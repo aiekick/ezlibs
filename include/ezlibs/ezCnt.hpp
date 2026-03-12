@@ -65,6 +65,7 @@ public:
     typename std::vector<TValue>::iterator end() { return m_array.end(); }
     typename std::vector<TValue>::const_iterator end() const { return m_array.end(); }
     bool exist(const TKey& vKey) const { return (m_dico.find(vKey) != m_dico.end()); }
+    size_t index(const TKey& vKey) const { return m_dico.at(vKey); }
     TValue& value(const TKey& vKey) { return at(m_dico.at(vKey)); }
     const TValue& value(const TKey& vKey) const { return at(m_dico.at(vKey)); }
     void resize(const size_t vNewSize) { m_array.resize(vNewSize); }

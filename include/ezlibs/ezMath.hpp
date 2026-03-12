@@ -121,12 +121,6 @@ inline bool isEqual(double vA, double vB) {
     return std::abs(vA - vB) < std::numeric_limits<double>::epsilon();
 }
 
-template <typename T>
-inline bool isEqual(T vA, T vB, T vEpsilon) {
-    static_assert(std::is_floating_point<T>::value, "isEqual with custom epsilon is only valid for floating point types");
-    return std::fabs(vA - vB) < vEpsilon;
-}
-
 // Rounds a floating-point number to the nearest integer.
 // Only floating-point types (float, double, long double) are allowed.
 template <typename T>

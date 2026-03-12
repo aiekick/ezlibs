@@ -217,21 +217,19 @@ inline bool stringToNumber(const std::string& vText, T& vNumber) {
 template <typename T>
 inline std::vector<T> stringToNumberVector(const std::string& text, char delimiter) {
     std::vector<T> arr;
-    if (!text.empty()) {
-        std::string::size_type start = 0;
-        std::string::size_type end = text.find(delimiter, start);
-        T value = 0;
-        while (end != std::string::npos) {
-            std::string token = text.substr(start, end - start);
-            if (stringToNumber<T>(token, value)) {
-                arr.emplace_back(value);
-            }
-            start = end + 1;
-            end = text.find(delimiter, start);
-        }
-        if (stringToNumber<T>(text.substr(start).c_str(), value)) {
+    std::string::size_type start = 0;
+    std::string::size_type end = text.find(delimiter, start);
+    T value = 0;
+    while (end != std::string::npos) {
+        std::string token = text.substr(start, end - start);
+        if (stringToNumber<T>(token, value)) {
             arr.emplace_back(value);
         }
+        start = end + 1;
+        end = text.find(delimiter, start);
+    }
+    if (stringToNumber<T>(text.substr(start).c_str(), value)) {
+        arr.emplace_back(value);
     }
     return arr;
 }
@@ -326,53 +324,43 @@ inline std::string toDecStr(T t) {
 
 inline std::vector<std::string::size_type> strContains(const std::string& text, const std::string& word) {
     std::vector<std::string::size_type> result;
-    if (!text.empty()) {
-        std::string::size_type loc = 0;
-        if (!word.empty()) {
-            while ((loc = text.find(word, loc)) != std::string::npos) {
-                result.emplace_back(loc);
-                ++loc;
-            }
-        }
+    std::string::size_type loc = 0;
+    while ((loc = text.find(word, loc)) != std::string::npos) {
+        result.emplace_back(loc);
+        loc += word.size();
     }
     return result;
 }
 
 inline bool replaceString(std::string& str, const std::string& oldStr, const std::string& newStr) {
     bool found = false;
-    if (!oldStr.empty()) {
-        size_t pos = 0;
-        while ((pos = str.find(oldStr, pos)) != std::string::npos) {
-            found = true;
-            str.replace(pos, oldStr.length(), newStr);
-            pos += newStr.length();
-        }
+    size_t pos = 0;
+    while ((pos = str.find(oldStr, pos)) != std::string::npos) {
+        found = true;
+        str.replace(pos, oldStr.length(), newStr);
+        pos += newStr.length();
     }
     return found;
 }
 
 inline size_t getCountOccurence(const std::string& vSrcString, const std::string& vStringToCount) {
     size_t count = 0;
-    if (!vStringToCount.empty()) {
-        size_t pos = 0;
-        const auto len = vStringToCount.length();
-        while ((pos = vSrcString.find(vStringToCount, pos)) != std::string::npos) {
-            ++count;
-            pos += len;
-        }
+    size_t pos = 0;
+    const auto len = vStringToCount.length();
+    while ((pos = vSrcString.find(vStringToCount, pos)) != std::string::npos) {
+        ++count;
+        pos += len;
     }
     return count;
 }
 inline size_t getCountOccurenceInSection(const std::string& vSrcString, size_t vStartPos, size_t vEndpos, const std::string& vStringToCount) {
     size_t count = 0;
-    if (!vStringToCount.empty()) {
-        size_t pos = vStartPos;
-        const auto len = vStringToCount.length();
-        while (pos < vEndpos && (pos = vSrcString.find(vStringToCount, pos)) != std::string::npos) {
-            if (pos < vEndpos) {
-                ++count;
-                pos += len;
-            }
+    size_t pos = vStartPos;
+    const auto len = vStringToCount.length();
+    while (pos < vEndpos && (pos = vSrcString.find(vStringToCount, pos)) != std::string::npos) {
+        if (pos < vEndpos) {
+            ++count;
+            pos += len;
         }
     }
     return count;
@@ -478,8 +466,6 @@ inline std::wstring utf8Decode(const std::string& str) {
 
 inline std::string searchForPatternWithWildcards(const std::string& vBuffer, const std::string& vWildcardedPattern, std::pair<size_t, size_t>& vOutPosRange) {
     std::string res;
-    bool startsWithWildcard = !vWildcardedPattern.empty() && vWildcardedPattern.front() == '*';
-    bool endsWithWildcard = !vWildcardedPattern.empty() && vWildcardedPattern.back() == '*';
     auto patterns = splitStringToVector(vWildcardedPattern, '*', false);
     vOutPosRange.first = std::string::npos;
     vOutPosRange.second = 0U;
@@ -497,12 +483,6 @@ inline std::string searchForPatternWithWildcards(const std::string& vBuffer, con
         }
     }
     if (vOutPosRange.first != std::string::npos && vOutPosRange.second != std::string::npos) {
-        if (startsWithWildcard) {
-            vOutPosRange.first = 0U;
-        }
-        if (endsWithWildcard) {
-            vOutPosRange.second = vBuffer.size();
-        }
         res = vBuffer.substr(vOutPosRange.first, vOutPosRange.second - vOutPosRange.first);
     }
     return res;
