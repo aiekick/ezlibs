@@ -202,16 +202,10 @@ struct PathInfos {
             vPath = "/" + vPath;  // make it absolute
 #endif
         }
-        std::string ext = vExt;
-        if (!ext.empty()) {
-            ext = '.' + ext;
-        }
-
-        if (vPath.empty()) {
-            return vName + ext;
-        }
-
-        return vPath + EZ_FILE_SLASH_TYPE + vName + ext;
+        std::string local_ext = vExt;
+        if (!local_ext.empty()) { local_ext = '.' + local_ext; }
+        if (vPath.empty()) { return vName + local_ext; }
+        return vPath + EZ_FILE_SLASH_TYPE + vName + local_ext;
     }
 
     std::string GetFPNE_WithPath(const std::string &vPath) const { return GetFPNE_WithPathNameExt(vPath, name, ext); }
