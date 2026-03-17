@@ -43,8 +43,7 @@ SOFTWARE.
 #include <string>
 #include <array>
 
-namespace ez {
-namespace gl {
+namespace ez::gl {
 
 class Texture;
 typedef std::shared_ptr<Texture> TexturePtr;
@@ -891,5 +890,5 @@ private:
     }
 };
 
-}  // namespace gl
-}  // namespace ez
+} // namespace ez::gl
+

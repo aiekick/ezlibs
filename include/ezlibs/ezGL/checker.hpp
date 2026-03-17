@@ -26,6 +26,7 @@ SOFTWARE.
 
 // ezGL is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
+#ifndef __ANDROID__
 #include "ezGL.hpp"
 
 #include <map>
@@ -641,3 +642,5 @@ private:
 
 }  // namespace gl
 }  // namespace ez
+
+#endif // __ANDROID__

@@ -540,8 +540,10 @@ public:
                 switch (shader_type.first) {
                     case GL_VERTEX_SHADER: ImGui::Text("%s", "Stage Vertex"); break;
                     case GL_FRAGMENT_SHADER: ImGui::Text("%s", "Stage Fragment"); break;
+#ifndef GL_ES_VERSION_3_0
                     case GL_TESS_EVALUATION_SHADER: ImGui::Text("%s", "Stage Tesselation Evaluation"); break;
                     case GL_TESS_CONTROL_SHADER: ImGui::Text("%s", "Stage Tesselation Control"); break;
+#endif
                     case GL_COMPUTE_SHADER: ImGui::Text("%s", "Stage Compute Control"); break;
                 }
                 ImGui::Indent();
@@ -572,7 +574,7 @@ public:
                                     case 4U: ImGui::DragScalarN(uni.second.name.c_str(), ImGuiDataType_U32, uni.second.datas_u, 4); break;
                                 }
                             } else if (uni.second.data_s2d != nullptr && *uni.second.data_s2d > 0) {
-                                ImGui::Text(uni.second.name.c_str());
+                                ImGui::Text("%s", uni.second.name.c_str());
                                 ImGui::Indent();
                                 ImTextureRef ref;
                                 ref._TexID = static_cast<size_t>(*uni.second.data_s2d);
@@ -609,8 +611,10 @@ public:
             switch (shader_type.first) {
                 case GL_VERTEX_SHADER: stage_name = "VERTEX"; break;
                 case GL_FRAGMENT_SHADER: stage_name = "FRAGMENT"; break;
+#ifndef GL_ES_VERSION_3_0
                 case GL_TESS_EVALUATION_SHADER: stage_name = "TESSEVAL"; break;
                 case GL_TESS_CONTROL_SHADER: stage_name = "TESSCTRL"; break;
+#endif
                 case GL_COMPUTE_SHADER: stage_name = "COMPUTE"; break;
             }
             for (auto& uni : shader_type.second) {

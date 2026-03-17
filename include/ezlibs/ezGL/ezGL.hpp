@@ -84,8 +84,10 @@ static inline void checkGLErrors(const char* vFile, const char* vFunc, const int
             case GL_INVALID_VALUE: error = "INVALID_VALUE"; break;
             case GL_OUT_OF_MEMORY: error = "OUT_OF_MEMORY"; break;
             case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
+#ifndef GL_ES_VERSION_3_0
             case GL_STACK_UNDERFLOW: error = "GL_STACK_UNDERFLOW"; break;
             case GL_STACK_OVERFLOW: error = "GL_STACK_OVERFLOW"; break;
+#endif
         }
         LogVarLightError("[%s][%s][%i] GL Errors : %s", vFile, vFunc, vLine, error.c_str());
     }
@@ -96,8 +98,8 @@ static inline void checkGLErrors(const char* vFile, const char* vFunc, const int
 #endif
 }
 
-}  // namespace gl
-}  // namespace ez
+} // namespace ez::gl
+
 
 #define CheckGLErrors ez::gl::checkGLErrors(__FILE__, __FUNCTION__, __LINE__)
 

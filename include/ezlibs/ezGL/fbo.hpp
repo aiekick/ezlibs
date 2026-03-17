@@ -26,13 +26,13 @@ SOFTWARE.
 
 // ezGL is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
-#include "ezGL.hpp"
 #include <array>
 #include <vector>
 #include <memory>
+#include "ezGL.hpp"
+#include "texture.hpp"
 
-namespace ez {
-namespace gl {
+namespace ez::gl {
 
 namespace detail {
 
@@ -113,7 +113,7 @@ private:
     GLsizei m_SizeY = 0;
     GLuint m_CountBuffers = 0U;
     bool m_UseMipMapping = false;
-    std::vector<TexturePtr> m_Textures;
+    std::vector<TexturePtr> m_Textures{};
     GLenum* m_ColorDrawBuffers = nullptr;
 
 public:
@@ -296,8 +296,10 @@ public:
         glReadBuffer(GL_COLOR_ATTACHMENT0 + vAttachementID);
         CheckGLErrors;
 
+#ifndef GL_ES_VERSION_3_0
         glDrawBuffer(GL_BACK);
         CheckGLErrors;
+#endif
 
         glBlitFramebuffer(0, 0, m_SizeX, m_SizeY, vX, vY, vX + vW, vY + vH, vMask, vFilter);
         CheckGLErrors;
@@ -411,5 +413,5 @@ public:
     }
 };
 
-}  // namespace gl
-}  // namespace ez
+} // namespace ez::gl
+
