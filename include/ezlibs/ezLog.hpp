@@ -285,7 +285,7 @@ public:
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)
         ZoneScoped;
 #endif
-        if (!ConsoleVerbose) {
+        if (!m_consoleVerbose) {
             return false;
         }
 
@@ -304,8 +304,8 @@ public:
             }
 
             if (!error.empty()) {
-                const int64 ticks = ez::time::GetTicks();
-                const float time = (ticks - m_lastTick) / 1000.0f;
+                const auto ticks = ez::time::getTicks();
+                const auto time = (ticks - m_lastTick) / 1000.0f;
 
                 std::string msg;
 
