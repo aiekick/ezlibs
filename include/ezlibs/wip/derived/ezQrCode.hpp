@@ -135,7 +135,7 @@ constexpr int ALIGN_POS[41][7] = {
 };
 
 // How many bytes necessary to store `n` bits.
-static size_t bytes_in_bits(size_t n) {
+static constexpr int bytes_in_bits(int n) {
     return (n >> 3) + !!(n & 7);
 }
 
@@ -369,9 +369,9 @@ private:
     static constexpr int N_TIMING_BITS = (SIDE - 16) * 2 - (10 * (V > 1 ? N_ALIGN - 2 : 0));
     static constexpr int N_VER_BITS = V > 6 ? 36 : 0;
     static constexpr int N_DAT_BITS = N_BITS - (192 + N_ALIGN_BITS + N_TIMING_BITS + 31 + N_VER_BITS);
-    static int N_BYTES{bytes_in_bits(N_BITS)};  // Actual number of bytes_in_bits required to store whole QrCode m_code
-    static int N_DAT_BYTES{bytes_in_bits(N_DAT_BITS)};  // Actual number of bytes_in_bits required to store [data + ecc]
-    static int N_DAT_CAPACITY{N_DAT_BITS >> 3};  // Capacity of [data + ecc] without remainder bits
+    static constexpr int N_BYTES{bytes_in_bits(N_BITS)};  // Actual number of bytes_in_bits required to store whole QrCode m_code
+    static constexpr int N_DAT_BYTES{bytes_in_bits(N_DAT_BITS)};  // Actual number of bytes_in_bits required to store [data + ecc]
+    static constexpr int N_DAT_CAPACITY{N_DAT_BITS >> 3};         // Capacity of [data + ecc] without remainder bits
 private:
     uint8_t m_code[N_BYTES] = {};
     bool m_status = false;
