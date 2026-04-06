@@ -39,7 +39,7 @@ endif()
 include_directories(${EZ_LIBS_INCLUDE_DIR})
 
 if(NOT TARGET ezBuildInc)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Tests/ezBuildInc)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ezBuildInc)
 	set_target_properties(ezBuildInc PROPERTIES FOLDER 3rdparty/tools)
 endif()
 
