@@ -197,7 +197,7 @@ public:
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)
         ZoneScoped;
 #endif
-        std::unique_lock<std::mutex> lck(ez::Log::m_logger_Mutex, std::defer_lock);
+        std::unique_lock<std::mutex> lck(m_logger_Mutex, std::defer_lock);
         lck.lock();
         va_list args;
         va_start(args, fmt);
@@ -209,7 +209,7 @@ public:
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)
         ZoneScoped;
 #endif
-        std::unique_lock<std::mutex> lck(ez::Log::m_logger_Mutex, std::defer_lock);
+        std::unique_lock<std::mutex> lck(m_logger_Mutex, std::defer_lock);
         lck.lock();
         va_list args;
         va_start(args, fmt);
@@ -221,7 +221,7 @@ public:
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)
         ZoneScoped;
 #endif
-        std::unique_lock<std::mutex> lck(ez::Log::m_logger_Mutex, std::defer_lock);
+        std::unique_lock<std::mutex> lck(m_logger_Mutex, std::defer_lock);
         lck.lock();
         va_list args;
         va_start(args, fmt);
@@ -233,7 +233,7 @@ public:
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)
         ZoneScoped;
 #endif
-        std::unique_lock<std::mutex> lck(ez::Log::m_logger_Mutex, std::defer_lock);
+        std::unique_lock<std::mutex> lck(m_logger_Mutex, std::defer_lock);
         lck.lock();
         va_list args;
         va_start(args, fmt);
@@ -246,7 +246,7 @@ public:
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)
         ZoneScoped;
 #endif
-        std::unique_lock<std::mutex> lck(ez::Log::m_logger_Mutex, std::defer_lock);
+        std::unique_lock<std::mutex> lck(m_logger_Mutex, std::defer_lock);
         lck.lock();
         va_list args;
         va_start(args, fmt);
@@ -265,7 +265,7 @@ public:
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)
         ZoneScoped;
 #endif
-        std::unique_lock<std::mutex> lck(ez::Log::m_logger_Mutex, std::defer_lock);
+        std::unique_lock<std::mutex> lck(m_logger_Mutex, std::defer_lock);
         lck.lock();
         va_list args;
         va_start(args, fmt);
@@ -298,7 +298,7 @@ public:
                 case GL_INVALID_ENUM: error = "INVALID_ENUM"; break;
                 case GL_INVALID_VALUE: error = "INVALID_VALUE"; break;
                 case GL_OUT_OF_MEMORY: error = "OUT_OF_MEMORY"; break;
-                case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
+                //case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
                 case GL_STACK_UNDERFLOW: error = "GL_STACK_UNDERFLOW"; break;
                 case GL_STACK_OVERFLOW: error = "GL_STACK_OVERFLOW"; break;
             }
@@ -353,7 +353,7 @@ public:
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)
         ZoneScoped;
 #endif
-        std::unique_lock<std::mutex> lck(ez::Log::m_logger_Mutex, std::defer_lock);
+        std::unique_lock<std::mutex> lck(m_logger_Mutex, std::defer_lock);
         lck.lock();
         m_debugLogFile.close();
         m_debugLogFile.clear();
@@ -404,7 +404,7 @@ private:
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)
         ZoneScoped;
 #endif
-        std::unique_lock<std::mutex> lck(ez::Log::m_logger_Mutex, std::defer_lock);
+        std::unique_lock<std::mutex> lck(m_logger_Mutex, std::defer_lock);
         lck.lock();
         m_debugLogFile.open("debug.log", std::ios::out);
         m_lastTick = time::getTicks();
