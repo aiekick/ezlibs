@@ -11,5 +11,5 @@ set_target_properties(${PROJECT} PROPERTIES FOLDER 3rdparty/tools)
 
 if (MSVC)
     add_definitions(-DNOMINMAX)
-	set_property(TARGET ${PROJECT} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+	set_property(TARGET ${PROJECT} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
