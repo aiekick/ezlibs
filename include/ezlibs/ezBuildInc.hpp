@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-// ezBuildInc is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
+// BuildInc is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 #include <string>
 #include <cstdint>
@@ -50,7 +50,7 @@ namespace ez {
 #define Project_FigFontLabel "..." // Optionnal
 */
 
-class ezBuildInc {
+class BuildInc {
 private:
     bool m_lastWriteStatus = false;
     bool m_lastWriteJsFileStatus = false;
@@ -63,7 +63,7 @@ private:
     int32_t m_buildNumber = 0;
 #ifdef EZ_FIG_FONT
     class FigFontGenerator {
-        friend class ezBuildInc;
+        friend class BuildInc;
 
     private:
         ez::FigFont m_generator;
@@ -83,11 +83,11 @@ private:
 #endif  // EZ_FIG_FONT
 
 public:
-    ezBuildInc(const std::string& vBuildFileHeader) {
+    BuildInc(const std::string& vBuildFileHeader) {
         m_buildFileHeader = vBuildFileHeader;
         read();
     }
-    ezBuildInc& read() {
+    BuildInc& read() {
         std::string content;
         std::ifstream docFile(m_buildFileHeader, std::ios::in);
         if (docFile.is_open()) {
@@ -153,7 +153,7 @@ public:
         tbl.print("", ss);
         return ss.str();
     }
-    ezBuildInc& printInfos() {
+    BuildInc& printInfos() {
         std::cout << getInfos();
         return *this;
     }
@@ -162,31 +162,31 @@ public:
     int32_t getMajor() { return m_majorNumber; }
     int32_t getMinor() { return m_minorNumber; }
     int32_t getBuildNumber() { return m_buildNumber; }
-    ezBuildInc& setProject(const std::string& vProject) {
+    BuildInc& setProject(const std::string& vProject) {
         m_project = vProject;
         return *this;
     }
-    ezBuildInc& setLabel(const std::string& vLabel) {
+    BuildInc& setLabel(const std::string& vLabel) {
         m_label = vLabel;
         return *this;
     }
-    ezBuildInc& setMajor(const int32_t vMajorNumber) {
+    BuildInc& setMajor(const int32_t vMajorNumber) {
         m_majorNumber = vMajorNumber;
         return *this;
     }
-    ezBuildInc& setMinor(const int32_t vMinorNumber) {
+    BuildInc& setMinor(const int32_t vMinorNumber) {
         m_minorNumber = vMinorNumber;
         return *this;
     }
-    ezBuildInc& setBuildNumber(const int32_t vBuildNumber) {
+    BuildInc& setBuildNumber(const int32_t vBuildNumber) {
         m_buildNumber = vBuildNumber;
         return *this;
     }
-    ezBuildInc& incBuildNumber() {
+    BuildInc& incBuildNumber() {
         ++m_buildNumber;
         return *this;
     }
-    ezBuildInc& setJsFilePath(const std::string& vJsFilePath) {
+    BuildInc& setJsFilePath(const std::string& vJsFilePath) {
         m_JsFilePath = vJsFilePath;
         return *this;
     }
@@ -196,7 +196,7 @@ public:
         return m_figFontGenerator;
     }
 #endif  // EZ_FIG_FONT
-    ezBuildInc& write() {
+    BuildInc& write() {
         m_lastWriteStatus = false;
         std::ofstream configFileWriter(m_buildFileHeader, std::ios::out);
         if (!configFileWriter.bad()) {
@@ -231,7 +231,7 @@ public:
     }
 
 private:
-    ezBuildInc& m_writeJsFile() {
+    BuildInc& m_writeJsFile() {
         m_lastWriteJsFileStatus = false;
         if (!m_JsFilePath.empty()) {
             std::ofstream configFileWriter(m_JsFilePath, std::ios::out);

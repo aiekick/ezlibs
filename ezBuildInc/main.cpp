@@ -46,7 +46,7 @@ int main(int vArgc, char* vArgv[]) {
         auto file = args.getValue<std::string>("file");
         auto jsfile = args.getValue<std::string>("jsfile");
         if (!file.empty()) {
-            ez::ezBuildInc builder(file);
+            ez::BuildInc builder(file);
             builder.setProject(project).setLabel(label).setJsFilePath(jsfile).setFigFontFile(figFontFile);
             builder.incBuildNumber().write().printInfos();
         } else {

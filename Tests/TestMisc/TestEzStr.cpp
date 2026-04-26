@@ -333,6 +333,10 @@ bool TestEzStr_StrContainsEdgeCases() {
     CTEST_ASSERT(result.empty());
 
     result = ez::str::strContains("aaa", "aa");
+    CTEST_ASSERT(result.size() == 1);
+    CTEST_ASSERT(result[0] == 0);
+
+    result = ez::str::strContains("aaa", "aa", true);
     CTEST_ASSERT(result.size() == 2);
     CTEST_ASSERT(result[0] == 0);
     CTEST_ASSERT(result[1] == 1);

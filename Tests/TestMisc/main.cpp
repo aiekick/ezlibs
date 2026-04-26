@@ -47,5 +47,5 @@ int main(int argc, char** argv) {
         return TestMisc(argv[1]) ? 0 : 1;
     }
     // User testing
-    return TestMisc("TestEzStr_SearchForPatternWithWildcardsEdgeCases") ? 0 : 1;
+    return TestMisc("TestEzStr_StrContainsEdgeCases") ? 0 : 1;
 }
