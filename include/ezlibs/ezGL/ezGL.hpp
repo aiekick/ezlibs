@@ -70,8 +70,7 @@ SOFTWARE.
     assert((cond) && msg)
 #endif
 
-namespace ez {
-namespace gl {
+namespace ez::gl {
 
 static inline void checkGLErrors(const char* vFile, const char* vFunc, const int& vLine) {
 #ifndef NDEBUG
