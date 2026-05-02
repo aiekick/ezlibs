@@ -58,12 +58,16 @@ public:
     const std::vector<TValue>& getArray() const { return m_array; }
     TValue& front() { return m_array.front(); }
     const TValue& front() const { return m_array.front(); }
-    TValue& back() { return m_array.front(); }
+    TValue& back() { return m_array.back(); }
     const TValue& back() const { return m_array.back(); }
     typename std::vector<TValue>::iterator begin() { return m_array.begin(); }
     typename std::vector<TValue>::const_iterator begin() const { return m_array.begin(); }
     typename std::vector<TValue>::iterator end() { return m_array.end(); }
     typename std::vector<TValue>::const_iterator end() const { return m_array.end(); }
+    typename std::vector<TValue>::reverse_iterator rbegin() { return m_array.rbegin(); }
+    typename std::vector<TValue>::const_reverse_iterator rbegin() const { return m_array.rbegin(); }
+    typename std::vector<TValue>::reverse_iterator rend() { return m_array.rend(); }
+    typename std::vector<TValue>::const_reverse_iterator rend() const { return m_array.rend(); }
     bool exist(const TKey& vKey) const { return (m_dico.find(vKey) != m_dico.end()); }
     size_t index(const TKey& vKey) const { return m_dico.at(vKey); }
     TValue& value(const TKey& vKey) { return at(m_dico.at(vKey)); }
