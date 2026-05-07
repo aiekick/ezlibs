@@ -176,6 +176,13 @@ public:
         mp_SlotDatas.reset();
     }
 
+    // Hooks called from m_connectSlot / m_disconnectSlot after the storage
+    // mutation. Default empty, overridden by derived slots that want to
+    // propagate state to their parent node (transfer payload, queue deferred
+    // heavy work, etc.). Fire on each side of a connection (start + end).
+    virtual void onConnectEvent(const SlotWeak& /*vOther*/) {}
+    virtual void onDisConnectEvent(const SlotWeak& /*vOther*/) {}
+
     template <typename T = SlotDatas>
     const T &getDatas() const {
         // remove the need to use a slow dynamic_cast
@@ -219,6 +226,7 @@ protected:
         auto ret = RetCodes::FAILED_SLOT_PTR_NULL;
         if (!vSlot.expired()) {
             m_ConnectedSlots.push_back(vSlot);
+            onConnectEvent(vSlot);
             ret = RetCodes::SUCCESS;
         }
         return ret;
@@ -229,6 +237,7 @@ protected:
         const auto it = Utils::isWeakPtrExistInVector(vSlot, m_ConnectedSlots);
         if (it != m_ConnectedSlots.end()) {
             m_ConnectedSlots.erase(it);
+            onDisConnectEvent(vSlot);
             ret = RetCodes::SUCCESS;
         }
         return ret;
@@ -557,7 +566,7 @@ protected:  // Node
                 if (ret == RetCodes::SUCCESS) {
                     ret = toPtr->m_connectSlot(vFrom);
                     if (ret != RetCodes::SUCCESS) {
-                        fromPtr->m_connectSlot(vTo);
+                        fromPtr->m_disconnectSlot(vTo);
                     }
                 }
             }
