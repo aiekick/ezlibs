@@ -284,10 +284,10 @@ public:
     }
     virtual void unit() {
         // we must reset slots 
-        m_Inputs.clear();
         m_InputWeaks.clear();
-        m_Outputs.clear();
+        m_Inputs.clear();
         m_OutputWeaks.clear();
+        m_Outputs.clear();
         // before reset this ans parentGraph
         m_This.reset();
         m_ParentGraph.reset();
@@ -464,10 +464,11 @@ public:
     ~Graph() override { unit(); }
 
     virtual bool init() {
-        //assert(!m_This.expired() && "m_This msut be defined with m_setThis suring the ceration");
-        return true;
+        for (auto &pNode : m_Nodes) { pNode->init(); }
+        return true; // a not initialized node cant stop the init of the graph
     }
     virtual void unit() {
+        for (auto &pNode : m_Nodes) { pNode->unit(); }
         m_This.reset();
         m_ParentNode.reset();
         mp_GraphDatas.reset();
@@ -475,8 +476,8 @@ public:
     }
 
     virtual void clear() {
-        m_Nodes.clear();
         m_NodeWeaks.clear();
+        m_Nodes.clear();
     }
 
     // Datas
