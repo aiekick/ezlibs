@@ -42,10 +42,6 @@ struct ProcDatas {
     ProcDatas(const float& px, const float& py, const float& pz, const float& tx, const float& ty) : p{px, py, pz}, t{tx, ty} {};
 };
 
-class ProcMesh;
-typedef std::shared_ptr<ProcMesh> ProcMeshPtr;
-typedef std::weak_ptr<ProcMesh> ProcMeshWeak;
-
 class ProcMesh : public Mesh<ProcDatas> {
 public:
     static ProcMeshPtr createUVSphere(const double& vRadius, const uint32_t& vUSubdivs, const uint32_t& vVSubdivs) {

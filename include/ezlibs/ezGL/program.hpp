@@ -31,14 +31,15 @@ SOFTWARE.
 #include <string>
 #include <cassert>
 #include <functional>
-#include "ezGL.hpp"
+
+#ifdef OPENGL_LOADER
+#include OPENGL_LOADER
+#endif  // OPENGL_LOADER
+
+#include "defs.hpp"
 
 namespace ez {
 namespace gl {
-
-class Program;
-typedef std::shared_ptr<Program> ProgramPtr;
-typedef std::weak_ptr<Program> ProgramWeak;
 
 class Program {
 public:

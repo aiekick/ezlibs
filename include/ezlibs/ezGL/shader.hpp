@@ -27,7 +27,12 @@ SOFTWARE.
 // ezGL is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 
-#include "ezGL.hpp"
+#include "defs.hpp"
+
+#ifdef OPENGL_LOADER
+#include OPENGL_LOADER
+#endif  // OPENGL_LOADER
+
 #include <map>
 #include <memory>
 #include <string>
@@ -36,10 +41,6 @@ SOFTWARE.
 
 namespace ez {
 namespace gl {
-
-class Shader;
-typedef std::shared_ptr<Shader> ShaderPtr;
-typedef std::weak_ptr<Shader> ShaderWeak;
 
 class Shader {
 private:

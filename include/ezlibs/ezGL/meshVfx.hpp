@@ -35,7 +35,11 @@ SOFTWARE.
  * One tesselation eval Shader
  */
 
-#include "ezGL.hpp"
+#include "defs.hpp"
+
+#ifdef OPENGL_LOADER
+#include OPENGL_LOADER
+#endif  // OPENGL_LOADER
 
 #include <array>
 #include <memory>
@@ -44,10 +48,6 @@ SOFTWARE.
 
 namespace ez {
 namespace gl {
-
-class MeshVfx;
-typedef std::shared_ptr<MeshVfx> MeshVfxPtr;
-typedef std::weak_ptr<MeshVfx> MeshVfxWeak;
 
 class MeshVfx {
 private:

@@ -27,7 +27,13 @@ SOFTWARE.
 // ezGL is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 #ifndef __ANDROID__
-#include "ezGL.hpp"
+#include "defs.hpp"
+
+#ifdef OPENGL_LOADER
+#include OPENGL_LOADER
+#endif  // OPENGL_LOADER
+
+#include "../ezLog.hpp"
 
 #include <map>
 #include <string>

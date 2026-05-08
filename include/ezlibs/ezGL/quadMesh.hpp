@@ -40,10 +40,6 @@ struct QuadDatas {
     QuadDatas(const float& px, const float& py, const float& tx, const float& ty) : p{px, py}, t{tx, ty} {};
 };
 
-class QuadMesh;
-typedef std::shared_ptr<QuadMesh> QuadMeshPtr;
-typedef std::weak_ptr<QuadMesh> QuadMeshWeak;
-
 class QuadMesh : public Mesh<QuadDatas> {
 public:
     static QuadMeshPtr create(float vZero = -1.0f) {

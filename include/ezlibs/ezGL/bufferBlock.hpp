@@ -26,7 +26,11 @@ SOFTWARE.
 
 // ezGL is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
-#include "ezGL.hpp"
+#ifdef OPENGL_LOADER
+#include OPENGL_LOADER
+#endif  // OPENGL_LOADER
+
+#include "defs.hpp"
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -38,9 +42,6 @@ SOFTWARE.
 
 namespace ez {
 namespace gl {
-
-class BufferBlock;
-using BufferBlockPtr = std::unique_ptr<BufferBlock>;
 
 class BufferBlock {
 public:

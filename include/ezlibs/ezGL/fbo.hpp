@@ -29,7 +29,12 @@ SOFTWARE.
 #include <array>
 #include <vector>
 #include <memory>
-#include "ezGL.hpp"
+
+#ifdef OPENGL_LOADER
+#include OPENGL_LOADER
+#endif  // OPENGL_LOADER
+
+#include "defs.hpp"
 #include "texture.hpp"
 
 namespace ez::gl {
@@ -100,10 +105,6 @@ struct GLTypeForT {
 constexpr GLenum glFormatFor(size_t channels) { return (channels == 1) ? GL_RED : (channels == 2) ? GL_RG : (channels == 3) ? GL_RGB : GL_RGBA; }
 
 }  // namespace detail
-
-class FBO;
-typedef std::shared_ptr<FBO> FBOPtr;
-typedef std::weak_ptr<FBO> FBOWeak;
 
 class FBO {
 private:
@@ -236,6 +237,13 @@ public:
 
     GLuint getBuffersCount() const { return m_CountBuffers; }
 
+    TextureWeak getTexture(const size_t& vBufferIdx = 0U) const {
+        if (m_Textures.size() > vBufferIdx) { 
+            return m_Textures[vBufferIdx]; 
+        }
+        return {};
+    }
+
     GLuint getTextureId(const size_t& vBufferIdx = 0U) const {
         if (m_Textures.size() > vBufferIdx) {
             return m_Textures[vBufferIdx]->getTexId();
@@ -311,9 +319,6 @@ public:
  * and switch between front and back after rendering
  */
 
-class FBOPipeLine;
-typedef std::shared_ptr<FBOPipeLine> FBOPipeLinePtr;
-typedef std::weak_ptr<FBOPipeLine> FBOPipeLineWeak;
 class FBOPipeLine {
 private:
     FBOPipeLineWeak m_This;

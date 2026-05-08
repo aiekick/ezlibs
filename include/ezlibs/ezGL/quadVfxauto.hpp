@@ -34,7 +34,11 @@ SOFTWARE.
  * One fragment Shader
  */
 
-#include "ezGL.hpp"
+#include "defs.hpp"
+
+#ifdef OPENGL_LOADER
+#include OPENGL_LOADER
+#endif  // OPENGL_LOADER
 
 #ifdef IMGUI_INCLUDE
 #include IMGUI_INCLUDE
@@ -47,10 +51,6 @@ SOFTWARE.
 
 namespace ez {
 namespace gl {
-
-class QuadVfxAuto;
-typedef std::shared_ptr<QuadVfxAuto> QuadVfxAutoPtr;
-typedef std::weak_ptr<QuadVfxAuto> QuadVfxAutoWeak;
 
 class QuadVfxAuto {
 private:

@@ -301,9 +301,6 @@ private:
     }
 };
 
-/*
- * class used for expsoe internal function of Uniforms class for test
- */
 class UniformStrings {
 public:
     // uniform pos, uniform line, uniform end

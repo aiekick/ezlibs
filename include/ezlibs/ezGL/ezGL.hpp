@@ -110,6 +110,7 @@ static inline void checkGLErrors(const char* vFile, const char* vFunc, const int
 // fbo params from code
 // like SoGLSL
 
+#include "defs.hpp"
 #include "texture.hpp"
 #include "fbo.hpp"
 #include "bufferBlock.hpp"

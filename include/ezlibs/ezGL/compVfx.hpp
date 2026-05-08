@@ -30,7 +30,7 @@ SOFTWARE.
  */
 
 
-#include "ezGL.hpp"
+#include "defs.hpp"
 
 #ifdef IMGUI_INCLUDE
 #include IMGUI_INCLUDE
@@ -43,10 +43,6 @@ SOFTWARE.
 
 namespace ez {
 namespace gl {
-
-class CompVfx;
-typedef std::shared_ptr<CompVfx> CompVfxPtr;
-typedef std::weak_ptr<CompVfx> CompVfxWeak;
 
 class CompVfx {
 public:

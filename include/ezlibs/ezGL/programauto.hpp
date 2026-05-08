@@ -33,7 +33,11 @@ SOFTWARE.
 #include <cassert>
 #include <functional>
 
-#include "ezGL.hpp"
+#ifdef OPENGL_LOADER
+#include OPENGL_LOADER
+#endif  // OPENGL_LOADER
+
+#include "defs.hpp"
 
 #ifdef IMGUI_INCLUDE
 #include IMGUI_INCLUDE
@@ -41,10 +45,6 @@ SOFTWARE.
 
 namespace ez {
 namespace gl {
-
-class ProgramAuto;
-typedef std::shared_ptr<ProgramAuto> ProgramAutoPtr;
-typedef std::weak_ptr<ProgramAuto> ProgramAutoWeak;
 
 class ProgramAuto {
 public:

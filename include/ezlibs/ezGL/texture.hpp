@@ -26,7 +26,11 @@ SOFTWARE.
 
 // ezGL is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
-#include "ezGL.hpp"
+#include "defs.hpp"
+
+#ifdef OPENGL_LOADER
+#include OPENGL_LOADER
+#endif  // OPENGL_LOADER
 
 #ifdef STB_IMAGE_READER_INCLUDE
 #include STB_IMAGE_READER_INCLUDE
@@ -44,10 +48,6 @@ SOFTWARE.
 #include <array>
 
 namespace ez::gl {
-
-class Texture;
-typedef std::shared_ptr<Texture> TexturePtr;
-typedef std::weak_ptr<Texture> TextureWeak;
 
 class Texture {
 public:
