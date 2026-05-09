@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BUILD_DIR="${1:?usage: collect_show_report.sh BUILD_DIR OUT_DIR}"
-OUT_DIR="${2:?usage: collect_show_report.sh BUILD_DIR OUT_DIR}"
+# Usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR
+# PROFDATA_PATH is the merged .profdata file produced by merge_profraw.sh.
+# PROFRAW_DIR is the directory that *directly* contains the .profraw files
+# (used only for reporting the file count). Both are now passed explicitly
+# so the script does not have to know the per-subsystem naming convention
+# of the EzCoverage macro.
+
+BUILD_DIR="${1:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR}"
+OUT_DIR="${2:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR}"
+OUT_PROFDATA="${3:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR}"
+PROFRAW_DIR="${4:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR}"
 
 COV_TXT="${OUT_DIR}/coverage.txt"
 RPT_TXT="${OUT_DIR}/report.txt"
-OUT_PROFDATA="${BUILD_DIR}/default.profdata"
 
 # Ne garder que Tests/Test* et ignorer coverage/forceCover/CMakeFiles
 mapfile -d '' EXES < <(
@@ -41,7 +49,7 @@ for exe in "${EXES[@]}"; do
 done
 
 : > "${RPT_TXT}"
-echo "# profraw files: $(find "${BUILD_DIR}/profraw" -type f -name '*.profraw' | wc -l)" >> "${RPT_TXT}"
+echo "# profraw files: $(find "${PROFRAW_DIR}" -type f -name '*.profraw' | wc -l)" >> "${RPT_TXT}"
 for exe in "${EXES[@]}"; do
   [[ "$exe" == *"/CMakeFiles/"* ]] && continue
   echo "" >> "${RPT_TXT}"

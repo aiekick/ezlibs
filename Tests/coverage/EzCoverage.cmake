@@ -94,7 +94,7 @@ macro(ezCoverage_addSubsystem aSubsystemName aIncludeDir)
         COMMAND bash ${_ezcov_shMergeProfraw} ${CMAKE_BINARY_DIR}/profraw_${aSubsystemName} ${CMAKE_BINARY_DIR}/${aSubsystemName}.profdata
 
         COMMAND ${CMAKE_COMMAND} -E echo "== llvm-cov show + report =="
-        COMMAND bash ${_ezcov_shCollectShowReport} ${CMAKE_BINARY_DIR} ${_ezcov_outDir}
+        COMMAND bash ${_ezcov_shCollectShowReport} ${CMAKE_BINARY_DIR} ${_ezcov_outDir} ${CMAKE_BINARY_DIR}/${aSubsystemName}.profdata ${CMAKE_BINARY_DIR}/profraw_${aSubsystemName}
 
         COMMAND ${CMAKE_COMMAND} -E echo "== UTF8 + fix_coverage.py =="
         COMMAND python3 ${_ezcov_pyConvertUtf8} ${_ezcov_coverageTxt} ${_ezcov_coverageTxtUtf8}
@@ -102,7 +102,7 @@ macro(ezCoverage_addSubsystem aSubsystemName aIncludeDir)
         COMMAND python3 ${_ezcov_fixCoveragePy} ${_ezcov_coverageTxtUtf8}
 
         COMMAND ${CMAKE_COMMAND} -E echo "== export LCOV + genhtml =="
-        COMMAND bash ${_ezcov_shExportLcovGenhtml} ${CMAKE_BINARY_DIR} ${_ezcov_lcovInfo} ${_ezcov_lcovHtmlDir} ${aIncludeDir}
+        COMMAND bash ${_ezcov_shExportLcovGenhtml} ${CMAKE_BINARY_DIR} ${_ezcov_lcovInfo} ${_ezcov_lcovHtmlDir} ${CMAKE_BINARY_DIR}/${aSubsystemName}.profdata ${aIncludeDir}
 
         COMMAND ${CMAKE_COMMAND} -E echo "== patch genhtml (inline, optional) =="
         COMMAND python3 ${_ezcov_pyPatchInline} ${_ezcov_coverageTxtUtf8} ${_ezcov_lcovHtmlDir} || true

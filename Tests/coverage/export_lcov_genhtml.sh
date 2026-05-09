@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BUILD_DIR="${1:?usage: export_lcov_genhtml.sh BUILD_DIR LCOV_INFO LCOV_HTML_DIR [INCLUDE_ONLY...paths]}"
-LCOV_INFO="${2:?usage: export_lcov_genhtml.sh BUILD_DIR LCOV_INFO LCOV_HTML_DIR [INCLUDE_ONLY...]}"
-LCOV_HTML="${3:?usage: export_lcov_genhtml.sh BUILD_DIR LCOV_INFO LCOV_HTML_DIR [INCLUDE_ONLY...]}"
-shift 3
-INCLUDE_ONLY=( "$@" )  # zéro, un ou plusieurs répertoires à extraire (pattern /* ajouté)
+# Usage: export_lcov_genhtml.sh BUILD_DIR LCOV_INFO LCOV_HTML_DIR PROFDATA_PATH [INCLUDE_ONLY...paths]
+# PROFDATA_PATH is the merged .profdata file produced by merge_profraw.sh.
+# It is now passed explicitly so the script does not have to know the
+# per-subsystem naming convention of the EzCoverage macro.
 
-OUT_PROFDATA="${BUILD_DIR}/default.profdata"
+BUILD_DIR="${1:?usage: export_lcov_genhtml.sh BUILD_DIR LCOV_INFO LCOV_HTML_DIR PROFDATA_PATH [INCLUDE_ONLY...]}"
+LCOV_INFO="${2:?usage: export_lcov_genhtml.sh BUILD_DIR LCOV_INFO LCOV_HTML_DIR PROFDATA_PATH [INCLUDE_ONLY...]}"
+LCOV_HTML="${3:?usage: export_lcov_genhtml.sh BUILD_DIR LCOV_INFO LCOV_HTML_DIR PROFDATA_PATH [INCLUDE_ONLY...]}"
+OUT_PROFDATA="${4:?usage: export_lcov_genhtml.sh BUILD_DIR LCOV_INFO LCOV_HTML_DIR PROFDATA_PATH [INCLUDE_ONLY...]}"
+shift 4
+INCLUDE_ONLY=( "$@" )  # zéro, un ou plusieurs répertoires à extraire (pattern /* ajouté)
 
 # Limiter aux exe sous Tests/Test* et ignorer coverage/forceCover/CMakeFiles
 mapfile -d '' EXES < <(

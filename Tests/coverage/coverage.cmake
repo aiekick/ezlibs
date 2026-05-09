@@ -79,7 +79,7 @@ add_custom_target(cov
   COMMAND bash ${SH_MERGE_PROFRAW} ${CMAKE_BINARY_DIR}/profraw ${CMAKE_BINARY_DIR}/default.profdata
 
   COMMAND ${CMAKE_COMMAND} -E echo "== llvm-cov show + report =="
-  COMMAND bash ${SH_COLLECT_SHOW_REPORT} ${CMAKE_BINARY_DIR} ${OUT_DIR}
+  COMMAND bash ${SH_COLLECT_SHOW_REPORT} ${CMAKE_BINARY_DIR} ${OUT_DIR} ${CMAKE_BINARY_DIR}/default.profdata ${CMAKE_BINARY_DIR}/profraw
 
   COMMAND ${CMAKE_COMMAND} -E echo "== UTF8 + fix_coverage.py =="
   COMMAND python3 ${PY_UTF8} ${COVERAGE_TXT} ${COVERAGE_TXT_UTF8}
@@ -87,7 +87,7 @@ add_custom_target(cov
   COMMAND python3 ${FIX_COVERAGE_PY} ${COVERAGE_TXT_UTF8}
 
   COMMAND ${CMAKE_COMMAND} -E echo "== export LCOV + genhtml =="
-  COMMAND bash ${SH_EXPORT_LCOV_GENHTML} ${CMAKE_BINARY_DIR} ${LCOV_INFO} ${LCOV_HTML_DIR} ${CMAKE_SOURCE_DIR}/include
+  COMMAND bash ${SH_EXPORT_LCOV_GENHTML} ${CMAKE_BINARY_DIR} ${LCOV_INFO} ${LCOV_HTML_DIR} ${CMAKE_BINARY_DIR}/default.profdata ${CMAKE_SOURCE_DIR}/include
 
   # Optionnel: patch visuel inline (cosmétique, n’affecte pas les stats)
   COMMAND ${CMAKE_COMMAND} -E echo "== patch genhtml (inline, optionnel) =="
