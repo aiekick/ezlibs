@@ -25,7 +25,10 @@ file(GLOB SRC_RECURSE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVec2.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVec3.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVec4.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVecN.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMat2.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMatN.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvd.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezQuat.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezPlane.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezAABB.hpp
@@ -855,6 +858,81 @@ AddTest("TestEzMat2_Inverse<float>")
 AddTest("TestEzMat2_Inverse<double>")
 AddTest("TestEzMat2_InverseSingular<float>")
 AddTest("TestEzMat2_InverseSingular<double>")
+
+##########################################################
+##### TESTS EzMatN #######################################
+##########################################################
+
+AddTest("TestEzMatN_DefaultConstructor<float>")
+AddTest("TestEzMatN_DefaultConstructor<double>")
+AddTest("TestEzMatN_DimensionConstructor<float>")
+AddTest("TestEzMatN_DimensionConstructor<double>")
+AddTest("TestEzMatN_DimensionConstructorWithFillValue<float>")
+AddTest("TestEzMatN_DimensionConstructorWithFillValue<double>")
+AddTest("TestEzMatN_Identity<float>")
+AddTest("TestEzMatN_Identity<double>")
+AddTest("TestEzMatN_Zero<float>")
+AddTest("TestEzMatN_Zero<double>")
+AddTest("TestEzMatN_AccessAndAssign<float>")
+AddTest("TestEzMatN_AccessAndAssign<double>")
+AddTest("TestEzMatN_Transpose<float>")
+AddTest("TestEzMatN_Transpose<double>")
+AddTest("TestEzMatN_Multiplication<float>")
+AddTest("TestEzMatN_Multiplication<double>")
+AddTest("TestEzMatN_MultiplicationDimensionMismatch<float>")
+AddTest("TestEzMatN_MultiplicationDimensionMismatch<double>")
+
+##########################################################
+##### TESTS EzVecN #######################################
+##########################################################
+
+AddTest("TestEzVecN_DefaultConstructor<float>")
+AddTest("TestEzVecN_DefaultConstructor<double>")
+AddTest("TestEzVecN_SizeConstructor<float>")
+AddTest("TestEzVecN_SizeConstructor<double>")
+AddTest("TestEzVecN_SizeConstructorWithFillValue<float>")
+AddTest("TestEzVecN_SizeConstructorWithFillValue<double>")
+AddTest("TestEzVecN_InitializerListConstructor<float>")
+AddTest("TestEzVecN_InitializerListConstructor<double>")
+AddTest("TestEzVecN_Zero<float>")
+AddTest("TestEzVecN_Zero<double>")
+AddTest("TestEzVecN_AccessAndAssign<float>")
+AddTest("TestEzVecN_AccessAndAssign<double>")
+AddTest("TestEzVecN_LengthSquared<float>")
+AddTest("TestEzVecN_LengthSquared<double>")
+AddTest("TestEzVecN_Length<float>")
+AddTest("TestEzVecN_Length<double>")
+AddTest("TestEzVecN_DotProduct<float>")
+AddTest("TestEzVecN_DotProduct<double>")
+AddTest("TestEzVecN_DotProductDimensionMismatch<float>")
+AddTest("TestEzVecN_DotProductDimensionMismatch<double>")
+AddTest("TestEzVecN_Normalize<float>")
+AddTest("TestEzVecN_Normalize<double>")
+AddTest("TestEzVecN_NormalizeNullVector<float>")
+AddTest("TestEzVecN_NormalizeNullVector<double>")
+AddTest("TestEzVecN_Normalized<float>")
+AddTest("TestEzVecN_Normalized<double>")
+
+##########################################################
+##### TESTS EzSvd ########################################
+##########################################################
+
+AddTest("TestEzSvd_EmptyMatrix<float>")
+AddTest("TestEzSvd_EmptyMatrix<double>")
+AddTest("TestEzSvd_Identity3x3<float>")
+AddTest("TestEzSvd_Identity3x3<double>")
+AddTest("TestEzSvd_Diagonal<float>")
+AddTest("TestEzSvd_Diagonal<double>")
+AddTest("TestEzSvd_DiagonalNegative<float>")
+AddTest("TestEzSvd_DiagonalNegative<double>")
+AddTest("TestEzSvd_ReconstructionSquare<float>")
+AddTest("TestEzSvd_ReconstructionSquare<double>")
+AddTest("TestEzSvd_ReconstructionTallRectangular<float>")
+AddTest("TestEzSvd_ReconstructionTallRectangular<double>")
+AddTest("TestEzSvd_ReconstructionWideRectangular<float>")
+AddTest("TestEzSvd_ReconstructionWideRectangular<double>")
+AddTest("TestEzSvd_SingularValuesAreSortedDescending<float>")
+AddTest("TestEzSvd_SingularValuesAreSortedDescending<double>")
 
 ##########################################################
 ##### TESTS EzQuat ########################################

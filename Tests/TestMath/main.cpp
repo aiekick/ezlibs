@@ -2,8 +2,11 @@
 #include <TestEzVec2.h>
 #include <TestEzVec3.h>
 #include <TestEzVec4.h>
+#include <TestEzVecN.h>
 #include <TestEzAABBCC.h>
 #include <TestEzMat2.h>
+#include <TestEzMatN.h>
+#include <TestEzSvd.h>
 #include <TestEzQuat.h>
 #include <TestEzAABB.h>
 #include <TestEzExpr.h>
@@ -21,7 +24,10 @@ bool TestMisc(const std::string& vTest) {
     IfTestCollectionExist(TestEzVec2);
     IfTestCollectionExist(TestEzVec3);
     IfTestCollectionExist(TestEzVec4);
+    IfTestCollectionExist(TestEzVecN);
     IfTestCollectionExist(TestEzMat2);
+    IfTestCollectionExist(TestEzMatN);
+    IfTestCollectionExist(TestEzSvd);
     IfTestCollectionExist(TestEzQuat);
     IfTestCollectionExist(TestEzAABB);
     IfTestCollectionExist(TestEzExpr);
