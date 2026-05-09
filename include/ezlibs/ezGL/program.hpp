@@ -37,6 +37,7 @@ SOFTWARE.
 #endif  // OPENGL_LOADER
 
 #include "defs.hpp"
+#include "utils.hpp"
 
 namespace ez {
 namespace gl {

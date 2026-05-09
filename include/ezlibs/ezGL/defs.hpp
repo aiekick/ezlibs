@@ -28,7 +28,8 @@ SOFTWARE.
 
 #include <memory>
 
-namespace ez::gl {
+namespace ez {
+namespace gl {
 
 class BufferBlock;
 using BufferBlockPtr = ::std::unique_ptr<BufferBlock>;
@@ -85,4 +86,5 @@ class QuadVfxAuto;
 typedef std::shared_ptr<QuadVfxAuto> QuadVfxAutoPtr;
 typedef std::weak_ptr<QuadVfxAuto> QuadVfxAutoWeak;
 
-}  // namespace ez::gl
+}  // namespace gl
+}  // namespace ez

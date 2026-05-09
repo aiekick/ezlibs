@@ -27,6 +27,7 @@ SOFTWARE.
 // ezGL is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 #include "defs.hpp"
+#include "utils.hpp"
 
 #ifdef OPENGL_LOADER
 #include OPENGL_LOADER
@@ -47,7 +48,8 @@ SOFTWARE.
 #include <string>
 #include <array>
 
-namespace ez::gl {
+namespace ez {
+namespace gl {
 
 class Texture {
 public:
@@ -890,5 +892,5 @@ private:
     }
 };
 
-} // namespace ez::gl
-
+}  // namespace gl
+}  // namespace ez

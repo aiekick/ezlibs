@@ -41,6 +41,8 @@ SOFTWARE.
 #include <functional>
 #include <unordered_map>
 
+#include "utils.hpp"
+
 namespace ez {
 namespace gl {
 

@@ -31,6 +31,7 @@ SOFTWARE.
 #endif  // OPENGL_LOADER
 
 #include "defs.hpp"
+#include "utils.hpp"
 #include <unordered_map>
 #include <vector>
 #include <string>

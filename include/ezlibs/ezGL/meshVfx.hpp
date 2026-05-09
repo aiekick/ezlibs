@@ -36,6 +36,7 @@ SOFTWARE.
  */
 
 #include "defs.hpp"
+#include "utils.hpp"
 
 #ifdef OPENGL_LOADER
 #include OPENGL_LOADER

@@ -35,9 +35,11 @@ SOFTWARE.
 #endif  // OPENGL_LOADER
 
 #include "defs.hpp"
+#include "utils.hpp"
 #include "texture.hpp"
 
-namespace ez::gl {
+namespace ez {
+namespace gl {
 
 namespace detail {
 
@@ -121,9 +123,7 @@ public:
     static FBOPtr create(const GLsizei& vSX, const GLsizei& vSY, const GLuint vCountBuffers, const bool vUseMipMapping) {
         auto res = std::make_shared<FBO>();
         res->m_This = res;
-        if (!res->init(vSX, vSY, vCountBuffers, vUseMipMapping)) {
-            res.reset();
-        }
+        if (!res->init(vSX, vSY, vCountBuffers, vUseMipMapping)) { res.reset(); }
         return res;
     }
 
@@ -194,9 +194,7 @@ public:
             PROFILER_SCOPED("FBO", "updateMipMaping %u", m_FBOId);
 #endif
             for (auto& tex_ptr : m_Textures) {
-                if (tex_ptr != nullptr) {
-                    tex_ptr->updateMipMaping();
-                }
+                if (tex_ptr != nullptr) { tex_ptr->updateMipMaping(); }
             }
         }
     }
@@ -238,16 +236,12 @@ public:
     GLuint getBuffersCount() const { return m_CountBuffers; }
 
     TextureWeak getTexture(const size_t& vBufferIdx = 0U) const {
-        if (m_Textures.size() > vBufferIdx) { 
-            return m_Textures[vBufferIdx]; 
-        }
+        if (m_Textures.size() > vBufferIdx) { return m_Textures[vBufferIdx]; }
         return {};
     }
 
     GLuint getTextureId(const size_t& vBufferIdx = 0U) const {
-        if (m_Textures.size() > vBufferIdx) {
-            return m_Textures[vBufferIdx]->getTexId();
-        }
+        if (m_Textures.size() > vBufferIdx) { return m_Textures[vBufferIdx]->getTexId(); }
         return 0U;
     }
 
@@ -330,9 +324,7 @@ public:
     static FBOPipeLinePtr create(const GLsizei& vSX, const GLsizei& vSY, const GLuint vCountBuffers, const bool vUseMipMapping, const bool vMultiPass) {
         auto res = std::make_shared<FBOPipeLine>();
         res->m_This = res;
-        if (!res->init(vSX, vSY, vCountBuffers, vUseMipMapping, vMultiPass)) {
-            res.reset();
-        }
+        if (!res->init(vSX, vSY, vCountBuffers, vUseMipMapping, vMultiPass)) { res.reset(); }
         return res;
     }
 
@@ -346,9 +338,7 @@ public:
         if (m_FrontFBOPtr != nullptr) {
             if (m_MultiPass) {
                 m_BackFBOPtr = FBO::create(vSX, vSY, vCountBuffers, vUseMipMapping);
-                if (m_BackFBOPtr != nullptr) {
-                    res = true;
-                }
+                if (m_BackFBOPtr != nullptr) { res = true; }
             } else {
                 res = true;
             }
@@ -392,9 +382,7 @@ public:
     void unbind() {
         ASSERT_THROW(m_FrontFBOPtr != nullptr, "");
         m_FrontFBOPtr->unbind();
-        if (m_MultiPass) {
-            swapFBOs();
-        }
+        if (m_MultiPass) { swapFBOs(); }
     }
     GLuint getFrontTextureId(const size_t& vBufferIdx = 0U) const {
         ASSERT_THROW(m_FrontFBOPtr != nullptr, "");
@@ -418,5 +406,5 @@ public:
     }
 };
 
-} // namespace ez::gl
-
+}  // namespace gl
+}  // namespace ez

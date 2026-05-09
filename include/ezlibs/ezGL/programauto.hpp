@@ -38,6 +38,7 @@ SOFTWARE.
 #endif  // OPENGL_LOADER
 
 #include "defs.hpp"
+#include "utils.hpp"
 
 #ifdef IMGUI_INCLUDE
 #include IMGUI_INCLUDE

@@ -27,6 +27,7 @@ SOFTWARE.
 // ezGL is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 #include "defs.hpp"
+#include "utils.hpp"
 
 #ifdef OPENGL_LOADER
 #include OPENGL_LOADER

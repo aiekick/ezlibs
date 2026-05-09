@@ -26,73 +26,39 @@ SOFTWARE.
 
 // ezGL is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
-
 #ifdef OPENGL_LOADER
 #include OPENGL_LOADER
 #endif  // OPENGL_LOADER
 
-#ifdef PROFILER_INCLUDE
-#include PROFILER_INCLUDE
-#endif  // PROFILER_SCOPED
+namespace ez {
+namespace gl {
 
-/*
-#ifdef PROFILER_SCOPED
-#define PROFILER_SCOPED
-#endif  // PROFILER_SCOPED
-*/
-
-/*
-#ifdef PROFILER_SCOPED_PTR
-#define PROFILER_SCOPED_PTR
-#endif  // PROFILER_SCOPED_PTR
-*/
-
-#ifdef IMGUI_INCLUDE
-#include IMGUI_INCLUDE
-#endif  // IMGUI_INCLUDE
-
-#ifdef MSVC
-#define __PRETTY_FUNCTION__ __FUNCSIG__
+static inline void checkGLErrors(const char* vFile, const char* vFunc, const int& vLine) {
+#ifndef NDEBUG
+    const GLenum err(glGetError());
+    if (err != GL_NO_ERROR) {
+        std::string error;
+        switch (err) {
+            case GL_INVALID_OPERATION: error = "INVALID_OPERATION"; break;
+            case GL_INVALID_ENUM: error = "INVALID_ENUM"; break;
+            case GL_INVALID_VALUE: error = "INVALID_VALUE"; break;
+            case GL_OUT_OF_MEMORY: error = "OUT_OF_MEMORY"; break;
+            case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
+#ifndef GL_ES_VERSION_3_0
+            case GL_STACK_UNDERFLOW: error = "GL_STACK_UNDERFLOW"; break;
+            case GL_STACK_OVERFLOW: error = "GL_STACK_OVERFLOW"; break;
 #endif
-
-#include <ezlibs/ezStr.hpp>
-#include <ezlibs/ezLog.hpp>
-#include <ezlibs/ezMath.hpp>
-
-#include <string>
-
-#ifdef _TESTING_
-#define ASSERT_THROW(cond, msg) \
-    if (!(cond))                \
-    throw std::runtime_error(msg)
+        }
+        LogVarLightError("[%s][%s][%i] GL Errors : %s", vFile, vFunc, vLine, error.c_str());
+    }
 #else
-#define ASSERT_THROW(cond, msg) \
-    assert((cond) && msg)
+    (void)vFile;
+    (void)vFunc;
+    (void)vLine;
 #endif
+}
 
-// the order is important
-// so dont reorder these includes
+}  // namespace gl
+}  // namespace ez
 
-// 'auto' mean auto configuration
-// uniform params from code
-// fbo params from code
-// like SoGLSL
-
-#include "defs.hpp"
-#include "utils.hpp"
-#include "texture.hpp"
-#include "fbo.hpp"
-#include "bufferBlock.hpp"
-#include "mesh.hpp"
-// #include "meshVfx.hpp"
-#include "quadMesh.hpp"
-#include "procMesh.hpp"
-#include "uniforms.hpp"
-#include "shader.hpp"
-#include "shaderauto.hpp"
-#include "program.hpp"
-#include "programauto.hpp"
-#include "quadVfx.hpp"
-#include "quadVfxauto.hpp"
-#include "canvas.hpp"
-#include "compVfx.hpp"
+#define CheckGLErrors ez::gl::checkGLErrors(__FILE__, __FUNCTION__, __LINE__)
