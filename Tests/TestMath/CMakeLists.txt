@@ -30,6 +30,9 @@ file(GLOB SRC_RECURSE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMatN.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvd.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezEigenSym.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezKdTree.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezRansac.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezEpipolar.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezQuat.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezPlane.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezAABB.hpp
@@ -957,6 +960,50 @@ AddTest("TestEzEigenSym_EigenvectorsAreOrthogonal<float>")
 AddTest("TestEzEigenSym_EigenvectorsAreOrthogonal<double>")
 AddTest("TestEzEigenSym_EigenvaluesAreSortedDescending<float>")
 AddTest("TestEzEigenSym_EigenvaluesAreSortedDescending<double>")
+
+##########################################################
+##### TESTS EzKdTree #####################################
+##########################################################
+
+AddTest("TestEzKdTree_DefaultEmpty")
+AddTest("TestEzKdTree_PutWrongDimensionIsRejected")
+AddTest("TestEzKdTree_SinglePointFoundExactly")
+AddTest("TestEzKdTree_NearestRespectsMaxDistance")
+AddTest("TestEzKdTree_KNearestReturnsKBestSorted")
+AddTest("TestEzKdTree_AgreesWithBruteForceOnSmallSet")
+AddTest("TestEzKdTree_DepthGrowsAfterSplit")
+AddTest("TestEzKdTree_NearestOnEmptyReturnsNothing")
+AddTest("TestEzKdTree_NearestRespectsMaxElementsZero")
+
+##########################################################
+##### TESTS EzRansac #####################################
+##########################################################
+
+AddTest("TestEzRansac_EmptySamplesReturnFailure")
+AddTest("TestEzRansac_TooFewSamplesReturnFailure")
+AddTest("TestEzRansac_FitsLineThroughOutlierContaminatedData")
+AddTest("TestEzRansac_AllInliersConvergesQuickly")
+AddTest("TestEzRansac_ProsacReachesSameSolution")
+AddTest("TestEzRansac_DegenerateEstimatorIsSkipped")
+
+##########################################################
+##### TESTS EzEpipolar ###################################
+##########################################################
+
+AddTest("TestEzEpipolar_DecomposeRejectsNonSquare<float>")
+AddTest("TestEzEpipolar_DecomposeRejectsNonSquare<double>")
+AddTest("TestEzEpipolar_DecomposePureXTranslation<float>")
+AddTest("TestEzEpipolar_DecomposePureXTranslation<double>")
+AddTest("TestEzEpipolar_DecomposeProducesProperRotations<float>")
+AddTest("TestEzEpipolar_DecomposeProducesProperRotations<double>")
+AddTest("TestEzEpipolar_TriangulateRejectsBadDimensions<float>")
+AddTest("TestEzEpipolar_TriangulateRejectsBadDimensions<double>")
+AddTest("TestEzEpipolar_TriangulateAxisAlignedCameras<float>")
+AddTest("TestEzEpipolar_TriangulateAxisAlignedCameras<double>")
+AddTest("TestEzEpipolar_CheiralityHandlesEmptySamples<float>")
+AddTest("TestEzEpipolar_CheiralityHandlesEmptySamples<double>")
+AddTest("TestEzEpipolar_CheiralitySelectsCorrectPose<float>")
+AddTest("TestEzEpipolar_CheiralitySelectsCorrectPose<double>")
 
 ##########################################################
 ##### TESTS EzQuat ########################################

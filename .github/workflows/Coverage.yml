@@ -53,24 +53,24 @@ jobs:
 
       - name: Builf forceCover
         run: cmake --build build --target forceCover -j 12
-        
+
       - name: Run forceCover
-        run: cmake --build build --target forcecover_prep -j 12
+        run: cmake --build build --target forcecover_prep_ezLibs -j 12
 
       - name: Build tests
         run: cmake --build build -j 12
 
       - name: Generate coverage
         run: |
-          xvfb-run --auto-servernum cmake --build build --target cov -j 12
+          xvfb-run --auto-servernum cmake --build build --target cov_ezLibs -j 12
           mkdir -p build/coverage_web
-          cp -r build/Tests/coverage_lcov/* build/coverage_web/
-          
+          cp -r build/Tests/ezLibs/coverage_lcov/* build/coverage_web/
+
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: coverage_bundle.tar.gz
-          path: build/Tests/coverage_bundle.tar.gz
+          path: build/Tests/ezLibs/coverage_bundle.tar.gz
 
       - name: Setup web pages
         uses: actions/configure-pages@v5
