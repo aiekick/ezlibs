@@ -76,7 +76,7 @@ add_custom_target(cov
           ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_BINARY_DIR} --output-on-failure
 
   COMMAND ${CMAKE_COMMAND} -E echo "== merge profraw =="
-  COMMAND bash ${SH_MERGE_PROFRAW} ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/default.profdata
+  COMMAND bash ${SH_MERGE_PROFRAW} ${CMAKE_BINARY_DIR}/profraw ${CMAKE_BINARY_DIR}/default.profdata
 
   COMMAND ${CMAKE_COMMAND} -E echo "== llvm-cov show + report =="
   COMMAND bash ${SH_COLLECT_SHOW_REPORT} ${CMAKE_BINARY_DIR} ${OUT_DIR}

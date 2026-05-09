@@ -434,7 +434,7 @@ inline std::wstring stringToWstring(const std::string& mbstr) {
 }
 
 inline size_t getDigitsCountOfAIntegralNumber(const int64_t vNum) {
-    size_t res = (vNum == 0) ? 1 : static_cast<int>(log10(abs(vNum))) + 1;
+    size_t res = (vNum == 0) ? 1 : static_cast<int>(log10(std::abs(vNum))) + 1;
     if (vNum < 0) {
         ++res;
     }
