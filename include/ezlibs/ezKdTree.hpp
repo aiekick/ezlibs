@@ -102,7 +102,9 @@ private:
 public:
     explicit kdTree(std::size_t aDimension)
         : m_dimension(aDimension)
-        , m_root(std::make_unique<node>()) {
+        // std::make_unique is C++14; ezlibs targets C++11 strict, hence the
+        // explicit std::unique_ptr<node>(new node()) form.
+        , m_root(std::unique_ptr<node>(new node())) {
     }
 
     std::size_t size() const {
@@ -210,8 +212,9 @@ private:
         }
         const float pivot = (minValue + maxValue) * 0.5f;
 
-        auto leftChild = std::make_unique<node>();
-        auto rightChild = std::make_unique<node>();
+        // std::make_unique not available under C++11 (added in C++14).
+        std::unique_ptr<node> leftChild(new node());
+        std::unique_ptr<node> rightChild(new node());
         for (auto& current : aoNode.entries) {
             if (current.point[bestAxis] < pivot) {
                 leftChild->entries.push_back(std::move(current));
