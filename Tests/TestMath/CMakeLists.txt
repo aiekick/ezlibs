@@ -29,6 +29,7 @@ file(GLOB SRC_RECURSE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMat2.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMatN.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvd.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezEigenSym.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezQuat.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezPlane.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezAABB.hpp
@@ -933,6 +934,29 @@ AddTest("TestEzSvd_ReconstructionWideRectangular<float>")
 AddTest("TestEzSvd_ReconstructionWideRectangular<double>")
 AddTest("TestEzSvd_SingularValuesAreSortedDescending<float>")
 AddTest("TestEzSvd_SingularValuesAreSortedDescending<double>")
+
+##########################################################
+##### TESTS EzEigenSym ###################################
+##########################################################
+
+AddTest("TestEzEigenSym_EmptyMatrix<float>")
+AddTest("TestEzEigenSym_EmptyMatrix<double>")
+AddTest("TestEzEigenSym_NonSquareMatrix<float>")
+AddTest("TestEzEigenSym_NonSquareMatrix<double>")
+AddTest("TestEzEigenSym_Identity3x3<float>")
+AddTest("TestEzEigenSym_Identity3x3<double>")
+AddTest("TestEzEigenSym_Diagonal<float>")
+AddTest("TestEzEigenSym_Diagonal<double>")
+AddTest("TestEzEigenSym_DiagonalWithNegative<float>")
+AddTest("TestEzEigenSym_DiagonalWithNegative<double>")
+AddTest("TestEzEigenSym_Known2x2<float>")
+AddTest("TestEzEigenSym_Known2x2<double>")
+AddTest("TestEzEigenSym_ReconstructionSymmetric3x3<float>")
+AddTest("TestEzEigenSym_ReconstructionSymmetric3x3<double>")
+AddTest("TestEzEigenSym_EigenvectorsAreOrthogonal<float>")
+AddTest("TestEzEigenSym_EigenvectorsAreOrthogonal<double>")
+AddTest("TestEzEigenSym_EigenvaluesAreSortedDescending<float>")
+AddTest("TestEzEigenSym_EigenvaluesAreSortedDescending<double>")
 
 ##########################################################
 ##### TESTS EzQuat ########################################
