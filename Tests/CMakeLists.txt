@@ -25,16 +25,10 @@ if(MSVC)
     add_definitions(-DNOMINMAX)
 endif()
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/coverage/EzCoverage.cmake)
+
 if (USE_CODE_COVERAGE)
-  if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    # LLVM source-based coverage (no gcov flags here)
-    add_compile_options(-fprofile-instr-generate -fcoverage-mapping -O0 -fno-inline -fno-elide-constructors)
-    add_link_options(-fprofile-instr-generate -fcoverage-mapping)
-  else()
-    # GCC / others: gcov-style coverage
-    add_compile_options(-fprofile-arcs -ftest-coverage --coverage -fno-inline -O0)
-    add_link_options(-fprofile-arcs -ftest-coverage --coverage -fno-inline -O0)
-  endif()
+    ezCoverage_enableFlags()
 endif()
 
 function(AddTest arg)
@@ -98,5 +92,5 @@ if (TESTING_GEO)
 endif()
 
 if (USE_CODE_COVERAGE)
-	include(${CMAKE_CURRENT_SOURCE_DIR}/coverage/coverage.cmake)
+	ezCoverage_addSubsystem(ezLibs ${EZ_LIBS_INCLUDE_DIR})
 endif()
