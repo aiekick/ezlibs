@@ -85,6 +85,9 @@ struct vec3 {
     // Indexing operator
     T& operator[](size_t i) { return (&x)[i]; }
 
+    // Indexing operator
+    T const& operator[](size_t i) const { return (&x)[i]; }
+
     // Offset the vector
     vec3 Offset(T vX, T vY, T vZ) const { return vec3(x + vX, y + vY, z + vZ); }
 

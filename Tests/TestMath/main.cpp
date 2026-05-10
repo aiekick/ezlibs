@@ -5,6 +5,7 @@
 #include <TestEzVecN.h>
 #include <TestEzAABBCC.h>
 #include <TestEzMat2.h>
+#include <TestEzMat4.h>
 #include <TestEzMatN.h>
 #include <TestEzSvd.h>
 #include <TestEzEigenSym.h>
@@ -30,6 +31,7 @@ bool TestMisc(const std::string& vTest) {
     IfTestCollectionExist(TestEzVec4);
     IfTestCollectionExist(TestEzVecN);
     IfTestCollectionExist(TestEzMat2);
+    IfTestCollectionExist(TestEzMat4);
     IfTestCollectionExist(TestEzMatN);
     IfTestCollectionExist(TestEzSvd);
     IfTestCollectionExist(TestEzEigenSym);

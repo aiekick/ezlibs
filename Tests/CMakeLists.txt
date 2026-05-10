@@ -41,9 +41,15 @@ if(NOT TARGET ezBuildInc)
 endif()
 
 function(StageBuildInc)
+	# Always generate the build-id header. The previous form had the
+	# file-path argument wrapped in a Debug-only generator expression
+	# while the rest of the command was unconditional, so in non-Debug
+	# configs the command degenerated to `ezBuildInc ezLibs -ff <font>`
+	# — missing the required <file_path_name> positional, which made
+	# ezBuildInc fail with "Positional <file> not present".
 	add_custom_command(
 		TARGET ${PROJECT} PRE_BUILD
-		COMMAND ezBuildInc ezLibs $<$<CONFIG:Debug>:${EZ_LIBS_INCLUDE_DIR}/ezlibs.hpp> -ff ${EZ_LIBS_INCLUDE_DIR}/../Tests/res/big.flf
+		COMMAND ezBuildInc ezLibs ${EZ_LIBS_INCLUDE_DIR}/ezlibs.hpp -ff ${EZ_LIBS_INCLUDE_DIR}/../Tests/res/big.flf
 	)
 endfunction(StageBuildInc)
 

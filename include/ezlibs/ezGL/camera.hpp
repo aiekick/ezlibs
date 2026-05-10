@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-// ezOrbitCamera is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
+// ez::gl::camera is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 #include <array>
 #include <cmath>
@@ -54,8 +54,14 @@ public:  // methods
     const vec3<T>& getUp() const { return m_up; }
 
     // --- Core matrices ---
-    // View matrix (right-handed)
-    mat4<T> computeViewMatrix() const { return mat4<T>::LookAt(m_position, m_target, m_up); }
+    // View matrix (right-handed). LookAt takes std::array<T, 3>; the
+    // members are vec3<T>, so we pack them explicitly.
+    mat4<T> computeViewMatrix() const {
+        return mat4<T>::LookAt(
+            std::array<T, 3>{{m_position.x, m_position.y, m_position.z}},
+            std::array<T, 3>{{m_target.x,   m_target.y,   m_target.z  }},
+            std::array<T, 3>{{m_up.x,       m_up.y,       m_up.z      }});
+    }
 
     // Perspective (OpenGL clip space: z in [-1,1])
     static mat4<T> makeGLPerspective(T vFovYRadians, T vAspect, T vNear, T vFar) { return mat4<T>::PerspectiveGL(vFovYRadians, vAspect, vNear, vFar); }
@@ -126,45 +132,101 @@ public:
     }
 };
 
+// Y-up turntable camera.
+//
+// Two degrees of freedom around a pivot:
+//   - yaw   : rotation around the world Y axis (azimuth)
+//   - pitch : rotation around the camera's local right axis (elevation),
+//             clamped to (-pi/2 + eps, +pi/2 - eps) so the world up vector
+//             stays world Y at all times — i.e. the user can never flip
+//             the scene upside down.
+//
+// Plus one linear DoF:
+//   - distance : how far the eye is from the pivot, with a configurable
+//                lower bound to prevent the eye from collapsing onto the
+//                target.
+//
+// Spherical eye position (when pivot is origin and pitch/yaw are 0, the
+// eye is on the +Z half-axis looking back toward origin):
+//
+//     eye = pivot + ( cos(pitch) * sin(yaw),
+//                     sin(pitch),
+//                     cos(pitch) * cos(yaw) ) * distance
+//
+// Mouse-friendly setters (addYaw, addPitch, multiplyDistance) are provided
+// for incremental input deltas. setAngle/setAxis exist as backwards-
+// compatibility aliases for the older single-axis turntable.
 template <typename T>
 class Camera3DTurntable : public Camera3D<T> {
     vec3<T> m_pivot{T(0), T(0), T(0)};
-    vec3<T> m_axis{T(0), T(1), T(0)};  // normalized axis of rotation
-    T m_angleRadians{T(0)};
+    T m_yawRadians{T(0)};
+    T m_pitchRadians{T(0)};
     T m_distance{T(3)};
+    T m_minDistance{static_cast<T>(0.01)};
+
+    // Half-pi constant; std::numbers::pi_v is C++20 and ezlibs is C++11.
+    // Hard-coded as a plain literal to keep the header self-contained.
+    static constexpr T k_halfPi = static_cast<T>(1.57079632679489661923);
+    // Tiny offset so the pitch never reaches exactly +/- pi/2 (gimbal lock
+    // would make the up vector degenerate).
+    static constexpr T k_pitchEpsilon = static_cast<T>(0.01);
 
 public:
     void setPivot(const vec3<T>& vPivot) { m_pivot = vPivot; }
-    void setAxis(const vec3<T>& vAxisNorm) { m_axis = vAxisNorm; }
-    void setAngle(T vAngleRadians) { m_angleRadians = vAngleRadians; }
-    void setDistance(T vDistance) { m_distance = vDistance; }
+    void setYaw(T vYawRadians) { m_yawRadians = vYawRadians; }
+    void setPitch(T vPitchRadians) { m_pitchRadians = m_clampPitch(vPitchRadians); }
+    void setDistance(T vDistance) { m_distance = (vDistance < m_minDistance) ? m_minDistance : vDistance; }
+    void setMinDistance(T vMinDistance) {
+        m_minDistance = (vMinDistance <= T(0)) ? static_cast<T>(0.000001) : vMinDistance;
+        if (m_distance < m_minDistance) {
+            m_distance = m_minDistance;
+        }
+    }
 
-    // Simple axis-angle rotation around pivot
+    T getYaw() const { return m_yawRadians; }
+    T getPitch() const { return m_pitchRadians; }
+    T getDistance() const { return m_distance; }
+    const vec3<T>& getPivot() const { return m_pivot; }
+
+    // Apply an incremental delta. Pitch is automatically clamped.
+    void addYaw(T vDeltaRadians) { m_yawRadians += vDeltaRadians; }
+    void addPitch(T vDeltaRadians) { m_pitchRadians = m_clampPitch(m_pitchRadians + vDeltaRadians); }
+    // Multiplicative zoom is more natural with mouse-wheel events than an
+    // additive delta (a fixed wheel notch doubles or halves the distance
+    // regardless of the current scale).
+    void multiplyDistance(T vFactor) { setDistance(m_distance * vFactor); }
+
+    // Backwards-compatibility aliases for the older single-axis turntable.
+    // setAxis is intentionally a no-op: this turntable assumes world Y up.
+    void setAngle(T vYawRadians) { setYaw(vYawRadians); }
+    void setAxis(const vec3<T>& /*vAxisNorm*/) {}
+
     void update() {
-        // Build a minimal rotation around m_axis by m_angleRadians to place the eye on a circle
-        // Start from a reference point along Z (pivot + distance * Z), then rotate.
-        const vec3<T> refDir{T(0), T(0), T(1)};
-        const vec3<T> start = {m_pivot[0] + refDir[0] * m_distance, m_pivot[1] + refDir[1] * m_distance, m_pivot[2] + refDir[2] * m_distance};
+        const T cosYaw = static_cast<T>(std::cos(static_cast<double>(m_yawRadians)));
+        const T sinYaw = static_cast<T>(std::sin(static_cast<double>(m_yawRadians)));
+        const T cosPitch = static_cast<T>(std::cos(static_cast<double>(m_pitchRadians)));
+        const T sinPitch = static_cast<T>(std::sin(static_cast<double>(m_pitchRadians)));
 
-        // Rodrigues' rotation formula
-        const T c = static_cast<T>(std::cos(static_cast<double>(m_angleRadians)));
-        const T s = static_cast<T>(std::sin(static_cast<double>(m_angleRadians)));
-        const T oneMinusC = T(1) - c;
+        // Spherical coordinates around pivot, world Y up. At yaw=pitch=0
+        // the eye sits on the +Z half-axis at distance from the pivot.
+        // Members .x/.y/.z are accessed directly because vec3<T>::operator[]
+        // is non-const and we want to keep `offset` const.
+        const vec3<T> offset = {
+            cosPitch * sinYaw * m_distance,
+            sinPitch * m_distance,
+            cosPitch * cosYaw * m_distance};
 
-        const T ax = m_axis[0], ay = m_axis[1], az = m_axis[2];
-
-        // Rotate (start - pivot)
-        const vec3<T> v = {start[0] - m_pivot[0], start[1] - m_pivot[1], start[2] - m_pivot[2]};
-        vec3<T> vRot = {
-            v[0] * (c + ax * ax * oneMinusC) + v[1] * (ax * ay * oneMinusC - az * s) + v[2] * (ax * az * oneMinusC + ay * s),
-            v[0] * (ay * ax * oneMinusC + az * s) + v[1] * (c + ay * ay * oneMinusC) + v[2] * (ay * az * oneMinusC - ax * s),
-            v[0] * (az * ax * oneMinusC - ay * s) + v[1] * (az * ay * oneMinusC + ax * s) + v[2] * (c + az * az * oneMinusC)};
-
-        const vec3<T> eye = {m_pivot[0] + vRot[0], m_pivot[1] + vRot[1], m_pivot[2] + vRot[2]};
-
-        this->setPosition(eye);
+        this->setPosition({m_pivot.x + offset.x, m_pivot.y + offset.y, m_pivot.z + offset.z});
         this->setTarget(m_pivot);
         this->setUp({T(0), T(1), T(0)});
+    }
+
+private:
+    T m_clampPitch(T vRadians) const {
+        const T limit = k_halfPi - k_pitchEpsilon;
+        if (vRadians > limit) return limit;
+        if (vRadians < -limit) return -limit;
+        return vRadians;
     }
 };
 

@@ -278,3 +278,26 @@ AddTest("TestEzGL_Program_AddUniformMat4")
 AddTest("TestEzGL_Program_AddUniformSampler2D")
 AddTest("TestEzGL_Program_Use")
 AddTest("TestEzGL_Program_SetUniformFloatDatas")
+
+##########################################################
+##### TESTS EzCamera #####################################
+##########################################################
+
+AddTest("TestEzCamera_TurntableInitialState<float>")
+AddTest("TestEzCamera_TurntableInitialState<double>")
+AddTest("TestEzCamera_TurntableYawRotatesAroundY<float>")
+AddTest("TestEzCamera_TurntableYawRotatesAroundY<double>")
+AddTest("TestEzCamera_TurntablePitchLiftsEye<float>")
+AddTest("TestEzCamera_TurntablePitchLiftsEye<double>")
+AddTest("TestEzCamera_TurntablePitchIsClamped<float>")
+AddTest("TestEzCamera_TurntablePitchIsClamped<double>")
+AddTest("TestEzCamera_TurntableAddYawAndPitchAccumulate<float>")
+AddTest("TestEzCamera_TurntableAddYawAndPitchAccumulate<double>")
+AddTest("TestEzCamera_TurntableMultiplyDistance<float>")
+AddTest("TestEzCamera_TurntableMultiplyDistance<double>")
+AddTest("TestEzCamera_TurntableDistanceClampedToMin<float>")
+AddTest("TestEzCamera_TurntableDistanceClampedToMin<double>")
+AddTest("TestEzCamera_TurntableSetAngleIsAliasForSetYaw<float>")
+AddTest("TestEzCamera_TurntableSetAngleIsAliasForSetYaw<double>")
+AddTest("TestEzCamera_ComputeViewMatrixInstantiates<float>")
+AddTest("TestEzCamera_ComputeViewMatrixInstantiates<double>")

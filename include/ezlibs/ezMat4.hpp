@@ -227,7 +227,13 @@ public:
     }
 
 
-    /// Perspective matrix for Opengl (expects fovY in radians)
+    /// Perspective matrix for Opengl (expects fovY in radians).
+    /// Column-vector-on-right convention: gl_Position = mat * vec(p, 1).
+    /// Standard layout:
+    ///   | f/asp  0     0              0           |
+    ///   | 0      f     0              0           |
+    ///   | 0      0     (f+n)/(n-f)    2fn/(n-f)   |
+    ///   | 0      0    -1              0           |
     static mat4 PerspectiveGL(T vFovYRadians, T vAspect, T vNear, T vFar) {
         // Right-handed, OpenGL-style clip space
         const T f = T(1) / static_cast<T>(std::tan(static_cast<double>(vFovYRadians) * 0.5));
@@ -235,8 +241,8 @@ public:
         r(0, 0) = f / vAspect;
         r(1, 1) = f;
         r(2, 2) = (vFar + vNear) / (vNear - vFar);
-        r(2, 3) = T(-1);
-        r(3, 2) = (T(2) * vFar * vNear) / (vNear - vFar);
+        r(2, 3) = (T(2) * vFar * vNear) / (vNear - vFar);  // z translation in NDC
+        r(3, 2) = T(-1);                                   // copy view-space z into clip w
         return r;
     }
 
@@ -247,16 +253,18 @@ public:
     }
 
     // --- Orthographic projections (OpenGL-style: z in [-1, 1]) ---
-    // Off-center orthographic
+    // Off-center orthographic. Column-vector-on-right convention.
+    // Translation goes in the LAST COLUMN (entries r(0,3), r(1,3), r(2,3)),
+    // not in the last row.
     static mat4 OrthoGL(T vLeft, T vRight, T vBottom, T vTop, T vNear, T vFar) {
         mat4 r = mat4::Zero();
         r(0, 0) = T(2) / (vRight - vLeft);
         r(1, 1) = T(2) / (vTop - vBottom);
         r(2, 2) = T(-2) / (vFar - vNear);
         r(3, 3) = T(1);
-        r(3, 0) = -(vRight + vLeft) / (vRight - vLeft);
-        r(3, 1) = -(vTop + vBottom) / (vTop - vBottom);
-        r(3, 2) = -(vFar + vNear) / (vFar - vNear);
+        r(0, 3) = -(vRight + vLeft) / (vRight - vLeft);
+        r(1, 3) = -(vTop + vBottom) / (vTop - vBottom);
+        r(2, 3) = -(vFar + vNear) / (vFar - vNear);
         return r;
     }
 
@@ -278,7 +286,8 @@ public:
     }
 
     // --- Perspective frustum projections (OpenGL-style: z in [-1, 1]) ---
-    // Off-center perspective frustum (matches glFrustum semantics)
+    // Off-center perspective frustum (matches glFrustum semantics).
+    // Column-vector-on-right convention.
     static mat4 FrustumGL(T vLeft, T vRight, T vBottom, T vTop, T vNear, T vFar) {
         mat4 r = mat4::Zero();
         r(0, 0) = (T(2) * vNear) / (vRight - vLeft);
@@ -286,8 +295,8 @@ public:
         r(0, 2) = (vRight + vLeft) / (vRight - vLeft);
         r(1, 2) = (vTop + vBottom) / (vTop - vBottom);
         r(2, 2) = -(vFar + vNear) / (vFar - vNear);
-        r(2, 3) = T(-1);
-        r(3, 2) = -(T(2) * vFar * vNear) / (vFar - vNear);
+        r(2, 3) = -(T(2) * vFar * vNear) / (vFar - vNear);  // z translation in NDC
+        r(3, 2) = T(-1);                                    // copy view-space z into clip w
         return r;
     }
 
@@ -296,7 +305,15 @@ public:
         return BiasVK() * FrustumGL(vLeft, vRight, vBottom, vTop, vNear, vFar);
     }
 
-    /// LookAt matrix (right-handed)
+    /// LookAt matrix (right-handed). Column-vector-on-right convention:
+    ///     view * vec(world) = vec(view-space)
+    /// Layout (camera looks down -Z in view space):
+    ///     | side.x    side.y    side.z    -side·eye  |
+    ///     | up.x      up.y      up.z      -up·eye    |
+    ///     | -fwd.x   -fwd.y    -fwd.z      fwd·eye   |
+    ///     | 0         0         0          1         |
+    /// The basis vectors fill the FIRST THREE ROWS, the eye translation
+    /// goes in the LAST COLUMN.
     static mat4 LookAt(const std::array<T,3>& vEye,
                        const std::array<T,3>& vCenter,
                        const std::array<T,3>& vUp) {
@@ -305,13 +322,13 @@ public:
         const std::array<T,3> up = v3_cross(side, forward);
 
         mat4 r = mat4::Identity();
-        r(0,0) = side[0];   r(1,0) = side[1];   r(2,0) = side[2];
-        r(0,1) = up[0];     r(1,1) = up[1];     r(2,1) = up[2];
-        r(0,2) = -forward[0]; r(1,2) = -forward[1]; r(2,2) = -forward[2];
+        r(0,0) = side[0];      r(0,1) = side[1];      r(0,2) = side[2];
+        r(1,0) = up[0];        r(1,1) = up[1];        r(1,2) = up[2];
+        r(2,0) = -forward[0];  r(2,1) = -forward[1];  r(2,2) = -forward[2];
 
-        r(3,0) = - (side[0]*vEye[0] + side[1]*vEye[1] + side[2]*vEye[2]);
-        r(3,1) = - (up[0]*vEye[0] + up[1]*vEye[1] + up[2]*vEye[2]);
-        r(3,2) =   (forward[0]*vEye[0] + forward[1]*vEye[1] + forward[2]*vEye[2]);
+        r(0,3) = - (side[0]*vEye[0]    + side[1]*vEye[1]    + side[2]*vEye[2]);
+        r(1,3) = - (up[0]*vEye[0]      + up[1]*vEye[1]      + up[2]*vEye[2]);
+        r(2,3) =   (forward[0]*vEye[0] + forward[1]*vEye[1] + forward[2]*vEye[2]);
 
         return r;
     }

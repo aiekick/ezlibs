@@ -27,6 +27,7 @@ file(GLOB SRC_RECURSE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVec4.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVecN.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMat2.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMat4.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMatN.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvd.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezEigenSym.hpp
@@ -862,6 +863,19 @@ AddTest("TestEzMat2_Inverse<float>")
 AddTest("TestEzMat2_Inverse<double>")
 AddTest("TestEzMat2_InverseSingular<float>")
 AddTest("TestEzMat2_InverseSingular<double>")
+
+##########################################################
+##### TESTS EzMat4 #######################################
+##########################################################
+
+AddTest("TestEzMat4_LookAtMapsEyeToOrigin<float>")
+AddTest("TestEzMat4_LookAtMapsEyeToOrigin<double>")
+AddTest("TestEzMat4_LookAtMapsTargetToNegativeZ<float>")
+AddTest("TestEzMat4_LookAtMapsTargetToNegativeZ<double>")
+AddTest("TestEzMat4_PerspectiveGLClipWEqualsMinusViewZ<float>")
+AddTest("TestEzMat4_PerspectiveGLClipWEqualsMinusViewZ<double>")
+AddTest("TestEzMat4_OrthoGLMapsCornerToNDCCorner<float>")
+AddTest("TestEzMat4_OrthoGLMapsCornerToNDCCorner<double>")
 
 ##########################################################
 ##### TESTS EzMatN #######################################

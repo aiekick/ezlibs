@@ -9,6 +9,7 @@
 #include <TestEzGLTexture.h>
 #include <TestEzGLShader.h>
 #include <TestEzGLProgram.h>
+#include <TestEzGLCamera.h>
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -30,6 +31,7 @@ bool TestOpengl(const std::string& vTest) {
     else IfTestCollectionExist(TestEzGL_Texture);
     else IfTestCollectionExist(TestEzGL_Shader);
     else IfTestCollectionExist(TestEzGL_Program);
+    else IfTestCollectionExist(TestEzGL_Camera);
     return false;
 }
 
