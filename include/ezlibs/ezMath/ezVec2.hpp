@@ -433,6 +433,38 @@ inline vec2<T> cross(const vec2<T>& a, const vec2<T>& b) {
     return vec2<T>(a.x * b.y - a.y * b.x, a.y * b.x - a.x * b.y);
 }
 
+// Squared Euclidean distance from a 2D point to the closest point on the
+// finite segment [aSegA, aSegB]. Faster than distanceToSegment when only
+// a comparison against a threshold is needed (skips the sqrt). Handles
+// the degenerate case A == B as a plain point-to-point squared distance.
+// Floating-point types only.
+template <typename T>
+inline T squaredDistanceToSegment(const vec2<T>& aPoint, const vec2<T>& aSegA, const vec2<T>& aSegB) {
+    static_assert(std::is_floating_point<T>::value, "squaredDistanceToSegment requires a floating-point type");
+    const vec2<T> ab = aSegB - aSegA;
+    const T abLenSq = ez::math::dot(ab, ab);
+    T t = static_cast<T>(0);
+    if (abLenSq > static_cast<T>(0)) {
+        t = ez::math::dot(aPoint - aSegA, ab) / abLenSq;
+        if (t < static_cast<T>(0)) {
+            t = static_cast<T>(0);
+        } else if (t > static_cast<T>(1)) {
+            t = static_cast<T>(1);
+        }
+    }
+    const vec2<T> closest = aSegA + ab * t;
+    const vec2<T> delta = aPoint - closest;
+    return ez::math::dot(delta, delta);
+}
+
+// Euclidean distance from a 2D point to the closest point on a finite
+// segment. See squaredDistanceToSegment for the comparison-friendly
+// variant that skips the square root.
+template <typename T>
+inline T distanceToSegment(const vec2<T>& aPoint, const vec2<T>& aSegA, const vec2<T>& aSegB) {
+    return ez::math::sqrt(squaredDistanceToSegment(aPoint, aSegA, aSegB));
+}
+
 template <typename T>
 inline vec2<T> reflect(const vec2<T>& I, const vec2<T>& N) {
     static_assert(std::is_floating_point<T>::value, "fract is only valid for floating point types");

@@ -389,6 +389,104 @@ bool TestEzVec2_Atan() {
     return true;
 }
 
+template <typename T>
+bool TestEzVec2_SquaredDistanceToSegment() {
+    const T epsilon = static_cast<T>(1e-5);
+    // Point ON segment endpoint A → 0
+    {
+        ez::math::vec2<T> a(0, 0);
+        ez::math::vec2<T> b(10, 0);
+        T result = ez::math::squaredDistanceToSegment<T>(a, a, b);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(0), epsilon));
+    }
+    // Point ON segment endpoint B → 0
+    {
+        ez::math::vec2<T> a(0, 0);
+        ez::math::vec2<T> b(10, 0);
+        T result = ez::math::squaredDistanceToSegment<T>(b, a, b);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(0), epsilon));
+    }
+    // Point ON segment middle → 0
+    {
+        ez::math::vec2<T> a(0, 0);
+        ez::math::vec2<T> b(10, 0);
+        ez::math::vec2<T> p(5, 0);
+        T result = ez::math::squaredDistanceToSegment<T>(p, a, b);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(0), epsilon));
+    }
+    // Point perpendicular to mid-segment, perp distance 3 → squared = 9
+    {
+        ez::math::vec2<T> a(0, 0);
+        ez::math::vec2<T> b(10, 0);
+        ez::math::vec2<T> p(5, 3);
+        T result = ez::math::squaredDistanceToSegment<T>(p, a, b);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(9), epsilon));
+    }
+    // Point past A: nearest is A → squared = 25
+    {
+        ez::math::vec2<T> a(0, 0);
+        ez::math::vec2<T> b(10, 0);
+        ez::math::vec2<T> p(-5, 0);
+        T result = ez::math::squaredDistanceToSegment<T>(p, a, b);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(25), epsilon));
+    }
+    // Point past B: nearest is B → squared = 25 + 16 = 41
+    {
+        ez::math::vec2<T> a(0, 0);
+        ez::math::vec2<T> b(10, 0);
+        ez::math::vec2<T> p(15, 4);
+        T result = ez::math::squaredDistanceToSegment<T>(p, a, b);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(41), epsilon));
+    }
+    // Degenerate segment (A == B): plain point-to-point squared distance
+    // (5-2)^2 + (7-3)^2 = 9 + 16 = 25
+    {
+        ez::math::vec2<T> a(2, 3);
+        ez::math::vec2<T> p(5, 7);
+        T result = ez::math::squaredDistanceToSegment<T>(p, a, a);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(25), epsilon));
+    }
+    // Diagonal segment: point at perpendicular distance sqrt(2) → squared = 2
+    {
+        ez::math::vec2<T> a(0, 0);
+        ez::math::vec2<T> b(10, 10);
+        ez::math::vec2<T> p(0, 2);  // perp foot at (1, 1), delta = (-1, 1), |delta|^2 = 2
+        T result = ez::math::squaredDistanceToSegment<T>(p, a, b);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(2), epsilon));
+    }
+    return true;
+}
+
+template <typename T>
+bool TestEzVec2_DistanceToSegment() {
+    const T epsilon = static_cast<T>(1e-5);
+    // Perpendicular distance 3 → distance 3
+    {
+        ez::math::vec2<T> a(0, 0);
+        ez::math::vec2<T> b(10, 0);
+        ez::math::vec2<T> p(5, 3);
+        T result = ez::math::distanceToSegment<T>(p, a, b);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(3), epsilon));
+    }
+    // Past A by 5 → distance 5
+    {
+        ez::math::vec2<T> a(0, 0);
+        ez::math::vec2<T> b(10, 0);
+        ez::math::vec2<T> p(-5, 0);
+        T result = ez::math::distanceToSegment<T>(p, a, b);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(5), epsilon));
+    }
+    // 3-4-5 triangle past B → distance 5
+    {
+        ez::math::vec2<T> a(0, 0);
+        ez::math::vec2<T> b(10, 0);
+        ez::math::vec2<T> p(13, 4);
+        T result = ez::math::distanceToSegment<T>(p, a, b);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(5), epsilon));
+    }
+    return true;
+}
+
 #define IfTestExist(v)            \
     if (vTest == std::string(#v)) \
     return v()
@@ -534,6 +632,12 @@ bool TestEzVec2(const std::string& vTest) {
 
     IfTestExist(TestEzVec2_Atan<float>);
     else IfTestExist(TestEzVec2_Atan<double>);
+
+    IfTestExist(TestEzVec2_SquaredDistanceToSegment<float>);
+    else IfTestExist(TestEzVec2_SquaredDistanceToSegment<double>);
+
+    IfTestExist(TestEzVec2_DistanceToSegment<float>);
+    else IfTestExist(TestEzVec2_DistanceToSegment<double>);
 
     return false;
 }

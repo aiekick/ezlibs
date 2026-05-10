@@ -533,6 +533,12 @@ AddTest("TestEzVec2_Tan<double>")
 AddTest("TestEzVec2_Atan<float>")
 AddTest("TestEzVec2_Atan<double>")
 
+AddTest("TestEzVec2_SquaredDistanceToSegment<float>")
+AddTest("TestEzVec2_SquaredDistanceToSegment<double>")
+
+AddTest("TestEzVec2_DistanceToSegment<float>")
+AddTest("TestEzVec2_DistanceToSegment<double>")
+
 ##########################################################
 ##### TESTS EzVec3 #######################################
 ##########################################################
