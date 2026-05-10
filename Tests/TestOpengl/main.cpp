@@ -45,5 +45,5 @@ int main(int argc, char** argv) {
         return TestOpengl(argv[1]) ? 0 : 1;
     }
     // User testing
-    return TestOpengl("TestEzGL_Shader_CreateFromCode_Compute") ? 0 : 1;
+    return TestOpengl("TestEzCamera_TurntableInitialState") ? 0 : 1;
 }
