@@ -63,6 +63,7 @@ SOFTWARE.
 #endif
 
 namespace ez {
+namespace math {
 
 template <typename U>
 class kdTree {
@@ -318,6 +319,7 @@ private:
     }
 };
 
+}  // namespace math
 }  // namespace ez
 
 #ifdef _MSC_VER

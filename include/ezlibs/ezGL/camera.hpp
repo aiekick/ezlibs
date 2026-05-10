@@ -28,8 +28,8 @@ SOFTWARE.
 
 #include <array>
 #include <cmath>
-#include "../ezVec3.hpp"
-#include "../ezMat4.hpp"
+#include "../ezMath/ezVec3.hpp"
+#include "../ezMath/ezMat4.hpp"
 
 namespace ez {
 namespace gl {
@@ -37,61 +37,61 @@ namespace gl {
 template <typename T>
 class Camera3D {
     static_assert(std::is_arithmetic<T>::value, "Camera3D requires arithmetic T");
-    vec3<T> m_position{T(0), T(0), T(1)};
-    vec3<T> m_target{T(0), T(0), T(0)};
-    vec3<T> m_up{T(0), T(1), T(0)};
+    math::vec3<T> m_position{T(0), T(0), T(1)};
+    math::vec3<T> m_target{T(0), T(0), T(0)};
+    math::vec3<T> m_up{T(0), T(1), T(0)};
 
 public:  // methods
     Camera3D() {}
 
     // --- Setters/Getters ---
-    void setPosition(const vec3<T>& vPosition) { m_position = vPosition; }
-    void setTarget(const vec3<T>& vTarget) { m_target = vTarget; }
-    void setUp(const vec3<T>& vUp) { m_up = vUp; }
+    void setPosition(const math::vec3<T>& vPosition) { m_position = vPosition; }
+    void setTarget(const math::vec3<T>& vTarget) { m_target = vTarget; }
+    void setUp(const math::vec3<T>& vUp) { m_up = vUp; }
 
-    const vec3<T>& getPosition() const { return m_position; }
-    const vec3<T>& getTarget() const { return m_target; }
-    const vec3<T>& getUp() const { return m_up; }
+    const math::vec3<T>& getPosition() const { return m_position; }
+    const math::vec3<T>& getTarget() const { return m_target; }
+    const math::vec3<T>& getUp() const { return m_up; }
 
     // --- Core matrices ---
     // View matrix (right-handed). LookAt takes std::array<T, 3>; the
-    // members are vec3<T>, so we pack them explicitly.
-    mat4<T> computeViewMatrix() const {
-        return mat4<T>::LookAt(
+    // members are math::vec3<T>, so we pack them explicitly.
+    math::mat4<T> computeViewMatrix() const {
+        return math::mat4<T>::LookAt(
             std::array<T, 3>{{m_position.x, m_position.y, m_position.z}},
             std::array<T, 3>{{m_target.x,   m_target.y,   m_target.z  }},
             std::array<T, 3>{{m_up.x,       m_up.y,       m_up.z      }});
     }
 
     // Perspective (OpenGL clip space: z in [-1,1])
-    static mat4<T> makeGLPerspective(T vFovYRadians, T vAspect, T vNear, T vFar) { return mat4<T>::PerspectiveGL(vFovYRadians, vAspect, vNear, vFar); }
+    static math::mat4<T> makeGLPerspective(T vFovYRadians, T vAspect, T vNear, T vFar) { return math::mat4<T>::PerspectiveGL(vFovYRadians, vAspect, vNear, vFar); }
 
     // Perspective (Vulkan clip space: z in [0,1] + Y flip)
-    static mat4<T> makeVKPerspective(T vFovYRadians, T vAspect, T vNear, T vFar) { return mat4<T>::PerspectiveVK(vFovYRadians, vAspect, vNear, vFar); }
+    static math::mat4<T> makeVKPerspective(T vFovYRadians, T vAspect, T vNear, T vFar) { return math::mat4<T>::PerspectiveVK(vFovYRadians, vAspect, vNear, vFar); }
 
     // Orthographic (OpenGL)
-    static mat4<T> makeGLOrtho(T vLeft, T vRight, T vBottom, T vTop, T vNear, T vFar) { return mat4<T>::OrthoGL(vLeft, vRight, vBottom, vTop, vNear, vFar); }
+    static math::mat4<T> makeGLOrtho(T vLeft, T vRight, T vBottom, T vTop, T vNear, T vFar) { return math::mat4<T>::OrthoGL(vLeft, vRight, vBottom, vTop, vNear, vFar); }
 
     // Orthographic (Vulkan)
-    static mat4<T> makeVKOrtho(T vLeft, T vRight, T vBottom, T vTop, T vNear, T vFar) { return mat4<T>::OrthoVK(vLeft, vRight, vBottom, vTop, vNear, vFar); }
+    static math::mat4<T> makeVKOrtho(T vLeft, T vRight, T vBottom, T vTop, T vNear, T vFar) { return math::mat4<T>::OrthoVK(vLeft, vRight, vBottom, vTop, vNear, vFar); }
 
     // Frustum (OpenGL)
-    static mat4<T> makeGLFrustum(T vLeft, T vRight, T vBottom, T vTop, T vNear, T vFar) { return mat4<T>::FrustumGL(vLeft, vRight, vBottom, vTop, vNear, vFar); }
+    static math::mat4<T> makeGLFrustum(T vLeft, T vRight, T vBottom, T vTop, T vNear, T vFar) { return math::mat4<T>::FrustumGL(vLeft, vRight, vBottom, vTop, vNear, vFar); }
 
     // Frustum (Vulkan)
-    static mat4<T> makeVKFrustum(T vLeft, T vRight, T vBottom, T vTop, T vNear, T vFar) { return mat4<T>::FrustumVK(vLeft, vRight, vBottom, vTop, vNear, vFar); }
+    static math::mat4<T> makeVKFrustum(T vLeft, T vRight, T vBottom, T vTop, T vNear, T vFar) { return math::mat4<T>::FrustumVK(vLeft, vRight, vBottom, vTop, vNear, vFar); }
 };
 
 template <typename T>
 class Camera3DOrbit : public Camera3D<T> {
-    vec3<T> m_orbitTarget{T(0), T(0), T(0)};
+    math::vec3<T> m_orbitTarget{T(0), T(0), T(0)};
     T m_distance{T(3)};
     T m_yawRadians{T(0)};    // azimuth around world up (y)
     T m_pitchRadians{T(0)};  // elevation
     T m_minDistance{T(0.01)};
 
 public:
-    void setOrbitTarget(const vec3<T>& vTarget) { m_orbitTarget = vTarget; }
+    void setOrbitTarget(const math::vec3<T>& vTarget) { m_orbitTarget = vTarget; }
     void setDistance(T vDistance) { m_distance = (vDistance < m_minDistance) ? m_minDistance : vDistance; }
     void setAngles(T vYawRadians, T vPitchRadians) {
         m_yawRadians = vYawRadians;
@@ -111,20 +111,20 @@ public:
         const T sinPitch = static_cast<T>(std::sin(static_cast<double>(m_pitchRadians)));
 
         // World axes: X(right), Y(up), Z(forward)
-        const vec3<T> worldRight{T(1), T(0), T(0)};
-        const vec3<T> worldUp{T(0), T(1), T(0)};
-        const vec3<T> worldFwd{T(0), T(0), T(1)};
+        const math::vec3<T> worldRight{T(1), T(0), T(0)};
+        const math::vec3<T> worldUp{T(0), T(1), T(0)};
+        const math::vec3<T> worldFwd{T(0), T(0), T(1)};
 
         // Spherical direction from yaw/pitch (right-handed)
         // Forward dir in world space:
-        vec3<T> forwardDir = {
+        math::vec3<T> forwardDir = {
             cosPitch * sinYaw,  // x
             sinPitch,           // y
             cosPitch * cosYaw   // z
         };
 
         // Eye = target - forward * distance
-        vec3<T> eye = {m_orbitTarget[0] - forwardDir[0] * m_distance, m_orbitTarget[1] - forwardDir[1] * m_distance, m_orbitTarget[2] - forwardDir[2] * m_distance};
+        math::vec3<T> eye = {m_orbitTarget[0] - forwardDir[0] * m_distance, m_orbitTarget[1] - forwardDir[1] * m_distance, m_orbitTarget[2] - forwardDir[2] * m_distance};
 
         this->setPosition(eye);
         this->setTarget(m_orbitTarget);
@@ -158,7 +158,7 @@ public:
 // compatibility aliases for the older single-axis turntable.
 template <typename T>
 class Camera3DTurntable : public Camera3D<T> {
-    vec3<T> m_pivot{T(0), T(0), T(0)};
+    math::vec3<T> m_pivot{T(0), T(0), T(0)};
     T m_yawRadians{T(0)};
     T m_pitchRadians{T(0)};
     T m_distance{T(3)};
@@ -172,7 +172,7 @@ class Camera3DTurntable : public Camera3D<T> {
     static constexpr T k_pitchEpsilon = static_cast<T>(0.01);
 
 public:
-    void setPivot(const vec3<T>& vPivot) { m_pivot = vPivot; }
+    void setPivot(const math::vec3<T>& vPivot) { m_pivot = vPivot; }
     void setYaw(T vYawRadians) { m_yawRadians = vYawRadians; }
     void setPitch(T vPitchRadians) { m_pitchRadians = m_clampPitch(vPitchRadians); }
     void setDistance(T vDistance) { m_distance = (vDistance < m_minDistance) ? m_minDistance : vDistance; }
@@ -186,7 +186,7 @@ public:
     T getYaw() const { return m_yawRadians; }
     T getPitch() const { return m_pitchRadians; }
     T getDistance() const { return m_distance; }
-    const vec3<T>& getPivot() const { return m_pivot; }
+    const math::vec3<T>& getPivot() const { return m_pivot; }
 
     // Apply an incremental delta. Pitch is automatically clamped.
     void addYaw(T vDeltaRadians) { m_yawRadians += vDeltaRadians; }
@@ -199,7 +199,7 @@ public:
     // Backwards-compatibility aliases for the older single-axis turntable.
     // setAxis is intentionally a no-op: this turntable assumes world Y up.
     void setAngle(T vYawRadians) { setYaw(vYawRadians); }
-    void setAxis(const vec3<T>& /*vAxisNorm*/) {}
+    void setAxis(const math::vec3<T>& /*vAxisNorm*/) {}
 
     void update() {
         const T cosYaw = static_cast<T>(std::cos(static_cast<double>(m_yawRadians)));
@@ -209,9 +209,9 @@ public:
 
         // Spherical coordinates around pivot, world Y up. At yaw=pitch=0
         // the eye sits on the +Z half-axis at distance from the pivot.
-        // Members .x/.y/.z are accessed directly because vec3<T>::operator[]
+        // Members .x/.y/.z are accessed directly because math::vec3<T>::operator[]
         // is non-const and we want to keep `offset` const.
-        const vec3<T> offset = {
+        const math::vec3<T> offset = {
             cosPitch * sinYaw * m_distance,
             sinPitch * m_distance,
             cosPitch * cosYaw * m_distance};
@@ -232,13 +232,13 @@ private:
 
 template <typename T>
 class Camera3DFreeFlight : public Camera3D<T> {
-    vec3<T> m_forward{T(0), T(0), T(1)};  // normalized
-    vec3<T> m_right{T(1), T(0), T(0)};    // normalized
-    vec3<T> m_up{T(0), T(1), T(0)};       // normalized
+    math::vec3<T> m_forward{T(0), T(0), T(1)};  // normalized
+    math::vec3<T> m_right{T(1), T(0), T(0)};    // normalized
+    math::vec3<T> m_up{T(0), T(1), T(0)};       // normalized
 
 public:
     // Init from yaw/pitch and position
-    void setFromYawPitch(const vec3<T>& vPosition, T vYawRadians, T vPitchRadians) {
+    void setFromYawPitch(const math::vec3<T>& vPosition, T vYawRadians, T vPitchRadians) {
         const T cosYaw = static_cast<T>(std::cos(static_cast<double>(vYawRadians)));
         const T sinYaw = static_cast<T>(std::sin(static_cast<double>(vYawRadians)));
         const T cosPitch = static_cast<T>(std::cos(static_cast<double>(vPitchRadians)));
@@ -255,8 +255,8 @@ public:
 
     // Move along local axes
     void moveLocal(T vDeltaForward, T vDeltaRight, T vDeltaUp) {
-        const vec3<T> pos = this->getPosition();
-        vec3<T> newPos = {
+        const math::vec3<T> pos = this->getPosition();
+        math::vec3<T> newPos = {
             pos[0] + m_forward[0] * vDeltaForward + m_right[0] * vDeltaRight + m_up[0] * vDeltaUp,
             pos[1] + m_forward[1] * vDeltaForward + m_right[1] * vDeltaRight + m_up[1] * vDeltaUp,
             pos[2] + m_forward[2] * vDeltaForward + m_right[2] * vDeltaRight + m_up[2] * vDeltaUp};

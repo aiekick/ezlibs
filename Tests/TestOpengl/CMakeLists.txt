@@ -229,6 +229,7 @@ AddTest("TestEzGL_ProcMesh_CreateUVSphere_LargeSubdivs")
 AddTest("TestEzGL_ProcMesh_CreateUVSphere_DifferentRadius")
 AddTest("TestEzGL_ProcMesh_ProcDatas_DefaultConstructor")
 AddTest("TestEzGL_ProcMesh_ProcDatas_ParameterizedConstructor")
+AddTest("TestEzGL_ProcMesh_AccessorsReturnSemanticallyCorrectIds")
 
 ##########################################################
 #### TEXTURE ##############################################

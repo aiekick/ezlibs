@@ -34,7 +34,7 @@ SOFTWARE.
 #include "ezGeo.hpp"
 #include "ezTile.hpp"
 #include "../ezBinBuf.hpp"
-#include "../ezMath.hpp"
+#include "../ezMath/ezMath.hpp"
 
 namespace ez {
 namespace geo {

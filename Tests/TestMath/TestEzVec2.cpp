@@ -1,4 +1,4 @@
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 #include <ezlibs/ezCTest.hpp>
 #include <cmath>
 #include <limits>
@@ -20,160 +20,160 @@
 
 template <typename T>
 bool TestEzVec2_Offset() {
-    ez::vec2<T> v(1, 2);
-    ez::vec2<T> result = v.Offset(1, 2);
-    CTEST_ASSERT(ez::isEqual(result.x, static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(result.y, static_cast<T>(4)));
+    ez::math::vec2<T> v(1, 2);
+    ez::math::vec2<T> result = v.Offset(1, 2);
+    CTEST_ASSERT(ez::math::isEqual(result.x, static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(result.y, static_cast<T>(4)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Negate() {
-    ez::vec2<T> v(1, 2);
-    ez::vec2<T> result = -v;
-    CTEST_ASSERT(ez::isEqual(result.x, static_cast<T>(-1)));
-    CTEST_ASSERT(ez::isEqual(result.y, static_cast<T>(-2)));
+    ez::math::vec2<T> v(1, 2);
+    ez::math::vec2<T> result = -v;
+    CTEST_ASSERT(ez::math::isEqual(result.x, static_cast<T>(-1)));
+    CTEST_ASSERT(ez::math::isEqual(result.y, static_cast<T>(-2)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Length() {
-    ez::vec2<T> v(3, 4);
-    CTEST_ASSERT(ez::isEqual(v.length(), static_cast<T>(5)));
+    ez::math::vec2<T> v(3, 4);
+    CTEST_ASSERT(ez::math::isEqual(v.length(), static_cast<T>(5)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Normalize() {
-    ez::vec2<T> v(3, 4);
+    ez::math::vec2<T> v(3, 4);
     v.normalize();
-    CTEST_ASSERT(ez::isEqual(v.length(), static_cast<T>(1)));
+    CTEST_ASSERT(ez::math::isEqual(v.length(), static_cast<T>(1)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Sum() {
-    ez::vec2<T> v(1, 2);
-    CTEST_ASSERT(ez::isEqual(v.sum(), static_cast<T>(3)));
+    ez::math::vec2<T> v(1, 2);
+    CTEST_ASSERT(ez::math::isEqual(v.sum(), static_cast<T>(3)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_OperatorAdd() {
-    ez::vec2<T> v1(1, 2);
-    ez::vec2<T> v2(3, 4);
+    ez::math::vec2<T> v1(1, 2);
+    ez::math::vec2<T> v2(3, 4);
     T scalar = 1;
 
-    ez::vec2<T> result1 = v1 + scalar;
-    CTEST_ASSERT(ez::isEqual(result1.x, static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(result1.y, static_cast<T>(3)));
+    ez::math::vec2<T> result1 = v1 + scalar;
+    CTEST_ASSERT(ez::math::isEqual(result1.x, static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(result1.y, static_cast<T>(3)));
 
-    ez::vec2<T> result2 = scalar + v1;
-    CTEST_ASSERT(ez::isEqual(result2.x, static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(result2.y, static_cast<T>(3)));
+    ez::math::vec2<T> result2 = scalar + v1;
+    CTEST_ASSERT(ez::math::isEqual(result2.x, static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(result2.y, static_cast<T>(3)));
 
-    ez::vec2<T> result3 = v1 + v2;
-    CTEST_ASSERT(ez::isEqual(result3.x, static_cast<T>(4)));
-    CTEST_ASSERT(ez::isEqual(result3.y, static_cast<T>(6)));
+    ez::math::vec2<T> result3 = v1 + v2;
+    CTEST_ASSERT(ez::math::isEqual(result3.x, static_cast<T>(4)));
+    CTEST_ASSERT(ez::math::isEqual(result3.y, static_cast<T>(6)));
 
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_OperatorSubtract() {
-    ez::vec2<T> v1(3, 4);
-    ez::vec2<T> v2(1, 2);
+    ez::math::vec2<T> v1(3, 4);
+    ez::math::vec2<T> v2(1, 2);
     T scalar = 1;
 
-    ez::vec2<T> result1 = v1 - scalar;
-    CTEST_ASSERT(ez::isEqual(result1.x, static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(result1.y, static_cast<T>(3)));
+    ez::math::vec2<T> result1 = v1 - scalar;
+    CTEST_ASSERT(ez::math::isEqual(result1.x, static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(result1.y, static_cast<T>(3)));
 
-    ez::vec2<T> result2 = scalar - v1;
-    CTEST_ASSERT(ez::isEqual(result2.x, static_cast<T>(-2)));
-    CTEST_ASSERT(ez::isEqual(result2.y, static_cast<T>(-3)));
+    ez::math::vec2<T> result2 = scalar - v1;
+    CTEST_ASSERT(ez::math::isEqual(result2.x, static_cast<T>(-2)));
+    CTEST_ASSERT(ez::math::isEqual(result2.y, static_cast<T>(-3)));
 
-    ez::vec2<T> result3 = v1 - v2;
-    CTEST_ASSERT(ez::isEqual(result3.x, static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(result3.y, static_cast<T>(2)));
+    ez::math::vec2<T> result3 = v1 - v2;
+    CTEST_ASSERT(ez::math::isEqual(result3.x, static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(result3.y, static_cast<T>(2)));
 
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_OperatorMultiply() {
-    ez::vec2<T> v1(2, 3);
-    ez::vec2<T> v2(4, 5);
+    ez::math::vec2<T> v1(2, 3);
+    ez::math::vec2<T> v2(4, 5);
     T scalar = 2;
 
-    ez::vec2<T> result1 = v1 * scalar;
-    CTEST_ASSERT(ez::isEqual(result1.x, static_cast<T>(4)));
-    CTEST_ASSERT(ez::isEqual(result1.y, static_cast<T>(6)));
+    ez::math::vec2<T> result1 = v1 * scalar;
+    CTEST_ASSERT(ez::math::isEqual(result1.x, static_cast<T>(4)));
+    CTEST_ASSERT(ez::math::isEqual(result1.y, static_cast<T>(6)));
 
-    ez::vec2<T> result2 = scalar * v1;
-    CTEST_ASSERT(ez::isEqual(result2.x, static_cast<T>(4)));
-    CTEST_ASSERT(ez::isEqual(result2.y, static_cast<T>(6)));
+    ez::math::vec2<T> result2 = scalar * v1;
+    CTEST_ASSERT(ez::math::isEqual(result2.x, static_cast<T>(4)));
+    CTEST_ASSERT(ez::math::isEqual(result2.y, static_cast<T>(6)));
 
-    ez::vec2<T> result3 = v1 * v2;
-    CTEST_ASSERT(ez::isEqual(result3.x, static_cast<T>(8)));
-    CTEST_ASSERT(ez::isEqual(result3.y, static_cast<T>(15)));
+    ez::math::vec2<T> result3 = v1 * v2;
+    CTEST_ASSERT(ez::math::isEqual(result3.x, static_cast<T>(8)));
+    CTEST_ASSERT(ez::math::isEqual(result3.y, static_cast<T>(15)));
 
     v1 *= v2;
-    CTEST_ASSERT(ez::isEqual(v1.x, static_cast<T>(8)));
-    CTEST_ASSERT(ez::isEqual(v1.y, static_cast<T>(15)));
+    CTEST_ASSERT(ez::math::isEqual(v1.x, static_cast<T>(8)));
+    CTEST_ASSERT(ez::math::isEqual(v1.y, static_cast<T>(15)));
 
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_OperatorDivide() {
-    ez::vec2<T> v1(4, 6);
-    ez::vec2<T> v2(2, 3);
+    ez::math::vec2<T> v1(4, 6);
+    ez::math::vec2<T> v2(2, 3);
     T scalar = 2;
 
-    ez::vec2<T> result1 = v1 / scalar;
-    CTEST_ASSERT(ez::isEqual(result1.x, static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(result1.y, static_cast<T>(3)));
+    ez::math::vec2<T> result1 = v1 / scalar;
+    CTEST_ASSERT(ez::math::isEqual(result1.x, static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(result1.y, static_cast<T>(3)));
 
-    ez::vec2<T> result3 = v1 / v2;
-    CTEST_ASSERT(ez::isEqual(result3.x, static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(result3.y, static_cast<T>(2)));
+    ez::math::vec2<T> result3 = v1 / v2;
+    CTEST_ASSERT(ez::math::isEqual(result3.x, static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(result3.y, static_cast<T>(2)));
 
     return true;
 }
 
 template <>
 bool TestEzVec2_OperatorDivide<float>() {
-    ez::vec2<float> v1(4.0f, 6.0f);
-    ez::vec2<float> v2(2.0f, 3.0f);
+    ez::math::vec2<float> v1(4.0f, 6.0f);
+    ez::math::vec2<float> v2(2.0f, 3.0f);
     float scalar = 2.0f;
 
-    ez::vec2<float> result2 = scalar / v1;
-    CTEST_ASSERT(ez::isEqual(result2.x, 0.5f));
-    CTEST_ASSERT(ez::isEqual(result2.y, 1.0f / 3.0f));
+    ez::math::vec2<float> result2 = scalar / v1;
+    CTEST_ASSERT(ez::math::isEqual(result2.x, 0.5f));
+    CTEST_ASSERT(ez::math::isEqual(result2.y, 1.0f / 3.0f));
 
     return true;
 }
 
 template <>
 bool TestEzVec2_OperatorDivide<double>() {
-    ez::vec2<double> v1(4.0, 6.0);
-    ez::vec2<double> v2(2.0, 3.0);
+    ez::math::vec2<double> v1(4.0, 6.0);
+    ez::math::vec2<double> v2(2.0, 3.0);
     double scalar = 2.0;
 
-    ez::vec2<double> result2 = scalar / v1;
-    CTEST_ASSERT(ez::isEqual(result2.x, 0.5));
-    CTEST_ASSERT(ez::isEqual(result2.y, 1.0 / 3.0));
+    ez::math::vec2<double> result2 = scalar / v1;
+    CTEST_ASSERT(ez::math::isEqual(result2.x, 0.5));
+    CTEST_ASSERT(ez::math::isEqual(result2.y, 1.0 / 3.0));
 
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_EmptyAND() {
-    ez::vec2<T> v1(0, 0);
-    ez::vec2<T> v2(1, 0);
-    ez::vec2<T> v3(0, 1);
-    ez::vec2<T> v4(1, 1);
+    ez::math::vec2<T> v1(0, 0);
+    ez::math::vec2<T> v2(1, 0);
+    ez::math::vec2<T> v3(0, 1);
+    ez::math::vec2<T> v4(1, 1);
 
     CTEST_ASSERT(v1.emptyAND());
     CTEST_ASSERT(!v2.emptyAND());
@@ -185,10 +185,10 @@ bool TestEzVec2_EmptyAND() {
 
 template <typename T>
 bool TestEzVec2_EmptyOR() {
-    ez::vec2<T> v1(0, 0);
-    ez::vec2<T> v2(1, 0);
-    ez::vec2<T> v3(0, 1);
-    ez::vec2<T> v4(1, 1);
+    ez::math::vec2<T> v1(0, 0);
+    ez::math::vec2<T> v2(1, 0);
+    ez::math::vec2<T> v3(0, 1);
+    ez::math::vec2<T> v4(1, 1);
 
     CTEST_ASSERT(v1.emptyOR());
     CTEST_ASSERT(v2.emptyOR());
@@ -200,38 +200,38 @@ bool TestEzVec2_EmptyOR() {
 
 template <typename T>
 bool TestEzVec2_Min() {
-    ez::vec2<T> v1(1, 2);
-    CTEST_ASSERT(ez::isEqual(v1.min(), static_cast<T>(1)));
-    ez::vec2<T> v2(2, 1);
-    CTEST_ASSERT(ez::isEqual(v2.min(), static_cast<T>(1)));
+    ez::math::vec2<T> v1(1, 2);
+    CTEST_ASSERT(ez::math::isEqual(v1.min(), static_cast<T>(1)));
+    ez::math::vec2<T> v2(2, 1);
+    CTEST_ASSERT(ez::math::isEqual(v2.min(), static_cast<T>(1)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Max() {
-    ez::vec2<T> v1(1, 2);
-    CTEST_ASSERT(ez::isEqual(v1.max(), static_cast<T>(2)));
-    ez::vec2<T> v2(2, 1);
-    CTEST_ASSERT(ez::isEqual(v2.max(), static_cast<T>(2)));
+    ez::math::vec2<T> v1(1, 2);
+    CTEST_ASSERT(ez::math::isEqual(v1.max(), static_cast<T>(2)));
+    ez::math::vec2<T> v2(2, 1);
+    CTEST_ASSERT(ez::math::isEqual(v2.max(), static_cast<T>(2)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_GetNormalized() {
-    ez::vec2<T> v1(3, 4);
-    ez::vec2<T> n1 = v1.GetNormalized();
-    CTEST_ASSERT(ez::isEqual(n1.length(), static_cast<T>(1), static_cast<T>(0.00001)));
-    ez::vec2<T> v2(0.000001, 0.000005);
-    ez::vec2<T> n2 = v2.GetNormalized();
-    CTEST_ASSERT(ez::isEqual(n2.length(), static_cast<T>(0), static_cast<T>(0.00001)));
+    ez::math::vec2<T> v1(3, 4);
+    ez::math::vec2<T> n1 = v1.GetNormalized();
+    CTEST_ASSERT(ez::math::isEqual(n1.length(), static_cast<T>(1), static_cast<T>(0.00001)));
+    ez::math::vec2<T> v2(0.000001, 0.000005);
+    ez::math::vec2<T> n2 = v2.GetNormalized();
+    CTEST_ASSERT(ez::math::isEqual(n2.length(), static_cast<T>(0), static_cast<T>(0.00001)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_ComparisonOperators() {
-    ez::vec2<T> v1(1, 2);
-    ez::vec2<T> v2(3, 4);
-    ez::vec2<T> v3(1, 2);
+    ez::math::vec2<T> v1(1, 2);
+    ez::math::vec2<T> v2(3, 4);
+    ez::math::vec2<T> v3(1, 2);
     T scalar = 2;
 
     CTEST_ASSERT(v1 < v2);
@@ -265,127 +265,127 @@ bool TestEzVec2_ComparisonOperators() {
 
 template <typename T>
 bool TestEzVec2_Floor() {
-    ez::vec2<T> v(1.5, 2.7);
-    ez::vec2<T> floorResult = ez::floor<T>(v);
-    CTEST_ASSERT(ez::isEqual(floorResult.x, static_cast<T>(1)));
-    CTEST_ASSERT(ez::isEqual(floorResult.y, static_cast<T>(2)));
+    ez::math::vec2<T> v(1.5, 2.7);
+    ez::math::vec2<T> floorResult = ez::math::floor<T>(v);
+    CTEST_ASSERT(ez::math::isEqual(floorResult.x, static_cast<T>(1)));
+    CTEST_ASSERT(ez::math::isEqual(floorResult.y, static_cast<T>(2)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Fract() {
-    ez::vec2<T> v(1.5, 2.7);
-    ez::vec2<T> fractResult = ez::fract<T>(v);
-    CTEST_ASSERT(ez::isEqual(fractResult.x, static_cast<T>(0.5), static_cast<T>(0.00001)));
-    CTEST_ASSERT(ez::isEqual(fractResult.y, static_cast<T>(0.7), static_cast<T>(0.00001)));
+    ez::math::vec2<T> v(1.5, 2.7);
+    ez::math::vec2<T> fractResult = ez::math::fract<T>(v);
+    CTEST_ASSERT(ez::math::isEqual(fractResult.x, static_cast<T>(0.5), static_cast<T>(0.00001)));
+    CTEST_ASSERT(ez::math::isEqual(fractResult.y, static_cast<T>(0.7), static_cast<T>(0.00001)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Ceil() {
-    ez::vec2<T> v(1.5, 2.7);
-    ez::vec2<T> ceilResult = ez::ceil<T>(v);
-    CTEST_ASSERT(ez::isEqual(ceilResult.x, static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(ceilResult.y, static_cast<T>(3)));
+    ez::math::vec2<T> v(1.5, 2.7);
+    ez::math::vec2<T> ceilResult = ez::math::ceil<T>(v);
+    CTEST_ASSERT(ez::math::isEqual(ceilResult.x, static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(ceilResult.y, static_cast<T>(3)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Mini() {
-    ez::vec2<T> v1(1, 3);
-    ez::vec2<T> v2(2, 4);
-    ez::vec2<T> miniResult = ez::mini<T>(v1, v2);
-    CTEST_ASSERT(ez::isEqual(miniResult.x, static_cast<T>(1)));
-    CTEST_ASSERT(ez::isEqual(miniResult.y, static_cast<T>(3)));
+    ez::math::vec2<T> v1(1, 3);
+    ez::math::vec2<T> v2(2, 4);
+    ez::math::vec2<T> miniResult = ez::math::mini<T>(v1, v2);
+    CTEST_ASSERT(ez::math::isEqual(miniResult.x, static_cast<T>(1)));
+    CTEST_ASSERT(ez::math::isEqual(miniResult.y, static_cast<T>(3)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Maxi() {
-    ez::vec2<T> v1(1, 3);
-    ez::vec2<T> v2(2, 4);
-    ez::vec2<T> maxiResult = ez::maxi<T>(v1, v2);
-    CTEST_ASSERT(ez::isEqual(maxiResult.x, static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(maxiResult.y, static_cast<T>(4)));
+    ez::math::vec2<T> v1(1, 3);
+    ez::math::vec2<T> v2(2, 4);
+    ez::math::vec2<T> maxiResult = ez::math::maxi<T>(v1, v2);
+    CTEST_ASSERT(ez::math::isEqual(maxiResult.x, static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(maxiResult.y, static_cast<T>(4)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Dot() {
-    ez::vec2<T> v1(1, 3);
-    ez::vec2<T> v2(2, 4);
-    T dotResult = ez::dot<T>(v1, v2);
-    CTEST_ASSERT(ez::isEqual(dotResult, static_cast<T>(14)));
+    ez::math::vec2<T> v1(1, 3);
+    ez::math::vec2<T> v2(2, 4);
+    T dotResult = ez::math::dot<T>(v1, v2);
+    CTEST_ASSERT(ez::math::isEqual(dotResult, static_cast<T>(14)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Det() {
-    ez::vec2<T> v1(1, 3);
-    ez::vec2<T> v2(2, 4);
-    T detResult = ez::det<T>(v1, v2);
-    CTEST_ASSERT(ez::isEqual(detResult, static_cast<T>(-2)));
+    ez::math::vec2<T> v1(1, 3);
+    ez::math::vec2<T> v2(2, 4);
+    T detResult = ez::math::det<T>(v1, v2);
+    CTEST_ASSERT(ez::math::isEqual(detResult, static_cast<T>(-2)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Reflect() {
-    ez::vec2<T> v1(1, 3);
-    ez::vec2<T> v2(2, 4);
-    ez::vec2<T> reflectResult = ez::reflect<T>(v1, v2);
-    CTEST_ASSERT(ez::isEqual(reflectResult.x, static_cast<T>(-55.0)));
-    CTEST_ASSERT(ez::isEqual(reflectResult.y, static_cast<T>(-109.0)));
+    ez::math::vec2<T> v1(1, 3);
+    ez::math::vec2<T> v2(2, 4);
+    ez::math::vec2<T> reflectResult = ez::math::reflect<T>(v1, v2);
+    CTEST_ASSERT(ez::math::isEqual(reflectResult.x, static_cast<T>(-55.0)));
+    CTEST_ASSERT(ez::math::isEqual(reflectResult.y, static_cast<T>(-109.0)));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Sign() {
-    ez::vec2<T> v(5, 3);
-    ez::vec2<T> signResult = ez::sign<T>(v);
-    CTEST_ASSERT(ez::isEqual(signResult.x, static_cast<T>(1)));
-    CTEST_ASSERT(ez::isEqual(signResult.y, static_cast<T>(1)));
+    ez::math::vec2<T> v(5, 3);
+    ez::math::vec2<T> signResult = ez::math::sign<T>(v);
+    CTEST_ASSERT(ez::math::isEqual(signResult.x, static_cast<T>(1)));
+    CTEST_ASSERT(ez::math::isEqual(signResult.y, static_cast<T>(1)));
 
-    v = ez::vec2<T>(0, 0);
-    signResult = ez::sign(v);
-    CTEST_ASSERT(ez::isEqual(signResult.x, static_cast<T>(0)));
-    CTEST_ASSERT(ez::isEqual(signResult.y, static_cast<T>(0)));
+    v = ez::math::vec2<T>(0, 0);
+    signResult = ez::math::sign(v);
+    CTEST_ASSERT(ez::math::isEqual(signResult.x, static_cast<T>(0)));
+    CTEST_ASSERT(ez::math::isEqual(signResult.y, static_cast<T>(0)));
 
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Sin() {
-    ez::vec2<T> v(1.5, 2.7);
-    ez::vec2<T> sinResult = ez::sin<T>(v);
-    CTEST_ASSERT(ez::isEqual(sinResult.x, std::sin(static_cast<T>(1.5))));
-    CTEST_ASSERT(ez::isEqual(sinResult.y, std::sin(static_cast<T>(2.7))));
+    ez::math::vec2<T> v(1.5, 2.7);
+    ez::math::vec2<T> sinResult = ez::math::sin<T>(v);
+    CTEST_ASSERT(ez::math::isEqual(sinResult.x, std::sin(static_cast<T>(1.5))));
+    CTEST_ASSERT(ez::math::isEqual(sinResult.y, std::sin(static_cast<T>(2.7))));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Cos() {
-    ez::vec2<T> v(1.5, 2.7);
-    ez::vec2<T> cosResult = ez::cos<T>(v);
-    CTEST_ASSERT(ez::isEqual(cosResult.x, std::cos(static_cast<T>(1.5))));
-    CTEST_ASSERT(ez::isEqual(cosResult.y, std::cos(static_cast<T>(2.7))));
+    ez::math::vec2<T> v(1.5, 2.7);
+    ez::math::vec2<T> cosResult = ez::math::cos<T>(v);
+    CTEST_ASSERT(ez::math::isEqual(cosResult.x, std::cos(static_cast<T>(1.5))));
+    CTEST_ASSERT(ez::math::isEqual(cosResult.y, std::cos(static_cast<T>(2.7))));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Tan() {
-    ez::vec2<T> v(1.5, 2.7);
-    ez::vec2<T> tanResult = ez::tan<T>(v);
-    CTEST_ASSERT(ez::isEqual(tanResult.x, std::tan(static_cast<T>(1.5))));
-    CTEST_ASSERT(ez::isEqual(tanResult.y, std::tan(static_cast<T>(2.7))));
+    ez::math::vec2<T> v(1.5, 2.7);
+    ez::math::vec2<T> tanResult = ez::math::tan<T>(v);
+    CTEST_ASSERT(ez::math::isEqual(tanResult.x, std::tan(static_cast<T>(1.5))));
+    CTEST_ASSERT(ez::math::isEqual(tanResult.y, std::tan(static_cast<T>(2.7))));
     return true;
 }
 
 template <typename T>
 bool TestEzVec2_Atan() {
-    ez::vec2<T> v(1.5, 2.7);
-    ez::vec2<T> atanResult = ez::atan<T>(v);
-    CTEST_ASSERT(ez::isEqual(atanResult.x, std::atan(static_cast<T>(1.5))));
-    CTEST_ASSERT(ez::isEqual(atanResult.y, std::atan(static_cast<T>(2.7))));
+    ez::math::vec2<T> v(1.5, 2.7);
+    ez::math::vec2<T> atanResult = ez::math::atan<T>(v);
+    CTEST_ASSERT(ez::math::isEqual(atanResult.x, std::atan(static_cast<T>(1.5))));
+    CTEST_ASSERT(ez::math::isEqual(atanResult.y, std::atan(static_cast<T>(2.7))));
     return true;
 }
 

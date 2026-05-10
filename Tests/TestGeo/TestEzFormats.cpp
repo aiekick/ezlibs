@@ -44,8 +44,8 @@ bool TestEzFormats_DemAsc_Load_ValidFile() {
     const auto& datas = demAsc.getDatas();
     CTEST_ASSERT(datas.nLats == 3);
     CTEST_ASSERT(datas.nLons == 3);
-    CTEST_ASSERT(ez::isEqual(datas.xllcorner, 1.0));
-    CTEST_ASSERT(ez::isEqual(datas.yllcorner, 2.0));
+    CTEST_ASSERT(ez::math::isEqual(datas.xllcorner, 1.0));
+    CTEST_ASSERT(ez::math::isEqual(datas.yllcorner, 2.0));
     CTEST_ASSERT(datas.cellsize == 30);
     CTEST_ASSERT(datas.NODATA_value == -9999);
 
@@ -83,8 +83,8 @@ bool TestEzFormats_DemAsc_Save_RoundTrip() {
 
     CTEST_ASSERT(datas1.nLats == datas2.nLats);
     CTEST_ASSERT(datas1.nLons == datas2.nLons);
-    CTEST_ASSERT(ez::isEqual(datas1.xllcorner, datas2.xllcorner));
-    CTEST_ASSERT(ez::isEqual(datas1.yllcorner, datas2.yllcorner));
+    CTEST_ASSERT(ez::math::isEqual(datas1.xllcorner, datas2.xllcorner));
+    CTEST_ASSERT(ez::math::isEqual(datas1.yllcorner, datas2.yllcorner));
 
     return true;
 }
@@ -475,8 +475,8 @@ bool TestEzFormats_Shp_Point_Creation() {
     pt.x = 10.5;
     pt.y = 20.3;
 
-    CTEST_ASSERT(ez::isEqual(pt.x, 10.5));
-    CTEST_ASSERT(ez::isEqual(pt.y, 20.3));
+    CTEST_ASSERT(ez::math::isEqual(pt.x, 10.5));
+    CTEST_ASSERT(ez::math::isEqual(pt.y, 20.3));
 
     return true;
 }
@@ -489,10 +489,10 @@ bool TestEzFormats_Shp_PointZ_Creation() {
     ptz.z = 30.7;
     ptz.m = 40.1;
 
-    CTEST_ASSERT(ez::isEqual(ptz.x, 10.5));
-    CTEST_ASSERT(ez::isEqual(ptz.y, 20.3));
-    CTEST_ASSERT(ez::isEqual(ptz.z, 30.7));
-    CTEST_ASSERT(ez::isEqual(ptz.m, 40.1));
+    CTEST_ASSERT(ez::math::isEqual(ptz.x, 10.5));
+    CTEST_ASSERT(ez::math::isEqual(ptz.y, 20.3));
+    CTEST_ASSERT(ez::math::isEqual(ptz.z, 30.7));
+    CTEST_ASSERT(ez::math::isEqual(ptz.m, 40.1));
 
     return true;
 }
@@ -504,9 +504,9 @@ bool TestEzFormats_Shp_PointM_Creation() {
     ptm.y = 20.3;
     ptm.m = 15.2;
 
-    CTEST_ASSERT(ez::isEqual(ptm.x, 10.5));
-    CTEST_ASSERT(ez::isEqual(ptm.y, 20.3));
-    CTEST_ASSERT(ez::isEqual(ptm.m, 15.2));
+    CTEST_ASSERT(ez::math::isEqual(ptm.x, 10.5));
+    CTEST_ASSERT(ez::math::isEqual(ptm.y, 20.3));
+    CTEST_ASSERT(ez::math::isEqual(ptm.m, 15.2));
 
     return true;
 }
@@ -523,8 +523,8 @@ bool TestEzFormats_Shp_MultiPoint_Creation() {
 
     CTEST_ASSERT(mp.numPoints == 3);
     CTEST_ASSERT(mp.points.size() == 3);
-    CTEST_ASSERT(ez::isEqual(mp.points[0].x, 10.0));
-    CTEST_ASSERT(ez::isEqual(mp.points[1].y, 40.0));
+    CTEST_ASSERT(ez::math::isEqual(mp.points[0].x, 10.0));
+    CTEST_ASSERT(ez::math::isEqual(mp.points[1].y, 40.0));
 
     return true;
 }

@@ -36,6 +36,7 @@ SOFTWARE.
 #include <vector>
 
 namespace ez {
+namespace math {
 
 // Restrict the template to relevant types only (e.g., disable bool)
 template <typename T>
@@ -200,7 +201,7 @@ struct vec3 {
     }
 
     // Length of the vector
-    T length() const { return static_cast<T>(ez::sqrt(lengthSquared())); }
+    T length() const { return static_cast<T>(ez::math::sqrt(lengthSquared())); }
 
     // Squared length of the vector
     T lengthSquared() const { return x * x + y * y + z * z; }
@@ -228,7 +229,7 @@ struct vec3 {
     T sum() const { return x + y + z; }
 
     // Sum of absolute values of components
-    T sumAbs() const { return ez::abs(x) + ez::abs(y) + ez::abs(z); }
+    T sumAbs() const { return ez::math::abs(x) + ez::math::abs(y) + ez::math::abs(z); }
 
     // Check if all components are zero (AND)
     bool emptyAND() const { return x == static_cast<T>(0) && y == static_cast<T>(0) && z == static_cast<T>(0); }
@@ -240,10 +241,10 @@ struct vec3 {
     std::string string(char c = ';') const { return ez::str::toStr(x) + c + ez::str::toStr(y) + c + ez::str::toStr(z); }
 
     // Minimum component
-    T mini() const { return ez::mini(x, ez::mini(y, z)); }
+    T mini() const { return ez::math::mini(x, ez::math::mini(y, z)); }
 
     // Maximum component
-    T maxi() const { return ez::maxi(x, ez::maxi(y, z)); }
+    T maxi() const { return ez::math::maxi(x, ez::math::maxi(y, z)); }
 };
 
 // Operators for vec3
@@ -375,12 +376,12 @@ inline bool operator!=(const vec3<T>& v, const vec3<T>& f) {
 
 template <>
 inline bool operator!=(const vec3<float>& v, const vec3<float>& f) {
-    return ez::isDifferent(v.x, f.x) || ez::isDifferent(v.y, f.y) || ez::isDifferent(v.z, f.z);
+    return ez::math::isDifferent(v.x, f.x) || ez::math::isDifferent(v.y, f.y) || ez::math::isDifferent(v.z, f.z);
 }
 
 template <>
 inline bool operator!=(const vec3<double>& v, const vec3<double>& f) {
-    return ez::isDifferent(v.x, f.x) || ez::isDifferent(v.y, f.y) || ez::isDifferent(v.z, f.z);
+    return ez::math::isDifferent(v.x, f.x) || ez::math::isDifferent(v.y, f.y) || ez::math::isDifferent(v.z, f.z);
 }
 
 template <typename T>
@@ -400,12 +401,12 @@ inline bool operator==(const vec3<T>& v, const vec3<T>& f) {
 
 template <>
 inline bool operator==(const vec3<float>& v, const vec3<float>& f) {
-    return ez::isEqual(v.x, f.x) && ez::isEqual(v.y, f.y) && ez::isEqual(v.z, f.z);
+    return ez::math::isEqual(v.x, f.x) && ez::math::isEqual(v.y, f.y) && ez::math::isEqual(v.z, f.z);
 }
 
 template <>
 inline bool operator==(const vec3<double>& v, const vec3<double>& f) {
-    return ez::isEqual(v.x, f.x) && ez::isEqual(v.y, f.y) && ez::isEqual(v.z, f.z);
+    return ez::math::isEqual(v.x, f.x) && ez::math::isEqual(v.y, f.y) && ez::math::isEqual(v.z, f.z);
 }
 
 template <typename T>
@@ -421,27 +422,27 @@ inline bool operator==(T f, const vec3<T>& v) {
 // Utility functions
 template <typename T>
 inline vec3<T> mini(const vec3<T>& a, const vec3<T>& b) {
-    return vec3<T>(ez::mini(a.x, b.x), ez::mini(a.y, b.y), ez::mini(a.z, b.z));
+    return vec3<T>(ez::math::mini(a.x, b.x), ez::math::mini(a.y, b.y), ez::math::mini(a.z, b.z));
 }
 
 template <typename T>
 inline vec3<T> maxi(const vec3<T>& a, const vec3<T>& b) {
-    return vec3<T>(ez::maxi(a.x, b.x), ez::maxi(a.y, b.y), ez::maxi(a.z, b.z));
+    return vec3<T>(ez::math::maxi(a.x, b.x), ez::math::maxi(a.y, b.y), ez::math::maxi(a.z, b.z));
 }
 
 template <typename T>
 inline vec3<T> floor(const vec3<T>& a) {
-    return vec3<T>(ez::floor(a.x), ez::floor(a.y), ez::floor(a.z));
+    return vec3<T>(ez::math::floor(a.x), ez::math::floor(a.y), ez::math::floor(a.z));
 }
 
 template <typename T>
 inline vec3<T> ceil(const vec3<T>& a) {
-    return vec3<T>(ez::ceil(a.x), ez::ceil(a.y), ez::ceil(a.z));
+    return vec3<T>(ez::math::ceil(a.x), ez::math::ceil(a.y), ez::math::ceil(a.z));
 }
 
 template <typename T>
 inline vec3<T> abs(const vec3<T>& a) {
-    return vec3<T>(ez::abs(a.x), ez::abs(a.y), ez::abs(a.z));
+    return vec3<T>(ez::math::abs(a.x), ez::math::abs(a.y), ez::math::abs(a.z));
 }
 
 template <typename T>
@@ -464,9 +465,9 @@ inline vec3<T> cReflect(const vec3<T>& I, const vec3<T>& N) {
 template <typename T>
 inline vec3<T> clamp(vec3<T> n) {
     vec3<T> ret;
-    ret.x = ez::clamp(n.x);
-    ret.y = ez::clamp(n.y);
-    ret.z = ez::clamp(n.z);
+    ret.x = ez::math::clamp(n.x);
+    ret.y = ez::math::clamp(n.y);
+    ret.z = ez::math::clamp(n.z);
     return ret;
 }
 
@@ -475,9 +476,9 @@ inline vec3<T> clamp(vec3<T> n) {
 template <typename T>
 inline vec3<T> clamp(vec3<T> n, T b) {
     vec3<T> ret;
-    ret.x = ez::clamp(n.x, b);
-    ret.y = ez::clamp(n.y, b);
-    ret.z = ez::clamp(n.z, b);
+    ret.x = ez::math::clamp(n.x, b);
+    ret.y = ez::math::clamp(n.y, b);
+    ret.z = ez::math::clamp(n.z, b);
     return ret;
 }
 
@@ -486,9 +487,9 @@ inline vec3<T> clamp(vec3<T> n, T b) {
 template <typename T>
 inline vec3<T> clamp(vec3<T> n, T a, T b) {
     vec3<T> ret;
-    ret.x = ez::clamp(n.x, a, b);
-    ret.y = ez::clamp(n.y, a, b);
-    ret.z = ez::clamp(n.z, a, b);
+    ret.x = ez::math::clamp(n.x, a, b);
+    ret.y = ez::math::clamp(n.y, a, b);
+    ret.z = ez::math::clamp(n.z, a, b);
     return ret;
 }
 
@@ -530,4 +531,5 @@ inline std::ostream& operator<<(std::ostream& vOut, const vec3<T>& vType) {
     return vOut;
 }
 
+}  // namespace math
 }  // namespace ez

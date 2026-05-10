@@ -53,19 +53,19 @@ private:
     uint32_t uint32_t_value = 0;
     uint64_t uint64_t_value = 0;
 #ifdef EZ_TOOLS_VEC2
-    vec2<T> point_value;
+    math::vec2<T> point_value;
 #endif
 #ifdef EZ_TOOLS_VEC3
-    vec3<T> v3_value;
+    math::vec3<T> v3_value;
 #endif
 #ifdef EZ_TOOLS_VEC4
-    vec4<T> rect_value;
+    math::vec4<T> rect_value;
 #endif
 #ifdef EZ_TOOLS_AABB
-    AABB<T> aabb_value;
+    math::AABB<T> aabb_value;
 #endif
 #ifdef EZ_TOOLS_AABBCC
-    AABBCC<T> aabbcc_value;
+    math::AABBCC<T> aabbcc_value;
 #endif
     std::vector<float> vector_float_value;
     std::vector<double> vector_double_value;
@@ -127,37 +127,37 @@ public:
         datatype = inputtype;
     }
 #ifdef EZ_TOOLS_VEC2
-    variant(const vec2<T>& c) {
+    variant(const math::vec2<T>& c) {
         point_value = c;
-        inputtype = "vec2";
+        inputtype = "math::vec2";
         datatype = inputtype;
     }
 #endif
 #ifdef EZ_TOOLS_VEC3
-    variant(const vec3<T>& c) {
+    variant(const math::vec3<T>& c) {
         v3_value = c;
-        inputtype = "vec3";
+        inputtype = "math::vec3";
         datatype = inputtype;
     }
 #endif
 #ifdef EZ_TOOLS_VEC4
-    variant(const vec4<T>& c) {
+    variant(const math::vec4<T>& c) {
         rect_value = c;
-        inputtype = "vec4";
+        inputtype = "math::vec4";
         datatype = inputtype;
     }
 #endif
 #ifdef EZ_TOOLS_AABB
-    variant(const AABB<T>& c) {
+    variant(const math::AABB<T>& c) {
         aabb_value = c;
-        inputtype = "AABB";
+        inputtype = "math::AABB";
         datatype = inputtype;
     }
 #endif
 #ifdef EZ_TOOLS_AABBCC
-    variant(const AABBCC<T>& c) {
+    variant(const math::AABBCC<T>& c) {
         aabb_value = c;
-        inputtype = "AABBCC";
+        inputtype = "math::AABBCC";
         datatype = inputtype;
     }
 #endif
@@ -193,31 +193,31 @@ public:
     bool operator==(variant<T> v) {
         if (inputtype == v.inputtype) {
 #ifdef EZ_TOOLS_VEC4
-            if (inputtype == "vec4")
+            if (inputtype == "math::vec4")
                 return rect_value == v.rect_value;
 #endif
 #ifdef EZ_TOOLS_VEC3
-            if (inputtype == "vec3")
+            if (inputtype == "math::vec3")
                 return v3_value == v.v3_value;
 #endif
 #ifdef EZ_TOOLS_VEC2
-            if (inputtype == "vec2")
+            if (inputtype == "math::vec2")
                 return point_value == v.point_value;
 #endif
 #ifdef EZ_TOOLS_AABB
-            if (inputtype == "AABB")
+            if (inputtype == "math::AABB")
                 return aabb_value == v.aabb_value;
 #endif
 #ifdef EZ_TOOLS_AABBCC
-            if (inputtype == "AABBCC")
+            if (inputtype == "math::AABBCC")
                 return aabbcc_value == v.aabbcc_value;
 #endif
             if (inputtype == "bool")
                 return bool_value == v.bool_value;
             if (inputtype == "float")
-                return ez::isEqual(float_value, v.float_value);
+                return ez::math::isEqual(float_value, v.float_value);
             if (inputtype == "double")
-                return ez::isEqual(double_value, v.double_value);
+                return ez::math::isEqual(double_value, v.double_value);
             if (inputtype == "int")
                 return int_value == v.int_value;
             if (inputtype == "long")
@@ -275,22 +275,22 @@ public:
 
     std::string GetS(char c = ';', const char* prec = "%.6f") {
 #ifdef EZ_TOOLS_VEC4
-        if (inputtype == "vec4") {
+        if (inputtype == "math::vec4") {
             return str::toStr(rect_value.x) + c + str::toStr(rect_value.y) + c + str::toStr(rect_value.z) + c + str::toStr(rect_value.w);
         }
 #endif
 #ifdef EZ_TOOLS_VEC3
-        if (inputtype == "vec3") {
+        if (inputtype == "math::vec3") {
             return str::toStr(v3_value.x) + c + str::toStr(v3_value.y) + c + str::toStr(v3_value.z);
         }
 #endif
 #ifdef EZ_TOOLS_VEC2
-        if (inputtype == "vec2") {
+        if (inputtype == "math::vec2") {
             return str::toStr(point_value.x) + c + str::toStr(point_value.y);
         }
 #endif
 #ifdef EZ_TOOLS_AABB
-        if (inputtype == "AABB") {
+        if (inputtype == "math::AABB") {
             return str::toStr(aabb_value.lowerBound.x) + c + str::toStr(aabb_value.lowerBound.y) + c + str::toStr(aabb_value.upperBound.x) + c +
                 str::toStr(aabb_value.upperBound.y);
         }
@@ -336,36 +336,36 @@ public:
         return string_value;
     }
 #ifdef EZ_TOOLS_VEC2
-    vec2<T> GetV2(char c = ';') {
+    math::vec2<T> GetV2(char c = ';') {
         if (inputtype == "string") {
-            return vec2<T>(string_value, c);
+            return math::vec2<T>(string_value, c);
         } else if (inputtype == "vectorString") {
         }
         return point_value;
     }
 #endif
 #ifdef EZ_TOOLS_VEC3
-    vec3<T> GetV3(char c = ';') {
+    math::vec3<T> GetV3(char c = ';') {
         if (inputtype == "string") {
-            return vec3<T>(string_value, c);
+            return math::vec3<T>(string_value, c);
         } else if (inputtype == "vectorString") {
         }
         return v3_value;
     }
 #endif
 #ifdef EZ_TOOLS_VEC4
-    vec4<T> GetV4(char c = ';') {
+    math::vec4<T> GetV4(char c = ';') {
         if (inputtype == "string") {
-            return vec4<T>(string_value, c, 4, 0);  //-V112
+            return math::vec4<T>(string_value, c, 4, 0);  //-V112
         } else if (inputtype == "vectorString") {
         }
         return rect_value;
     }
 #endif
 #ifdef EZ_TOOLS_AABB
-    AABB<T> GetAABB(char c = ';') {
+    math::AABB<T> GetAABB(char c = ';') {
         if (inputtype == "string") {
-            return AABB<T>(string_value, c);
+            return math::AABB<T>(string_value, c);
         }
         return aabb_value;
     }
@@ -457,8 +457,8 @@ public:
     }
 };
 
-typedef variant<float> fvariant;   // utile pour le type de renvoi des vec2,3,4 et AABB
-typedef variant<double> dvariant;  // utile pour le type de renvoi des vec2,3,4 et AABB
+typedef variant<float> fvariant;   // utile pour le type de renvoi des math::vec2,3,4 et math::AABB
+typedef variant<double> dvariant;  // utile pour le type de renvoi des math::vec2,3,4 et math::AABB
 typedef variant<size_t> uvariant;
 typedef variant<int> ivariant;
 

@@ -36,16 +36,16 @@ namespace gl {
 
 /* Base Canvas Vertex shader :
 #version 430
-layout(location = 0) in vec2 aPosition; // -1..+1 (quad fullscreen)
+layout(location = 0) in math::vec2 aPosition; // -1..+1 (quad fullscreen)
 
-uniform vec2 uScale;   // NDC scale
-uniform vec2 uOffset;  // NDC offset (centre du quad)
-uniform vec4 uColor;
+uniform math::vec2 uScale;   // NDC scale
+uniform math::vec2 uOffset;  // NDC offset (centre du quad)
+uniform math::vec4 uColor;
 
-out vec4 vertColor;
+out math::vec4 vertColor;
 
 void main() {
-    gl_Position = vec4(aPosition * uScale + uOffset, 0.0, 1.0);
+    gl_Position = math::vec4(aPosition * uScale + uOffset, 0.0, 1.0);
     vertColor = uColor;
 }
 */
@@ -53,9 +53,9 @@ void main() {
 /* Base Canvas Fragment shader :
 #version 430
 
-layout(location = 0) out vec4 fragColor;
+layout(location = 0) out math::vec4 fragColor;
 
-in vec4 vertColor;
+in math::vec4 vertColor;
 
 void main(void) {
     fragColor = vertColor;
@@ -65,29 +65,29 @@ void main(void) {
 class Canvas {
 public:
     struct MouseDatas {
-        ez::fvec2 displayRect;
-        ez::fvec2 mousePos;
+        ez::math::fvec2 displayRect;
+        ez::math::fvec2 mousePos;
         float mouseWheel{};
         bool isPanButtonDown{};
     };
     struct Transform {
-        ez::fvec2 origin;
+        ez::math::fvec2 origin;
         float scale{1.0f};  // px / unit� monde
         float invScale{1.0f};
     };
     struct UniformTransform {
-        ez::fvec2 uScale{1.0f};
-        ez::fvec2 uOffset;
+        ez::math::fvec2 uScale{1.0f};
+        ez::math::fvec2 uOffset;
     };
 
 
 private:
     bool m_isRenderingActive{true};
-    ez::fvec4 m_clearColor;
+    ez::math::fvec4 m_clearColor;
 
-    ez::fvec4 m_displayRect;
+    ez::math::fvec4 m_displayRect;
     ez::gl::FBOPipeLinePtr mp_fboPipeline;
-    ez::fvec2 m_fboSize;
+    ez::math::fvec2 m_fboSize;
 
     MouseDatas m_mouseDatas;
     Transform m_transform;
@@ -96,11 +96,11 @@ private:
     UniformTransform m_uniformTransform;
 
     // Souris (interne)
-    ez::fvec2 m_lastMousePos;
+    ez::math::fvec2 m_lastMousePos;
     bool m_isPanning{false};
 
 public:
-    bool init(const ez::ivec4& vDisplayRect) {
+    bool init(const ez::math::ivec4& vDisplayRect) {
         bool ret = true;
         m_displayRect = vDisplayRect;
         mp_fboPipeline = ez::gl::FBOPipeLine::create(vDisplayRect.z, vDisplayRect.w, 1, false, false);
@@ -117,13 +117,13 @@ public:
 
     void endFrame() {}
 
-    bool resize(const ez::ivec4& vNewDisplayRect) {
+    bool resize(const ez::math::ivec4& vNewDisplayRect) {
         if (mp_fboPipeline->resize(vNewDisplayRect.z, vNewDisplayRect.w)) {
             m_displayRect = vNewDisplayRect;
             if (!m_fboSize.emptyOR()) {
-                ez::fvec2 rescale = m_displayRect.zw() / m_fboSize;
+                ez::math::fvec2 rescale = m_displayRect.zw() / m_fboSize;
                 m_transform.origin *= rescale;
-                m_transform.scale *= ez::mini(rescale.x, rescale.y);
+                m_transform.scale *= ez::math::mini(rescale.x, rescale.y);
             }
             m_fboSize = vNewDisplayRect.zw();
             m_computeTransform();
@@ -132,11 +132,11 @@ public:
         return false;
     }
 
-    ez::fvec2 worldToLocal(const ez::fvec2& vWorldPos) const { 
+    ez::math::fvec2 worldToLocal(const ez::math::fvec2& vWorldPos) const { 
         return (vWorldPos - m_transform.origin) * m_transform.invScale;
     }
 
-    ez::fvec2 localToWorld(const ez::fvec2& vCanvasPos) const { 
+    ez::math::fvec2 localToWorld(const ez::math::fvec2& vCanvasPos) const { 
        return vCanvasPos * m_transform.scale + m_transform.origin; 
     }
 
@@ -165,7 +165,7 @@ public:
                 GL_NEAREST);
         }
     }
-    void clearBuffers(const ez::fvec4& vColorPtr) { mp_fboPipeline->clearBuffer({vColorPtr.x, vColorPtr.y, vColorPtr.z, vColorPtr.w}); }
+    void clearBuffers(const ez::math::fvec4& vColorPtr) { mp_fboPipeline->clearBuffer({vColorPtr.x, vColorPtr.y, vColorPtr.z, vColorPtr.w}); }
     bool drawUI() {
 #ifdef IMGUI_API
 #ifndef NDEBUG
@@ -184,7 +184,7 @@ public:
 
     void updateTransform() { m_computeTransform(); }
 
-    void fitToContent(const ez::fAABB& vBoundingBox) {
+    void fitToContent(const ez::math::fAABB& vBoundingBox) {
         m_computeFitToContent(  //
             vBoundingBox.lowerBound,
             vBoundingBox.upperBound,
@@ -195,8 +195,8 @@ public:
         m_computeTransform();
     }
 
-    ez::fvec4& getBackgroundColorRef() { return m_clearColor; }
-    const ez::fvec4& getBackgroundColor() const { return m_clearColor; }
+    ez::math::fvec4& getBackgroundColorRef() { return m_clearColor; }
+    const ez::math::fvec4& getBackgroundColor() const { return m_clearColor; }
     
     MouseDatas& getMouseDatasRef() { return m_mouseDatas; }
     const MouseDatas& getMouseDatas() const { return m_mouseDatas; }
@@ -217,7 +217,7 @@ private:
             ret = true;
         }
         if (vMouseDatas.isPanButtonDown) {
-            const ez::fvec2 delta = vMouseDatas.mousePos - m_lastMousePos;
+            const ez::math::fvec2 delta = vMouseDatas.mousePos - m_lastMousePos;
             m_isPanning = true;
             m_applyPanDrag(delta);
             ret = true;
@@ -233,12 +233,12 @@ private:
         m_transform.invScale = (v != 0.0f) ? (1.0f / v) : 0.0f;
     }
 
-    void m_applyPanDrag(const ez::fvec2& dragPx) {
+    void m_applyPanDrag(const ez::math::fvec2& dragPx) {
         m_transform.origin.x += dragPx.x;
         m_transform.origin.y += dragPx.y;
     }
 
-    void m_applyZoomAtMouse(float factor, const ez::fvec2& mousePx) {
+    void m_applyZoomAtMouse(float factor, const ez::math::fvec2& mousePx) {
         if (factor <= 0.0f) {
             return;
         }
@@ -254,7 +254,7 @@ private:
     }
 
     // computation of uScale/uOffset (NDC) for
-    // gl_Position = vec4(aPos * uScale + uOffset, 0, 1)
+    // gl_Position = math::vec4(aPos * uScale + uOffset, 0, 1)
     void m_computeTransform() {
         const float VW = m_fboSize.x;
         const float VH = m_fboSize.y;
@@ -270,13 +270,13 @@ private:
         m_uniformTransform.uOffset.y = 1.0f - (2.0f * m_transform.origin.y) / VH;
     }
 
-    // Fit "contain" d'un AABB monde dans un framebuffer en pixels.
+    // Fit "contain" d'un math::AABB monde dans un framebuffer en pixels.
     // Mapping utilis� : screen = world * scale + originPx
     void m_computeFitToContent(
-        const ez::fvec2& vWorldMin,
-        const ez::fvec2& vWorldMax,
-        const ez::fvec2& vFramebufferSizePx,
-        ez::fvec2& voOriginPx,
+        const ez::math::fvec2& vWorldMin,
+        const ez::math::fvec2& vWorldMax,
+        const ez::math::fvec2& vFramebufferSizePx,
+        ez::math::fvec2& voOriginPx,
         float& voScale,
         float& voInvScale) {
         const float W = vWorldMax.x - vWorldMin.x;

@@ -75,6 +75,7 @@ SOFTWARE.
 #endif
 
 namespace ez {
+namespace math {
 namespace svd {
 
 template <typename T>
@@ -558,6 +559,7 @@ public:
 };
 
 }  // namespace svd
+}  // namespace math
 }  // namespace ez
 
 #ifdef _MSC_VER

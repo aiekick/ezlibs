@@ -11,7 +11,6 @@
 #include <TestEzEigenSym.h>
 #include <TestEzKdTree.h>
 #include <TestEzRansac.h>
-#include <TestEzEpipolar.h>
 #include <TestEzQuat.h>
 #include <TestEzAABB.h>
 #include <TestEzExpr.h>
@@ -37,7 +36,6 @@ bool TestMisc(const std::string& vTest) {
     IfTestCollectionExist(TestEzEigenSym);
     IfTestCollectionExist(TestEzKdTree);
     IfTestCollectionExist(TestEzRansac);
-    IfTestCollectionExist(TestEzEpipolar);
     IfTestCollectionExist(TestEzQuat);
     IfTestCollectionExist(TestEzAABB);
     IfTestCollectionExist(TestEzExpr);

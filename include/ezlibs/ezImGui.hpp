@@ -32,26 +32,26 @@ namespace implot {}  // namespace implot
 }  // namespace ez
 
 #include <cstdint>
-#include <ezlibs/ezVec2.hpp>
-#include <ezlibs/ezVec4.hpp>
+#include <ezlibs/ezMath/ezVec2.hpp>
+#include <ezlibs/ezMath/ezVec4.hpp>
 
 #ifndef IM_VEC2_CLASS_EXTRA
 #define IM_VEC2_CLASS_EXTRA                        \
     ImVec2(const float v) : x(v), y(v) {}          \
-    ImVec2(const ez::fvec2& v) : x(v.x), y(v.y) {} \
-    ImVec2(const ez::dvec2& v) : x(static_cast<float>(v.x)), y(static_cast<float>(v.y)) {}
+    ImVec2(const ez::math::fvec2& v) : x(v.x), y(v.y) {} \
+    ImVec2(const ez::math::dvec2& v) : x(static_cast<float>(v.x)), y(static_cast<float>(v.y)) {}
 #endif
 
 #ifndef IM_VEC4_CLASS_EXTRA
 #define IM_VEC4_CLASS_EXTRA                                        \
     ImVec4(const float v) : x(v), y(v), z(v), w(v) {}              \
-    ImVec4(const ez::fvec4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {} \
-    ImVec4(const ez::dvec4& v) : x(static_cast<float>(v.x)), y(static_cast<float>(v.y)), z(static_cast<float>(v.z)), w(static_cast<float>(v.w)) {}
+    ImVec4(const ez::math::fvec4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {} \
+    ImVec4(const ez::math::dvec4& v) : x(static_cast<float>(v.x)), y(static_cast<float>(v.y)), z(static_cast<float>(v.z)), w(static_cast<float>(v.w)) {}
 #endif
 
 #ifndef IM_PLOT_RECT_CLASS_EXTRA
 #define IM_PLOT_RECT_CLASS_EXTRA \
-    ImPlotRect(const ez::dvec4& v) { \
+    ImPlotRect(const ez::math::dvec4& v) { \
         X.Min = v.x;                 \
         X.Max = v.y;                 \
         Y.Min = v.z;                 \

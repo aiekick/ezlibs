@@ -266,7 +266,7 @@ public:
         ASSERT_THROW(m_FBOPipeLinePtr != nullptr, "");
         m_FBOPipeLinePtr->clearBuffer(vColor);
     }
-    void render(const ez::fvec2& vPos = {}) {
+    void render(const ez::math::fvec2& vPos = {}) {
         if (m_RenderingPause) {
             return;
         }

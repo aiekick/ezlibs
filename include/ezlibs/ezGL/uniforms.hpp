@@ -484,8 +484,8 @@ public:
         return R"(
 buffer uniform syantax :
 - resolution :
-  - vec2 resolution => uniform vec2(buffer) name;
-  - vec3 resolution => uniform vec2(buffer) name; (like shadertoy resolution)
+  - math::vec2 resolution => uniform math::vec2(buffer) name;
+  - math::vec3 resolution => uniform math::vec2(buffer) name; (like shadertoy resolution)
 - sampler2D back buffer : (target is optional. n is the fbo attachment id frrm 0 to 7)
   - uniform sampler2D(buffer) name; => for target == 0
   - uniform sampler2D(buffer:target=n) name; => for target == n
@@ -499,13 +499,13 @@ public:
         return R"(
 float slider uniform syntax : (default and step are otionals)
 - uniform float(inf:sup:default:step) name;
-- uniform vec2(inf:sup:default:step) name;
-- uniform vec3(inf:sup:default:step) name;
-- uniform vec4(inf:sup:default:step) name;
+- uniform math::vec2(inf:sup:default:step) name;
+- uniform math::vec3(inf:sup:default:step) name;
+- uniform math::vec4(inf:sup:default:step) name;
 - uniform int(inf:sup:default:step) name;
-- uniform ivec2(inf:sup:default:step) name;
-- uniform ivec3(inf:sup:default:step) name;
-- uniform ivec4(inf:sup:default:step) name;
+- uniform math::ivec2(inf:sup:default:step) name;
+- uniform math::ivec3(inf:sup:default:step) name;
+- uniform math::ivec4(inf:sup:default:step) name;
 )";
     }
 };

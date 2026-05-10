@@ -53,6 +53,7 @@ SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////
 
 namespace ez {
+namespace math {
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795
@@ -372,9 +373,10 @@ struct range {
     }
 };
 
+}  // namespace math
 }  // namespace ez
 
-#include "ezStr.hpp"
+#include "../ezStr.hpp"
 #include "ezVec2.hpp"
 #include "ezVec3.hpp"
 #include "ezVec4.hpp"
@@ -385,7 +387,7 @@ struct range {
 #include "ezQuat.hpp"
 #include "ezPlane.hpp"
 #include "ezAABBCC.hpp"
-#include "ezScreen.hpp"
+#include "../ezScreen.hpp"
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////

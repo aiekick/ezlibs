@@ -7,13 +7,13 @@
 class Effect {
 private:
 public:
-    bool init(const ez::fvec4& vDisplayRect) { return false; }
+    bool init(const ez::math::fvec4& vDisplayRect) { return false; }
     bool reInit() { return false; }
     void unit() {}
-    bool resize(const ez::fvec4& vDisplayRect) { return false; }
+    bool resize(const ez::math::fvec4& vDisplayRect) { return false; }
     void render() {}
-    void clearBuffers(const ez::fvec4& vColor) {}
-    void blitOnScreen(const ez::fvec4& vDisplayRect) {}
+    void clearBuffers(const ez::math::fvec4& vColor) {}
+    void blitOnScreen(const ez::math::fvec4& vDisplayRect) {}
 };
 
 ////////////////////////////////////////////////////////////////////////////

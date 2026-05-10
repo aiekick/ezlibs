@@ -57,7 +57,7 @@ SOFTWARE.
 
 #include <ezlibs/ezStr.hpp>
 #include <ezlibs/ezLog.hpp>
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 
 #include <string>
 

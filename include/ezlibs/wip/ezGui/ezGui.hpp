@@ -36,16 +36,16 @@ class Gui {
 public:
 
     struct Vertex {
-        fvec2 pos;
-        fvec2 uv;
-        fvec4 color;
+        math::fvec2 pos;
+        math::fvec2 uv;
+        math::fvec4 color;
         Vertex() = default;
-        Vertex(fvec2 vPos, fvec2 vUV, fvec4 vColor) : pos(vPos), uv(vUV), color(vColor) {
+        Vertex(math::fvec2 vPos, math::fvec2 vUV, math::fvec4 vColor) : pos(vPos), uv(vUV), color(vColor) {
         }
     };
 
 public:
-    bool Begin(const std::string& vLabel, const bool* vOpened = nullptr, const fvec2& vSize = fvec2(0.0f, 0.0f)) {
+    bool Begin(const std::string& vLabel, const bool* vOpened = nullptr, const math::fvec2& vSize = math::fvec2(0.0f, 0.0f)) {
     
     }
 

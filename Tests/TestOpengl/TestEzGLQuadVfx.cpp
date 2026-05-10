@@ -9,8 +9,8 @@ public:
     struct EffectUniforms {
         float time = 0.0f;
         int32_t frame = 0;
-        ez::fvec4 mouse;  // xy:pos, zw:pressed pos
-        ez::fvec3 resolution;
+        ez::math::fvec4 mouse;  // xy:pos, zw:pressed pos
+        ez::math::fvec3 resolution;
         uint32_t backBufferId{};
     } uniforms;
 
@@ -20,7 +20,7 @@ private:
     ez::gl::QuadVfxPtr m_QuadVfxPtr = nullptr;
 
 public:
-    bool init(const ez::fvec4& vDisplayRect) {
+    bool init(const ez::math::fvec4& vDisplayRect) {
         CTEST_ASSERT(GLContext::initGLContext());
         m_QuadMeshPtr = ez::gl::QuadMesh::create();
         if (m_QuadMeshPtr != nullptr) {
@@ -61,7 +61,7 @@ public:
         m_QuadMeshPtr.reset();
         GLContext::unitGLContext();
     }
-    bool resize(const ez::fvec4& vDisplayRect) {
+    bool resize(const ez::math::fvec4& vDisplayRect) {
         const auto& size = vDisplayRect.size();
         if (m_QuadVfxPtr->resize(static_cast<GLsizei>(size.x), static_cast<GLsizei>(size.y))) {
             uniforms.resolution.x = size.x;
@@ -75,8 +75,8 @@ public:
         m_QuadVfxPtr->render();
         ++uniforms.frame;
     }
-    void clearBuffers(const ez::fvec4& vColor) { m_QuadVfxPtr->clearBuffers({vColor.x, vColor.y, vColor.z, vColor.w}); }
-    void blitOnScreen(const ez::fvec4& vDisplayRect) {
+    void clearBuffers(const ez::math::fvec4& vColor) { m_QuadVfxPtr->clearBuffers({vColor.x, vColor.y, vColor.z, vColor.w}); }
+    void blitOnScreen(const ez::math::fvec4& vDisplayRect) {
         auto fbo_ptr = m_QuadVfxPtr->getFrontFBO().lock();
         if (fbo_ptr != nullptr) {
             fbo_ptr->blitOnScreen(
@@ -89,8 +89,8 @@ public:
                 GL_NEAREST);
         }
     }
-    std::vector<ez::u8vec4> getPixels(const ez::fvec4& vRect) {
-        return m_QuadVfxPtr->getBackFBO().lock()->getPixels<ez::u8vec4, 1>(  //
+    std::vector<ez::math::u8vec4> getPixels(const ez::math::fvec4& vRect) {
+        return m_QuadVfxPtr->getBackFBO().lock()->getPixels<ez::math::u8vec4, 1>(  //
             vRect.pos().x,
             vRect.pos().y,
             vRect.size().x,
@@ -104,40 +104,40 @@ public:
 
 bool TestEzGL_QuadVfx_init() {
     Effect eff;
-    CTEST_ASSERT(eff.init(ez::fvec4(0, 0, 4, 4)));
+    CTEST_ASSERT(eff.init(ez::math::fvec4(0, 0, 4, 4)));
 
     // first render : yellow output (1,1,0,1)
     eff.render(); 
-    auto pixs = eff.getPixels(ez::fvec4(0, 0, 4, 4));
-    CTEST_ASSERT(pixs[0] == ez::u8vec4(255, 255, 0, 255));
+    auto pixs = eff.getPixels(ez::math::fvec4(0, 0, 4, 4));
+    CTEST_ASSERT(pixs[0] == ez::math::u8vec4(255, 255, 0, 255));
 
     // second render : blue output (0,0,1,1)
     eff.render();
-    pixs = eff.getPixels(ez::fvec4(0, 0, 4, 4));
-    CTEST_ASSERT(pixs[0] == ez::u8vec4(0, 0, 255, 255));
+    pixs = eff.getPixels(ez::math::fvec4(0, 0, 4, 4));
+    CTEST_ASSERT(pixs[0] == ez::math::u8vec4(0, 0, 255, 255));
 
     // resize
-    CTEST_ASSERT(eff.resize(ez::fvec4(0, 0, 2, 2)));
+    CTEST_ASSERT(eff.resize(ez::math::fvec4(0, 0, 2, 2)));
 
     // third render : no white since, resize cause black output
     eff.render();
-    pixs = eff.getPixels(ez::fvec4(0, 0, 2, 2));
-    CTEST_ASSERT(pixs[0] == ez::u8vec4(255, 255, 255, 255));
+    pixs = eff.getPixels(ez::math::fvec4(0, 0, 2, 2));
+    CTEST_ASSERT(pixs[0] == ez::math::u8vec4(255, 255, 255, 255));
 
     // resize again
-    CTEST_ASSERT(eff.resize(ez::fvec4(0, 0, 1, 1)));
+    CTEST_ASSERT(eff.resize(ez::math::fvec4(0, 0, 1, 1)));
     // and set red output
-    eff.clearBuffers(ez::fvec4(1, 0, 0, 1));
-    pixs = eff.getPixels(ez::fvec4(0, 0, 1, 1));
-    CTEST_ASSERT(pixs[0] == ez::u8vec4(255, 0, 0, 255));
+    eff.clearBuffers(ez::math::fvec4(1, 0, 0, 1));
+    pixs = eff.getPixels(ez::math::fvec4(0, 0, 1, 1));
+    CTEST_ASSERT(pixs[0] == ez::math::u8vec4(255, 0, 0, 255));
 
     // fourth render : pink output now (0,1,1,1)
     eff.render();
-    pixs = eff.getPixels(ez::fvec4(0, 0, 1, 1));
-    CTEST_ASSERT(pixs[0] == ez::u8vec4(0, 255, 255, 255));
+    pixs = eff.getPixels(ez::math::fvec4(0, 0, 1, 1));
+    CTEST_ASSERT(pixs[0] == ez::math::u8vec4(0, 255, 255, 255));
 
     // blit
-    eff.blitOnScreen(ez::fvec4(0, 0, 4, 4));
+    eff.blitOnScreen(ez::math::fvec4(0, 0, 4, 4));
 
     eff.unit();
     return true;

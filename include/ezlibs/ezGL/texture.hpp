@@ -425,7 +425,7 @@ public:
             }
             setPixels<float>(0, 0, m_Width, m_Height, buffer.data());
         } else {
-            const auto toU8 = [](float v) -> uint8_t { return static_cast<uint8_t>(ez::clamp(v, 0.0f, 1.0f) * 255.0f); };
+            const auto toU8 = [](float v) -> uint8_t { return static_cast<uint8_t>(ez::math::clamp(v, 0.0f, 1.0f) * 255.0f); };
             std::vector<uint8_t> buffer(pixelCount * m_ChannelsCount);
             for (size_t i = 0; i < buffer.size(); i += m_ChannelsCount) {
                 if (m_ChannelsCount >= 1) buffer[i] = toU8(vR);

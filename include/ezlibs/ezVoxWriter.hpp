@@ -38,7 +38,7 @@ SOFTWARE.
 #include <iostream>
 #include <functional>
 
-#include "ezMath.hpp"
+#include "ezMath/ezMath.hpp"
 #include "ezStr.hpp"
 
 // This File is a helper for write a vox file after 0.99 release to support
@@ -66,7 +66,7 @@ typedef int32_t TagID;
 typedef int32_t Version;
 typedef int32_t ColorID;
 
-typedef ez::dAABBCC Volume;
+typedef ez::math::dAABBCC Volume;
 
 typedef std::function<void(const KeyFrame& vKeyFrame, const double& vValue)> KeyFrameTimeLoggingFunctor;
 
@@ -452,9 +452,9 @@ public:
         // the limit of magicavoxel is 127 because the first voxel is 1 not 0
         // so this is 0 to 126
         // index limit, size is 127
-        m_MaxVoxelPerCubeX = ez::clamp<size_t>(vMaxVoxelPerCubeX, 0, 126);
-        m_MaxVoxelPerCubeY = ez::clamp<size_t>(vMaxVoxelPerCubeY, 0, 126);
-        m_MaxVoxelPerCubeZ = ez::clamp<size_t>(vMaxVoxelPerCubeZ, 0, 126);
+        m_MaxVoxelPerCubeX = ez::math::clamp<size_t>(vMaxVoxelPerCubeX, 0, 126);
+        m_MaxVoxelPerCubeY = ez::math::clamp<size_t>(vMaxVoxelPerCubeY, 0, 126);
+        m_MaxVoxelPerCubeZ = ez::math::clamp<size_t>(vMaxVoxelPerCubeZ, 0, 126);
     }
 
     ~Writer() = default;
@@ -531,9 +531,9 @@ public:
         size_t oy = (size_t)std::floor((double)vY / (double)m_MaxVoxelPerCubeY);
         size_t oz = (size_t)std::floor((double)vZ / (double)m_MaxVoxelPerCubeZ);
 
-        minCubeX = ez::mini<size_t>(minCubeX, ox);
-        minCubeY = ez::mini<size_t>(minCubeX, oy);
-        minCubeZ = ez::mini<size_t>(minCubeX, oz);
+        minCubeX = ez::math::mini<size_t>(minCubeX, ox);
+        minCubeY = ez::math::mini<size_t>(minCubeX, oy);
+        minCubeZ = ez::math::mini<size_t>(minCubeX, oz);
 
         auto cube = m_GetCube(ox, oy, oz);
 
@@ -749,7 +749,7 @@ private:
     }
 
     void m_MergeVoxelInCube(const VoxelX& vX, const VoxelY& vY, const VoxelZ& vZ, const uint8_t& vColorIndex, VoxCube* vCube) {
-        maxVolume.Combine(ez::dvec3((double)vX, (double)vY, (double)vZ));
+        maxVolume.Combine(ez::math::dvec3((double)vX, (double)vY, (double)vZ));
 
         bool exist = false;
         if (voxelId.find(m_KeyFrame) != voxelId.end()) {

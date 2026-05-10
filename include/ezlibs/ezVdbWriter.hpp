@@ -40,7 +40,7 @@ SOFTWARE.
 #include <array>
 #include <map>
 
-#include "ezMath.hpp"
+#include "ezMath/ezMath.hpp"
 
 namespace ez {
 namespace file {
@@ -102,7 +102,7 @@ inline void write_meta_vec3i(FILE* fp, const std::string& name, const std::array
 
 class ATree {
 protected:
-    dAABBCC m_Volume;
+    math::dAABBCC m_Volume;
     std::string m_Name;
 
 protected:
@@ -291,7 +291,7 @@ public:
 
     bool addVoxel(uint32_t vX, uint32_t vY, uint32_t vZ, void* vDatas, size_t vByteSize, size_t vCount) override final {
         if (vDatas != nullptr && vByteSize == sizeof(TType) && vCount == TCount) {
-            m_Volume.Combine(ez::dvec3((float)vX, (float)vY, (float)vZ));
+            m_Volume.Combine(ez::math::dvec3((float)vX, (float)vY, (float)vZ));
             const auto& bit_index_4 = getBitIndex4(vX, vY, vZ);
             const auto& bit_index_3 = getBitIndex3(vX, vY, vZ);
             const auto& bit_index_0 = getBitIndex0(vX, vY, vZ);

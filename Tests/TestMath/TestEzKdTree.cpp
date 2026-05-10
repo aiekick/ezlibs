@@ -1,5 +1,5 @@
-#include <ezlibs/ezKdTree.hpp>
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezKdTree.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 #include <ezlibs/ezCTest.hpp>
 
 #include <algorithm>
@@ -64,7 +64,7 @@ std::vector<bruteHit> bruteForceNearest(
 ////////////////////////////////////////////////////////////////////////////
 
 bool TestEzKdTree_DefaultEmpty() {
-    ez::kdTree<int> tree(3);
+    ez::math::kdTree<int> tree(3);
     CTEST_ASSERT(tree.size() == 0);
     CTEST_ASSERT(tree.empty());
     CTEST_ASSERT(tree.dimension() == 3);
@@ -72,32 +72,32 @@ bool TestEzKdTree_DefaultEmpty() {
 }
 
 bool TestEzKdTree_PutWrongDimensionIsRejected() {
-    ez::kdTree<int> tree(3);
+    ez::math::kdTree<int> tree(3);
     tree.put(std::vector<float>{1.0f, 2.0f}, 42);  // 2-D point in a 3-D tree
     CTEST_ASSERT(tree.size() == 0);
     return true;
 }
 
 bool TestEzKdTree_SinglePointFoundExactly() {
-    ez::kdTree<int> tree(3);
+    ez::math::kdTree<int> tree(3);
     tree.put(std::vector<float>{1.0f, 2.0f, 3.0f}, 42);
 
-    std::vector<ez::kdTree<int>::hit> hits;
+    std::vector<ez::math::kdTree<int>::hit> hits;
     tree.nearest(std::vector<float>{1.0f, 2.0f, 3.0f},
                  std::numeric_limits<float>::max(),
                  100, 1, hits);
     CTEST_ASSERT(hits.size() == 1);
     CTEST_ASSERT(hits[0].value == 42);
-    CTEST_ASSERT(ez::isEqual(hits[0].squaredDistance, 0.0f, 1e-6f));
+    CTEST_ASSERT(ez::math::isEqual(hits[0].squaredDistance, 0.0f, 1e-6f));
     return true;
 }
 
 bool TestEzKdTree_NearestRespectsMaxDistance() {
-    ez::kdTree<int> tree(2);
+    ez::math::kdTree<int> tree(2);
     tree.put(std::vector<float>{0.0f, 0.0f}, 1);
     tree.put(std::vector<float>{10.0f, 10.0f}, 2);
 
-    std::vector<ez::kdTree<int>::hit> hits;
+    std::vector<ez::math::kdTree<int>::hit> hits;
     tree.nearest(std::vector<float>{0.0f, 0.0f}, 1.0f, 100, 5, hits);
     // Only the (0, 0) point fits within squared distance 1.0
     CTEST_ASSERT(hits.size() == 1);
@@ -106,13 +106,13 @@ bool TestEzKdTree_NearestRespectsMaxDistance() {
 }
 
 bool TestEzKdTree_KNearestReturnsKBestSorted() {
-    ez::kdTree<int> tree(2);
+    ez::math::kdTree<int> tree(2);
     tree.put(std::vector<float>{0.0f, 0.0f}, 0);
     tree.put(std::vector<float>{1.0f, 0.0f}, 1);
     tree.put(std::vector<float>{2.0f, 0.0f}, 2);
     tree.put(std::vector<float>{3.0f, 0.0f}, 3);
 
-    std::vector<ez::kdTree<int>::hit> hits;
+    std::vector<ez::math::kdTree<int>::hit> hits;
     tree.nearest(std::vector<float>{0.0f, 0.0f},
                  std::numeric_limits<float>::max(),
                  100, 2, hits);
@@ -139,7 +139,7 @@ bool TestEzKdTree_AgreesWithBruteForceOnSmallSet() {
         {0.1f, 0.1f, 0.1f},
         {4.0f, 4.0f, 4.0f},
     };
-    ez::kdTree<std::size_t> tree(3);
+    ez::math::kdTree<std::size_t> tree(3);
     for (std::size_t i = 0; i < points.size(); ++i) {
         tree.put(points[i], i);
     }
@@ -150,13 +150,13 @@ bool TestEzKdTree_AgreesWithBruteForceOnSmallSet() {
         {-3.0f, 4.0f, 0.0f},
     };
     for (const auto& query : queries) {
-        std::vector<ez::kdTree<std::size_t>::hit> treeHits;
+        std::vector<ez::math::kdTree<std::size_t>::hit> treeHits;
         tree.nearest(query, std::numeric_limits<float>::max(), 100, 3, treeHits);
         const auto bruteHits = bruteForceNearest(points, query, 3);
         CTEST_ASSERT(treeHits.size() == bruteHits.size());
         for (std::size_t i = 0; i < treeHits.size(); ++i) {
             CTEST_ASSERT(treeHits[i].value == bruteHits[i].index);
-            CTEST_ASSERT(ez::isEqual(treeHits[i].squaredDistance, bruteHits[i].squaredDistance, 1e-5f));
+            CTEST_ASSERT(ez::math::isEqual(treeHits[i].squaredDistance, bruteHits[i].squaredDistance, 1e-5f));
         }
     }
     return true;
@@ -164,7 +164,7 @@ bool TestEzKdTree_AgreesWithBruteForceOnSmallSet() {
 
 bool TestEzKdTree_DepthGrowsAfterSplit() {
     // Insert more points than k_leafCapacity to force at least one split.
-    ez::kdTree<int> tree(2);
+    ez::math::kdTree<int> tree(2);
     for (std::size_t i = 0; i < 100; ++i) {
         const float x = static_cast<float>(i);
         tree.put(std::vector<float>{x, x * 0.5f}, static_cast<int>(i));
@@ -175,8 +175,8 @@ bool TestEzKdTree_DepthGrowsAfterSplit() {
 }
 
 bool TestEzKdTree_NearestOnEmptyReturnsNothing() {
-    ez::kdTree<int> tree(3);
-    std::vector<ez::kdTree<int>::hit> hits;
+    ez::math::kdTree<int> tree(3);
+    std::vector<ez::math::kdTree<int>::hit> hits;
     tree.nearest(std::vector<float>{0.0f, 0.0f, 0.0f},
                  std::numeric_limits<float>::max(),
                  100, 3, hits);
@@ -185,9 +185,9 @@ bool TestEzKdTree_NearestOnEmptyReturnsNothing() {
 }
 
 bool TestEzKdTree_NearestRespectsMaxElementsZero() {
-    ez::kdTree<int> tree(2);
+    ez::math::kdTree<int> tree(2);
     tree.put(std::vector<float>{0.0f, 0.0f}, 1);
-    std::vector<ez::kdTree<int>::hit> hits;
+    std::vector<ez::math::kdTree<int>::hit> hits;
     tree.nearest(std::vector<float>{0.0f, 0.0f},
                  std::numeric_limits<float>::max(),
                  100, 0, hits);

@@ -27,6 +27,7 @@ SOFTWARE.
 // ezAABBCC is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 namespace ez {
+namespace math {
 
 template <typename T>
 struct AABBCC  // copy of b2AABB struct
@@ -211,4 +212,5 @@ inline AABBCC<T> operator/(const AABBCC<T>& v, AABBCC<T> f) {
 }
 
 
+}  // namespace math
 }  // namespace ez

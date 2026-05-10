@@ -91,15 +91,15 @@ bool TestEzTile_Discrete_NonZeroMin() {
 
     // getValue(uvec2) expects {lonIndex, latIndex}; internal access is m_datas[lat][lon]
     int16_t v{};
-    CTEST_ASSERT(tile.getValue(ez::uvec2(0u, 0u), v) && v == -50);
-    CTEST_ASSERT(tile.getValue(ez::uvec2(1u, 0u), v) && v == 0);
-    CTEST_ASSERT(tile.getValue(ez::uvec2(0u, 1u), v) && v == 100);
-    CTEST_ASSERT(tile.getValue(ez::uvec2(1u, 1u), v) && v == 200);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(0u, 0u), v) && v == -50);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(1u, 0u), v) && v == 0);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(0u, 1u), v) && v == 100);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(1u, 1u), v) && v == 200);
 
     // Out of range must fail (no wrapping for discrete access)
-    CTEST_ASSERT(!tile.getValue(ez::uvec2(2u, 0u), v));
-    CTEST_ASSERT(!tile.getValue(ez::uvec2(0u, 2u), v));
-    CTEST_ASSERT(!tile.getValue(ez::uvec2(3u, 3u), v));
+    CTEST_ASSERT(!tile.getValue(ez::math::uvec2(2u, 0u), v));
+    CTEST_ASSERT(!tile.getValue(ez::math::uvec2(0u, 2u), v));
+    CTEST_ASSERT(!tile.getValue(ez::math::uvec2(3u, 3u), v));
 
     return true;
 }
@@ -170,14 +170,14 @@ bool TestEzTile_AllNeg_Discrete() {
 
     int16_t v{};
     // getValue(uvec2) expects {lonIndex, latIndex}
-    CTEST_ASSERT(tile.getValue(ez::uvec2(0u, 0u), v) && v == -200);
-    CTEST_ASSERT(tile.getValue(ez::uvec2(1u, 0u), v) && v == -100);
-    CTEST_ASSERT(tile.getValue(ez::uvec2(0u, 1u), v) && v == -50);
-    CTEST_ASSERT(tile.getValue(ez::uvec2(1u, 1u), v) && v == -25);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(0u, 0u), v) && v == -200);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(1u, 0u), v) && v == -100);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(0u, 1u), v) && v == -50);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(1u, 1u), v) && v == -25);
 
     // Out of range must fail (no wrapping)
-    CTEST_ASSERT(!tile.getValue(ez::uvec2(2u, 0u), v));
-    CTEST_ASSERT(!tile.getValue(ez::uvec2(0u, 2u), v));
+    CTEST_ASSERT(!tile.getValue(ez::math::uvec2(2u, 0u), v));
+    CTEST_ASSERT(!tile.getValue(ez::math::uvec2(0u, 2u), v));
     return true;
 }
 
@@ -236,14 +236,14 @@ bool TestEzTile_AllPos_Discrete() {
     CTEST_ASSERT(tile.isValid());
 
     int16_t v{};
-    CTEST_ASSERT(tile.getValue(ez::uvec2(0u, 0u), v) && v == 10);
-    CTEST_ASSERT(tile.getValue(ez::uvec2(1u, 0u), v) && v == 20);
-    CTEST_ASSERT(tile.getValue(ez::uvec2(0u, 1u), v) && v == 30);
-    CTEST_ASSERT(tile.getValue(ez::uvec2(1u, 1u), v) && v == 40);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(0u, 0u), v) && v == 10);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(1u, 0u), v) && v == 20);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(0u, 1u), v) && v == 30);
+    CTEST_ASSERT(tile.getValue(ez::math::uvec2(1u, 1u), v) && v == 40);
 
     // Out-of-range without wrap
-    CTEST_ASSERT(!tile.getValue(ez::uvec2(2u, 0u), v));
-    CTEST_ASSERT(!tile.getValue(ez::uvec2(0u, 2u), v));
+    CTEST_ASSERT(!tile.getValue(ez::math::uvec2(2u, 0u), v));
+    CTEST_ASSERT(!tile.getValue(ez::math::uvec2(0u, 2u), v));
     return true;
 }
 

@@ -27,6 +27,7 @@ SOFTWARE.
 // ezAABB is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 namespace ez {
+namespace math {
 
 template <typename T>
 struct AABB  // copy of b2AABB struct
@@ -252,4 +253,5 @@ inline vec4<T> vecFromAABB(AABB<T> aabb) {
     return vec4<T>(aabb.lowerBound.x, aabb.lowerBound.y, aabb.upperBound.x, aabb.upperBound.y);
 }
 
+}  // namespace math
 }  // namespace ez

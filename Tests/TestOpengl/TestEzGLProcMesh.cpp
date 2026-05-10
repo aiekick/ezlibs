@@ -71,6 +71,33 @@ bool TestEzGL_ProcMesh_ProcDatas_ParameterizedConstructor() {
     return true;
 }
 
+bool TestEzGL_ProcMesh_AccessorsReturnSemanticallyCorrectIds() {
+    CTEST_ASSERT(GLContext::initGLContext());
+    auto sphere = ez::gl::ProcMesh::createUVSphere(1.0, 10, 10);
+    CTEST_ASSERT(sphere != nullptr);
+    CTEST_ASSERT(sphere->isValid());
+
+    const auto vaoId = sphere->GetVaoID();
+    const auto vboId = sphere->GetVboID();
+    const auto iboId = sphere->GetIboID();
+
+    // VAO and buffers live in different GL namespaces, so vaoId may equal
+    // vboId/iboId numerically. Only the two buffer IDs MUST be distinct.
+    CTEST_ASSERT(vaoId != 0U);
+    CTEST_ASSERT(vboId != 0U);
+    CTEST_ASSERT(iboId != 0U);
+    CTEST_ASSERT(vboId != iboId);
+
+    // Semantic check: GL itself classifies each ID. A circular swap of
+    // the accessors would fail at least one of these assertions.
+    CTEST_ASSERT(glIsVertexArray(vaoId) == GL_TRUE);
+    CTEST_ASSERT(glIsBuffer(vboId) == GL_TRUE);
+    CTEST_ASSERT(glIsBuffer(iboId) == GL_TRUE);
+
+    GLContext::unitGLContext();
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 //// ENTRY POINT ///////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -82,5 +109,6 @@ bool TestEzGL_ProcMesh(const std::string& vTest) {
     IfTestExist(TestEzGL_ProcMesh_CreateUVSphere_DifferentRadius);
     IfTestExist(TestEzGL_ProcMesh_ProcDatas_DefaultConstructor);
     IfTestExist(TestEzGL_ProcMesh_ProcDatas_ParameterizedConstructor);
+    IfTestExist(TestEzGL_ProcMesh_AccessorsReturnSemanticallyCorrectIds);
     return false;
 }

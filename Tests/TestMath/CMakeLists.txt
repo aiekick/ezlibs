@@ -21,23 +21,22 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX Src FILES ${PROJECT_TEST_SR
 
 file(GLOB SRC_RECURSE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezExpr.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVec2.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVec3.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVec4.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVecN.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMat2.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMat4.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMatN.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvd.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezEigenSym.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezKdTree.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezRansac.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezEpipolar.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezQuat.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezPlane.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezAABB.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezAABBCC.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezMath.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezVec2.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezVec3.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezVec4.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezVecN.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezMat2.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezMat4.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezMatN.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezSvd.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezEigenSym.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezKdTree.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezRansac.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezQuat.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezPlane.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezAABB.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezAABBCC.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVariant.hpp)
 source_group(TREE ${EZ_LIBS_INCLUDE_DIR}/ezlibs PREFIX Libs FILES ${SRC_RECURSE})
 
@@ -999,25 +998,6 @@ AddTest("TestEzRansac_FitsLineThroughOutlierContaminatedData")
 AddTest("TestEzRansac_AllInliersConvergesQuickly")
 AddTest("TestEzRansac_ProsacReachesSameSolution")
 AddTest("TestEzRansac_DegenerateEstimatorIsSkipped")
-
-##########################################################
-##### TESTS EzEpipolar ###################################
-##########################################################
-
-AddTest("TestEzEpipolar_DecomposeRejectsNonSquare<float>")
-AddTest("TestEzEpipolar_DecomposeRejectsNonSquare<double>")
-AddTest("TestEzEpipolar_DecomposePureXTranslation<float>")
-AddTest("TestEzEpipolar_DecomposePureXTranslation<double>")
-AddTest("TestEzEpipolar_DecomposeProducesProperRotations<float>")
-AddTest("TestEzEpipolar_DecomposeProducesProperRotations<double>")
-AddTest("TestEzEpipolar_TriangulateRejectsBadDimensions<float>")
-AddTest("TestEzEpipolar_TriangulateRejectsBadDimensions<double>")
-AddTest("TestEzEpipolar_TriangulateAxisAlignedCameras<float>")
-AddTest("TestEzEpipolar_TriangulateAxisAlignedCameras<double>")
-AddTest("TestEzEpipolar_CheiralityHandlesEmptySamples<float>")
-AddTest("TestEzEpipolar_CheiralityHandlesEmptySamples<double>")
-AddTest("TestEzEpipolar_CheiralitySelectsCorrectPose<float>")
-AddTest("TestEzEpipolar_CheiralitySelectsCorrectPose<double>")
 
 ##########################################################
 ##### TESTS EzQuat ########################################

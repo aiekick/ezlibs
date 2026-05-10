@@ -64,7 +64,7 @@ int main() {
 #include <fstream>
 #include <sstream>
 
-#include "../ezMath.hpp"
+#include "../ezMath/ezMath.hpp"
 #include "../ezXml.hpp"
 
 namespace ez {
@@ -72,16 +72,16 @@ namespace ez {
 
         class Svg {
         private:
-            ez::uvec2 m_size{800U};
+            ez::math::uvec2 m_size{800U};
             std::vector<ez::xml::Node> m_elements;
             std::vector<ez::xml::Node> m_gradients;
 
         public:
-            Svg(const ez::uvec2 &vSize = 800U) : m_size(vSize) {}
+            Svg(const ez::math::uvec2 &vSize = 800U) : m_size(vSize) {}
 
             void addRectangle(  //
-                    const ez::uvec2 &vMin,
-                    const ez::uvec2 &vMax,
+                    const ez::math::uvec2 &vMin,
+                    const ez::math::uvec2 &vMax,
                     const std::string &fillColor = "none",
                     const std::string &strokeColor = "black",
                     int strokeWidth = 1) {
@@ -95,7 +95,7 @@ namespace ez {
             }
 
             void addText(  //
-                    const ez::uvec2 &vPos,
+                    const ez::math::uvec2 &vPos,
                     const std::string &text,
                     const std::string &color = "black",
                     int32_t fontSize = 16) {
@@ -109,7 +109,7 @@ namespace ez {
             }
 
             void addCircle(  //
-                    const ez::uvec2 &vPos,
+                    const ez::math::uvec2 &vPos,
                     int32_t vRadius,
                     const std::string &fillColor = "none",
                     const std::string &strokeColor = "black",
@@ -123,8 +123,8 @@ namespace ez {
             }
 
             void addLine(  //
-                    const ez::uvec2 &vPos1,  //
-                    const ez::uvec2 &vPos2,  //
+                    const ez::math::uvec2 &vPos1,  //
+                    const ez::math::uvec2 &vPos2,  //
                     const std::string &strokeColor = "black",
                     int32_t strokeWidth = 1) {
                 ez::xml::Node node("line");
@@ -151,8 +151,8 @@ namespace ez {
 
             // Utiliser un d�grad� dans les formes
             void addRectangleWithGradient(//
-                    const ez::uvec2 &vMin,
-                    const ez::uvec2 &vMax,
+                    const ez::math::uvec2 &vMin,
+                    const ez::math::uvec2 &vMax,
                     const std::string &gradientId,
                     const std::string &strokeColor = "black",
                     int32_t strokeWidth = 1) {

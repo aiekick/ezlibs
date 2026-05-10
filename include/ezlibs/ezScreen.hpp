@@ -32,7 +32,7 @@ namespace screen {
 // --- not blocking floor is not float or double ---
 template <typename T>
 inline typename std::enable_if<std::is_floating_point<T>::value, T>::type floor_nb(T v) {
-    return floor<T>(v);
+    return math::floor<T>(v);
 }
 
 template <typename T>
@@ -40,25 +40,25 @@ inline typename std::enable_if<!std::is_floating_point<T>::value, T>::type floor
     return v;
 }
 
-// --- not blocking floor vec4 is not float or double ---
+// --- not blocking floor math::vec4 is not float or double ---
 template <typename T>
-inline typename std::enable_if<std::is_floating_point<T>::value, vec4<T>>::type floor_nb(const vec4<T>& v) {
-    return vec4<T>(static_cast<T>(std::floor(v.x)), static_cast<T>(std::floor(v.y)), static_cast<T>(std::floor(v.z)), static_cast<T>(std::floor(v.w)));
+inline typename std::enable_if<std::is_floating_point<T>::value, math::vec4<T>>::type floor_nb(const math::vec4<T>& v) {
+    return math::vec4<T>(static_cast<T>(std::floor(v.x)), static_cast<T>(std::floor(v.y)), static_cast<T>(std::floor(v.z)), static_cast<T>(std::floor(v.w)));
 }
 
 template <typename T>
-inline typename std::enable_if<!std::is_floating_point<T>::value, vec4<T>>::type floor_nb(const vec4<T>& v) {
+inline typename std::enable_if<!std::is_floating_point<T>::value, math::vec4<T>>::type floor_nb(const math::vec4<T>& v) {
     return v;
 }
 
 template <typename T>
-inline vec4<T> getScreenRectWithSize(vec2<T> vItemSize, vec2<T> vMaxSize) {
-    vec4<T> rc;
+inline math::vec4<T> getScreenRectWithSize(math::vec2<T> vItemSize, math::vec2<T> vMaxSize) {
+    math::vec4<T> rc;
 
-    fvec2 visibleSize = fvec2((float)vMaxSize.x, (float)vMaxSize.y);
+    math::fvec2 visibleSize = math::fvec2((float)vMaxSize.x, (float)vMaxSize.y);
     if (visibleSize.x > 0.0f && visibleSize.y > 0.0f) {
-        fvec2 visibleOrigin;
-        const fvec2 texSize = fvec2((float)vItemSize.x, (float)vItemSize.y);
+        math::fvec2 visibleOrigin;
+        const math::fvec2 texSize = math::fvec2((float)vItemSize.x, (float)vItemSize.y);
 
         // float visibleRatio = visibleSize.x / visibleSize.y;
         const float refRatio = texSize.x / texSize.y;
@@ -96,12 +96,12 @@ inline vec4<T> getScreenRectWithSize(vec2<T> vItemSize, vec2<T> vMaxSize) {
 }
 
 template <typename T>
-inline vec4<T> getScreenRectWithRatio(float vRatio, vec2<T> vMaxSize) {
-    vec4<T> rc;
+inline math::vec4<T> getScreenRectWithRatio(float vRatio, math::vec2<T> vMaxSize) {
+    math::vec4<T> rc;
 
-    fvec2 visibleSize = fvec2((float)vMaxSize.x, (float)vMaxSize.y);
+    math::fvec2 visibleSize = math::fvec2((float)vMaxSize.x, (float)vMaxSize.y);
     if (visibleSize.x > 0.0f && visibleSize.y > 0.0f) {
-        fvec2 visibleOrigin;
+        math::fvec2 visibleOrigin;
 
         const float refRatio = vRatio;
 
@@ -137,10 +137,10 @@ inline vec4<T> getScreenRectWithRatio(float vRatio, vec2<T> vMaxSize) {
     return rc;
 }
 
-inline fvec2 screenToWorld_centered(
-    const fvec2& mousePx,
-    const fvec2& viewportSize,
-    const fvec2& worldCenter,
+inline math::fvec2 screenToWorld_centered(
+    const math::fvec2& mousePx,
+    const math::fvec2& viewportSize,
+    const math::fvec2& worldCenter,
     float sPx,
     bool yDown  // true si Y ecran descend
 ) {
@@ -152,12 +152,12 @@ inline fvec2 screenToWorld_centered(
 
 inline void centeredZoom(
     float factor,  // >1 zoom-in, <1 zoom-out
-    const fvec2& mousePx,
-    const fvec2& viewportSize,
+    const math::fvec2& mousePx,
+    const math::fvec2& viewportSize,
     bool yDown,
     float sFitPx,       // pixels/unit, issu de ton fit
     float& zoom,        // IN/OUT
-    fvec2& worldCenter  // IN/OUT
+    math::fvec2& worldCenter  // IN/OUT
 ) {
     if (factor <= 0.0f || sFitPx <= 0.0f)
         return;
@@ -170,7 +170,7 @@ inline void centeredZoom(
     const float dy = yDown ? (mousePx.y - 0.5f * VH) : (0.5f * VH - mousePx.y);
 
     // point monde sous la souris AVANT zoom
-    const fvec2 worldUnderMouse = {worldCenter.x + dx / sPx_before, worldCenter.y + dy / sPx_before};
+    const math::fvec2 worldUnderMouse = {worldCenter.x + dx / sPx_before, worldCenter.y + dy / sPx_before};
 
     // nouveau zoom
     zoom *= factor;
@@ -181,11 +181,11 @@ inline void centeredZoom(
 }
 
 inline void zoomedTranslation(
-    const fvec2& dragPx,  // delta souris en pixels
+    const math::fvec2& dragPx,  // delta souris en pixels
     bool yDown,
     float sFitPx,
     float zoom,
-    fvec2& worldCenter  // IN/OUT
+    math::fvec2& worldCenter  // IN/OUT
 ) {
     if (sFitPx <= 0.0f || zoom <= 0.0f)
         return;
@@ -199,22 +199,22 @@ inline void zoomedTranslation(
     worldCenter.y -= dy / sPx;
 }
 
-inline float computeFitScalePx(const fvec2& worldMin, const fvec2& worldMax, const fvec2& viewportSize) {
+inline float computeFitScalePx(const math::fvec2& worldMin, const math::fvec2& worldMax, const math::fvec2& viewportSize) {
     const float W = worldMax.x - worldMin.x;
     const float H = worldMax.y - worldMin.y;
     if (W <= 0.0f || H <= 0.0f || viewportSize.x <= 0.0f || viewportSize.y <= 0.0f)
         return 0.0f;
-    const fvec4 rc = getScreenRectWithSize({W, H}, viewportSize);  // {x,y,w,h}
+    const math::fvec4 rc = getScreenRectWithSize({W, H}, viewportSize);  // {x,y,w,h}
     return rc.z / W;                                               // == rc.w / H
 }
 
-// Fit "contain" d'un AABB monde dans un framebuffer en pixels.
+// Fit "contain" d'un math::AABB monde dans un framebuffer en pixels.
 // Mapping utilise : screen = world * scale + originPx
 inline void computeFitToContent(
-    const ez::fvec2& vWorldMin,
-    const ez::fvec2& vWorldMax,
-    const ez::fvec2& vFramebufferSizePx,
-    ez::fvec2& voOriginPx,
+    const ez::math::fvec2& vWorldMin,
+    const ez::math::fvec2& vWorldMax,
+    const ez::math::fvec2& vFramebufferSizePx,
+    ez::math::fvec2& voOriginPx,
     float& voScale,
     float& voInvScale) {
     const float W = vWorldMax.x - vWorldMin.x;

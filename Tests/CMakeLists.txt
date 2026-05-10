@@ -16,6 +16,7 @@ option(TESTING_MISC "Enable testing of Misc related libs" ON)
 option(TESTING_OPENGL "Enable testing of Opengl related libs" ON)
 option(TESTING_TIME "Enable testing of Time related libs" ON)
 option(TESTING_GEO "Enable testing of Geo related libs" ON)
+option(TESTING_VISION "Enable testing of Vision related libs" ON)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -95,6 +96,10 @@ endif()
 
 if (TESTING_GEO)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestGeo)
+endif()
+
+if (TESTING_VISION)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestVision)
 endif()
 
 if (USE_CODE_COVERAGE)

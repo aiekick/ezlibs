@@ -1,5 +1,5 @@
-#include <ezlibs/ezQuat.hpp>
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezQuat.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -15,69 +15,69 @@
 
 template <typename T>
 bool TestEzQuat_DefaultConstructor() {
-    ez::quat<T> q;
+    ez::math::quat<T> q;
     // Default: identity quaternion (0,0,0,1)
-    if (!ez::isEqual(q.x, static_cast<T>(0)))
+    if (!ez::math::isEqual(q.x, static_cast<T>(0)))
         return false;
-    if (!ez::isEqual(q.y, static_cast<T>(0)))
+    if (!ez::math::isEqual(q.y, static_cast<T>(0)))
         return false;
-    if (!ez::isEqual(q.z, static_cast<T>(0)))
+    if (!ez::math::isEqual(q.z, static_cast<T>(0)))
         return false;
-    if (!ez::isEqual(q.w, static_cast<T>(1)))
+    if (!ez::math::isEqual(q.w, static_cast<T>(1)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzQuat_ParameterConstructor() {
-    ez::quat<T> q(1, 2, 3, 4);
-    if (!ez::isEqual(q.x, static_cast<T>(1)))
+    ez::math::quat<T> q(1, 2, 3, 4);
+    if (!ez::math::isEqual(q.x, static_cast<T>(1)))
         return false;
-    if (!ez::isEqual(q.y, static_cast<T>(2)))
+    if (!ez::math::isEqual(q.y, static_cast<T>(2)))
         return false;
-    if (!ez::isEqual(q.z, static_cast<T>(3)))
+    if (!ez::math::isEqual(q.z, static_cast<T>(3)))
         return false;
-    if (!ez::isEqual(q.w, static_cast<T>(4)))
+    if (!ez::math::isEqual(q.w, static_cast<T>(4)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzQuat_Add() {
-    ez::quat<T> q1(1, 2, 3, 4);
-    ez::quat<T> q2(5, 6, 7, 8);
+    ez::math::quat<T> q1(1, 2, 3, 4);
+    ez::math::quat<T> q2(5, 6, 7, 8);
     q1.add(q2);
-    if (!ez::isEqual(q1.x, static_cast<T>(6)))
+    if (!ez::math::isEqual(q1.x, static_cast<T>(6)))
         return false;
-    if (!ez::isEqual(q1.y, static_cast<T>(8)))
+    if (!ez::math::isEqual(q1.y, static_cast<T>(8)))
         return false;
-    if (!ez::isEqual(q1.z, static_cast<T>(10)))
+    if (!ez::math::isEqual(q1.z, static_cast<T>(10)))
         return false;
-    if (!ez::isEqual(q1.w, static_cast<T>(12)))
+    if (!ez::math::isEqual(q1.w, static_cast<T>(12)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzQuat_Sub() {
-    ez::quat<T> q1(10, 20, 30, 40);
-    ez::quat<T> q2(5, 6, 7, 8);
+    ez::math::quat<T> q1(10, 20, 30, 40);
+    ez::math::quat<T> q2(5, 6, 7, 8);
     q1.sub(q2);
-    if (!ez::isEqual(q1.x, static_cast<T>(5)))
+    if (!ez::math::isEqual(q1.x, static_cast<T>(5)))
         return false;
-    if (!ez::isEqual(q1.y, static_cast<T>(14)))
+    if (!ez::math::isEqual(q1.y, static_cast<T>(14)))
         return false;
-    if (!ez::isEqual(q1.z, static_cast<T>(23)))
+    if (!ez::math::isEqual(q1.z, static_cast<T>(23)))
         return false;
-    if (!ez::isEqual(q1.w, static_cast<T>(32)))
+    if (!ez::math::isEqual(q1.w, static_cast<T>(32)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzQuat_Mul() {
-    ez::quat<T> q1(1, 0, 0, 1);
-    ez::quat<T> q2(0, 1, 0, 1);
+    ez::math::quat<T> q1(1, 0, 0, 1);
+    ez::math::quat<T> q2(0, 1, 0, 1);
     q1.mul(q2);
     // Quaternion multiplication is non-commutative
     // q1 * q2 != q2 * q1 in general
@@ -87,43 +87,43 @@ bool TestEzQuat_Mul() {
 
 template <typename T>
 bool TestEzQuat_Conjugate() {
-    ez::quat<T> q1(1, 2, 3, 4);
-    ez::quat<T> q2;
+    ez::math::quat<T> q1(1, 2, 3, 4);
+    ez::math::quat<T> q2;
     q2.conjugate(q1);
-    if (!ez::isEqual(q2.x, static_cast<T>(-1)))
+    if (!ez::math::isEqual(q2.x, static_cast<T>(-1)))
         return false;
-    if (!ez::isEqual(q2.y, static_cast<T>(-2)))
+    if (!ez::math::isEqual(q2.y, static_cast<T>(-2)))
         return false;
-    if (!ez::isEqual(q2.z, static_cast<T>(-3)))
+    if (!ez::math::isEqual(q2.z, static_cast<T>(-3)))
         return false;
-    if (!ez::isEqual(q2.w, static_cast<T>(4)))
+    if (!ez::math::isEqual(q2.w, static_cast<T>(4)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzQuat_Scale() {
-    ez::quat<T> q(1, 2, 3, 4);
+    ez::math::quat<T> q(1, 2, 3, 4);
     q.scale(2);
-    if (!ez::isEqual(q.x, static_cast<T>(2)))
+    if (!ez::math::isEqual(q.x, static_cast<T>(2)))
         return false;
-    if (!ez::isEqual(q.y, static_cast<T>(4)))
+    if (!ez::math::isEqual(q.y, static_cast<T>(4)))
         return false;
-    if (!ez::isEqual(q.z, static_cast<T>(6)))
+    if (!ez::math::isEqual(q.z, static_cast<T>(6)))
         return false;
-    if (!ez::isEqual(q.w, static_cast<T>(8)))
+    if (!ez::math::isEqual(q.w, static_cast<T>(8)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzQuat_GetT() {
-    ez::quat<T> q(2, 3, 4, 5);
-    if (!ez::isEqual(q.getTx(), static_cast<T>(10)))
+    ez::math::quat<T> q(2, 3, 4, 5);
+    if (!ez::math::isEqual(q.getTx(), static_cast<T>(10)))
         return false;
-    if (!ez::isEqual(q.getTy(), static_cast<T>(15)))
+    if (!ez::math::isEqual(q.getTy(), static_cast<T>(15)))
         return false;
-    if (!ez::isEqual(q.getTz(), static_cast<T>(20)))
+    if (!ez::math::isEqual(q.getTz(), static_cast<T>(20)))
         return false;
     return true;
 }

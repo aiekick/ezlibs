@@ -36,7 +36,7 @@ SOFTWARE.
 #include "ezTile.hpp"
 #include "../ezStackString.hpp"
 #include "../ezBinBuf.hpp"
-#include "../ezMath.hpp"
+#include "../ezMath/ezMath.hpp"
 
 namespace ez {
 namespace geo {

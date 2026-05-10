@@ -1,4 +1,4 @@
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 #include <ezlibs/ezCTest.hpp>
 #include <string>
 
@@ -39,7 +39,7 @@ bool TestEzScreen_FloorNb_Scalar_Int_NoOp() {
 }
 
 bool TestEzScreen_FloorNb_Vec4_Float() {
-    ez::vec4<float> v{3.9f, -2.1f, 5.0f, 0.0001f};
+    ez::math::vec4<float> v{3.9f, -2.1f, 5.0f, 0.0001f};
     auto r = ez::screen::floor_nb<float>(v);
     CTEST_ASSERT(r.x == 3.0f);
     CTEST_ASSERT(r.y == -3.0f);
@@ -49,7 +49,7 @@ bool TestEzScreen_FloorNb_Vec4_Float() {
 }
 
 bool TestEzScreen_FloorNb_Vec4_Int_NoOp() {
-    ez::vec4<int> v{3, -2, 5, 0};
+    ez::math::vec4<int> v{3, -2, 5, 0};
     auto r = ez::screen::floor_nb<int>(v);
     CTEST_ASSERT(r.x == 3);
     CTEST_ASSERT(r.y == -2);
@@ -60,8 +60,8 @@ bool TestEzScreen_FloorNb_Vec4_Int_NoOp() {
 
 bool TestEzScreen_GetScreenRectWithSize_Pillarbox() {
     // item 50x100 dans viewport 300x300 -> newX=150 < 300 => bandes verticales (pillarbox)
-    ez::fvec2 item{50.f, 100.f};
-    ez::fvec2 maxs{300.f, 300.f};
+    ez::math::fvec2 item{50.f, 100.f};
+    ez::math::fvec2 maxs{300.f, 300.f};
     auto rc = ez::screen::getScreenRectWithSize<float>(item, maxs);
     CTEST_ASSERT(rc.x == 75.0f);  // (300-150)/2
     CTEST_ASSERT(rc.y == 0.0f);
@@ -72,8 +72,8 @@ bool TestEzScreen_GetScreenRectWithSize_Pillarbox() {
 
 bool TestEzScreen_GetScreenRectWithSize_Letterbox() {
     // item 100x50 dans viewport 300x300 -> newX=600 > 300 => bandes horizontales (letterbox)
-    ez::fvec2 item{100.f, 50.f};
-    ez::fvec2 maxs{300.f, 300.f};
+    ez::math::fvec2 item{100.f, 50.f};
+    ez::math::fvec2 maxs{300.f, 300.f};
     auto rc = ez::screen::getScreenRectWithSize<float>(item, maxs);
     CTEST_ASSERT(rc.x == 0.0f);
     CTEST_ASSERT(rc.y == 75.0f);  // (300-150)/2
@@ -84,7 +84,7 @@ bool TestEzScreen_GetScreenRectWithSize_Letterbox() {
 
 bool TestEzScreen_GetScreenRectWithRatio_2dot0_Letterbox() {
     // ratio 2.0 dans viewport 300x300 -> identique au cas item 100x50
-    ez::fvec2 maxs{300.f, 300.f};
+    ez::math::fvec2 maxs{300.f, 300.f};
     auto rc = ez::screen::getScreenRectWithRatio<float>(2.0f, maxs);
     CTEST_ASSERT(rc.x == 0.0f);
     CTEST_ASSERT(rc.y == 75.0f);
@@ -95,7 +95,7 @@ bool TestEzScreen_GetScreenRectWithRatio_2dot0_Letterbox() {
 
 bool TestEzScreen_GetScreenRectWithRatio_0dot5_Pillarbox() {
     // ratio 0.5 dans viewport 300x300 -> identique au cas item 50x100
-    ez::fvec2 maxs{300.f, 300.f};
+    ez::math::fvec2 maxs{300.f, 300.f};
     auto rc = ez::screen::getScreenRectWithRatio<float>(0.5f, maxs);
     CTEST_ASSERT(rc.x == 75.0f);
     CTEST_ASSERT(rc.y == 0.0f);
@@ -105,9 +105,9 @@ bool TestEzScreen_GetScreenRectWithRatio_0dot5_Pillarbox() {
 }
 
 bool TestEzScreen_ScreenToWorld_Centered_YDown_And_YUp() {
-    const ez::fvec2 viewport{200.f, 100.f};
-    const ez::fvec2 mouseCenter{100.f, 50.f};
-    ez::fvec2 worldCenter{0.f, 0.f};
+    const ez::math::fvec2 viewport{200.f, 100.f};
+    const ez::math::fvec2 mouseCenter{100.f, 50.f};
+    ez::math::fvec2 worldCenter{0.f, 0.f};
     const float sPx = 10.0f;
 
     // À centre -> monde == centre
@@ -120,7 +120,7 @@ bool TestEzScreen_ScreenToWorld_Centered_YDown_And_YUp() {
     CTEST_ASSERT(std::abs(w2.y - 0.0f) < 1e-6f);
 
     // Point décalé (150,50) -> dx=50, dy=0
-    ez::fvec2 mouseRight{150.f, 50.f};
+    ez::math::fvec2 mouseRight{150.f, 50.f};
     auto w3 = ez::screen::screenToWorld_centered(mouseRight, viewport, worldCenter, sPx, true);
     CTEST_ASSERT(std::abs(w3.x - 5.0f) < 1e-6f);
     CTEST_ASSERT(std::abs(w3.y - 0.0f) < 1e-6f);
@@ -129,13 +129,13 @@ bool TestEzScreen_ScreenToWorld_Centered_YDown_And_YUp() {
 }
 
 bool TestEzScreen_CenteredZoom_KeepPointUnderMouse() {
-    const ez::fvec2 viewport{200.f, 100.f};
-    const ez::fvec2 mouse{150.f, 50.f};  // dx=50, dy=0
+    const ez::math::fvec2 viewport{200.f, 100.f};
+    const ez::math::fvec2 mouse{150.f, 50.f};  // dx=50, dy=0
     const bool yDown = true;
     const float sFitPx = 10.0f;
 
     float zoom = 1.0f;
-    ez::fvec2 center{0.f, 0.f};
+    ez::math::fvec2 center{0.f, 0.f};
 
     // avant : sPx = 10, worldUnderMouse = (5,0)
     ez::screen::centeredZoom(2.0f, mouse, viewport, yDown, sFitPx, zoom, center);
@@ -151,9 +151,9 @@ bool TestEzScreen_ZoomedTranslation_YDown() {
     const bool yDown = true;
     const float sFitPx = 10.0f;
     const float zoom = 2.0f;  // sPx = 20
-    ez::fvec2 center{0.f, 0.f};
+    ez::math::fvec2 center{0.f, 0.f};
 
-    ez::fvec2 drag{20.f, -10.f};  // dx=20, dy=-10 (yDown)
+    ez::math::fvec2 drag{20.f, -10.f};  // dx=20, dy=-10 (yDown)
     ez::screen::zoomedTranslation(drag, yDown, sFitPx, zoom, center);
 
     // centre -= (dx/sPx, dy/sPx) => (-1.0, +0.5)
@@ -163,9 +163,9 @@ bool TestEzScreen_ZoomedTranslation_YDown() {
 }
 
 bool TestEzScreen_ComputeFitScalePx() {
-    ez::fvec2 worldMin{0.f, 0.f};
-    ez::fvec2 worldMax{100.f, 50.f};
-    ez::fvec2 viewport{300.f, 300.f};
+    ez::math::fvec2 worldMin{0.f, 0.f};
+    ez::math::fvec2 worldMax{100.f, 50.f};
+    ez::math::fvec2 viewport{300.f, 300.f};
     float sPx = ez::screen::computeFitScalePx(worldMin, worldMax, viewport);
     // attendu : 3 (car rc.z = 300 pour W=100)
     CTEST_ASSERT(std::abs(sPx - 3.0f) < 1e-6f);
@@ -173,11 +173,11 @@ bool TestEzScreen_ComputeFitScalePx() {
 }
 
 bool TestEzScreen_ComputeFitToContent() {
-    ez::fvec2 worldMin{0.f, 0.f};
-    ez::fvec2 worldMax{100.f, 50.f};
-    ez::fvec2 framebuffer{300.f, 300.f};
+    ez::math::fvec2 worldMin{0.f, 0.f};
+    ez::math::fvec2 worldMax{100.f, 50.f};
+    ez::math::fvec2 framebuffer{300.f, 300.f};
 
-    ez::fvec2 origin{};
+    ez::math::fvec2 origin{};
     float scale = 0.f, inv = 0.f;
 
     ez::screen::computeFitToContent(worldMin, worldMax, framebuffer, origin, scale, inv);

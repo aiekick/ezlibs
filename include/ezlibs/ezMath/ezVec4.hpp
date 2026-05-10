@@ -36,6 +36,7 @@ SOFTWARE.
 #include <type_traits>
 
 namespace ez {
+namespace math {
 
 // Restrict the template to relevant types only (e.g., disable bool)
 template <typename T>
@@ -255,7 +256,7 @@ struct vec4 {
     vec2<T> size() const { return zw(); }
 
     // Length of the vector
-    T length() const { return static_cast<T>(ez::sqrt(lengthSquared())); }
+    T length() const { return static_cast<T>(ez::math::sqrt(lengthSquared())); }
 
     // Squared length of the vector
     T lengthSquared() const { return x * x + y * y + z * z + w * w; }
@@ -290,16 +291,16 @@ struct vec4 {
     T sum() const { return x + y + z + w; }
 
     // Sum of absolute values of components
-    T sumAbs() const { return ez::abs(x) + ez::abs(y) + ez::abs(z) + ez::abs(w); }
+    T sumAbs() const { return ez::math::abs(x) + ez::math::abs(y) + ez::math::abs(z) + ez::math::abs(w); }
 
     // Convert to string
     std::string string(char c = ';') const { return ez::str::toStr(x) + c + ez::str::toStr(y) + c + ez::str::toStr(z) + c + ez::str::toStr(w); }
 
     // Minimum component
-    T mini() const { return ez::mini(x, ez::mini(y, ez::mini(z, w))); }
+    T mini() const { return ez::math::mini(x, ez::math::mini(y, ez::math::mini(z, w))); }
 
     // Maximum component
-    T maxi() const { return ez::maxi(x, ez::maxi(y, ez::maxi(z, w))); }
+    T maxi() const { return ez::math::maxi(x, ez::math::maxi(y, ez::math::maxi(z, w))); }
 };
 
 // Operators for vec4
@@ -457,27 +458,27 @@ inline bool operator!=(T f, vec4<T> v) {
 // Utility functions
 template <typename T>
 inline vec4<T> mini(vec4<T> a, vec4<T> b) {
-    return vec4<T>(ez::mini(a.x, b.x), ez::mini(a.y, b.y), ez::mini(a.z, b.z), ez::mini(a.w, b.w));
+    return vec4<T>(ez::math::mini(a.x, b.x), ez::math::mini(a.y, b.y), ez::math::mini(a.z, b.z), ez::math::mini(a.w, b.w));
 }
 
 template <typename T>
 inline vec4<T> maxi(vec4<T> a, vec4<T> b) {
-    return vec4<T>(ez::maxi(a.x, b.x), ez::maxi(a.y, b.y), ez::maxi(a.z, b.z), ez::maxi(a.w, b.w));
+    return vec4<T>(ez::math::maxi(a.x, b.x), ez::math::maxi(a.y, b.y), ez::math::maxi(a.z, b.z), ez::math::maxi(a.w, b.w));
 }
 
 template <typename T>
 inline vec4<T> floor(vec4<T> a) {
-    return vec4<T>(ez::floor(a.x), ez::floor(a.y), ez::floor(a.z), ez::floor(a.w));
+    return vec4<T>(ez::math::floor(a.x), ez::math::floor(a.y), ez::math::floor(a.z), ez::math::floor(a.w));
 }
 
 template <typename T>
 inline vec4<T> ceil(vec4<T> a) {
-    return vec4<T>(ez::ceil(a.x), ez::ceil(a.y), ez::ceil(a.z), ez::ceil(a.w));
+    return vec4<T>(ez::math::ceil(a.x), ez::math::ceil(a.y), ez::math::ceil(a.z), ez::math::ceil(a.w));
 }
 
 template <typename T>
 inline vec4<T> abs(vec4<T> a) {
-    return vec4<T>(ez::abs(a.x), ez::abs(a.y), ez::abs(a.z), ez::abs(a.w));
+    return vec4<T>(ez::math::abs(a.x), ez::math::abs(a.y), ez::math::abs(a.z), ez::math::abs(a.w));
 }
 
 template <typename T>
@@ -490,17 +491,17 @@ inline vec4<T> sign(vec4<T> a) {
 
 template <typename T>
 inline vec4<T> sin(vec4<T> a) {
-    return vec4<T>(ez::sin(a.x), ez::sin(a.y), ez::sin(a.z), ez::sin(a.w));
+    return vec4<T>(ez::math::sin(a.x), ez::math::sin(a.y), ez::math::sin(a.z), ez::math::sin(a.w));
 }
 
 template <typename T>
 inline vec4<T> cos(vec4<T> a) {
-    return vec4<T>(ez::cos(a.x), ez::cos(a.y), ez::cos(a.z), ez::cos(a.w));
+    return vec4<T>(ez::math::cos(a.x), ez::math::cos(a.y), ez::math::cos(a.z), ez::math::cos(a.w));
 }
 
 template <typename T>
 inline vec4<T> tan(vec4<T> a) {
-    return vec4<T>(ez::tan(a.x), ez::tan(a.y), ez::tan(a.z), ez::tan(a.w));
+    return vec4<T>(ez::math::tan(a.x), ez::math::tan(a.y), ez::math::tan(a.z), ez::math::tan(a.w));
 }
 
 // Type aliases for common vector types
@@ -551,4 +552,5 @@ inline std::ostream& operator<<(std::ostream& vOut, const vec4<T>& vType) {
     return vOut;
 }
 
+}  // namespace math
 }  // namespace ez

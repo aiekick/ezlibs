@@ -1,5 +1,5 @@
-#include <ezlibs/ezRansac.hpp>
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezRansac.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 #include <ezlibs/ezCTest.hpp>
 
 #include <cmath>
@@ -96,9 +96,9 @@ std::vector<point2D> makeLineDataset(
 
 bool TestEzRansac_EmptySamplesReturnFailure() {
     std::vector<point2D> empty;
-    ez::ransacConfig config;
+    ez::math::ransacConfig config;
     config.minModelSamples = 2;
-    auto result = ez::ransac<line2D, point2D>(empty, config, estimateLine, lineInlierTester{0.1f});
+    auto result = ez::math::ransac<line2D, point2D>(empty, config, estimateLine, lineInlierTester{0.1f});
     CTEST_ASSERT(!result.success);
     return true;
 }
@@ -106,9 +106,9 @@ bool TestEzRansac_EmptySamplesReturnFailure() {
 bool TestEzRansac_TooFewSamplesReturnFailure() {
     // Need at least 2 * minModelSamples = 4 samples.
     std::vector<point2D> samples = {{0, 0}, {1, 1}, {2, 2}};
-    ez::ransacConfig config;
+    ez::math::ransacConfig config;
     config.minModelSamples = 2;
-    auto result = ez::ransac<line2D, point2D>(samples, config, estimateLine, lineInlierTester{0.1f});
+    auto result = ez::math::ransac<line2D, point2D>(samples, config, estimateLine, lineInlierTester{0.1f});
     CTEST_ASSERT(!result.success);
     return true;
 }
@@ -116,21 +116,21 @@ bool TestEzRansac_TooFewSamplesReturnFailure() {
 bool TestEzRansac_FitsLineThroughOutlierContaminatedData() {
     // 100 inliers on y = 2x + 1, 30 outliers, small noise.
     auto samples = makeLineDataset(2.0f, 1.0f, 100, 30, 0.01f);
-    ez::ransacConfig config;
+    ez::math::ransacConfig config;
     config.minModelSamples = 2;
     config.confidence = 0.99f;
     config.maxIterations = 5000;
     config.randomSeed = 42;
 
-    auto result = ez::ransac<line2D, point2D>(samples, config, estimateLine, lineInlierTester{0.05f});
+    auto result = ez::math::ransac<line2D, point2D>(samples, config, estimateLine, lineInlierTester{0.05f});
 
     CTEST_ASSERT(result.success);
     // Most of the 100 inliers should be recovered; the bound is loose to
     // tolerate the deterministic-but-arbitrary RNG draw and the noise.
     CTEST_ASSERT(result.inlierIndices.size() >= 90);
     // Slope and intercept should be close to the true values.
-    CTEST_ASSERT(ez::isEqual(result.model.a, 2.0f, 0.05f));
-    CTEST_ASSERT(ez::isEqual(result.model.b, 1.0f, 0.05f));
+    CTEST_ASSERT(ez::math::isEqual(result.model.a, 2.0f, 0.05f));
+    CTEST_ASSERT(ez::math::isEqual(result.model.b, 1.0f, 0.05f));
     return true;
 }
 
@@ -138,12 +138,12 @@ bool TestEzRansac_AllInliersConvergesQuickly() {
     // Perfect noiseless data: the very first valid estimate must match
     // every sample, so the adaptive iteration count drops to 1 immediately.
     auto samples = makeLineDataset(3.0f, -2.0f, 50, 0, 0.0f);
-    ez::ransacConfig config;
+    ez::math::ransacConfig config;
     config.minModelSamples = 2;
     config.maxIterations = 1000;
     config.randomSeed = 7;
 
-    auto result = ez::ransac<line2D, point2D>(samples, config, estimateLine, lineInlierTester{0.001f});
+    auto result = ez::math::ransac<line2D, point2D>(samples, config, estimateLine, lineInlierTester{0.001f});
     CTEST_ASSERT(result.success);
     CTEST_ASSERT(result.inlierIndices.size() == samples.size());
     // The adaptive update should kick in quickly; we don't assert the
@@ -158,14 +158,14 @@ bool TestEzRansac_ProsacReachesSameSolution() {
     // PROSAC degrades to a slightly different sampling order, but it must
     // still find the line.
     auto samples = makeLineDataset(2.0f, 1.0f, 100, 30, 0.01f);
-    ez::ransacConfig config;
+    ez::math::ransacConfig config;
     config.minModelSamples = 2;
     config.confidence = 0.99f;
     config.maxIterations = 5000;
     config.samplesAreSorted = true;
     config.randomSeed = 123;
 
-    auto result = ez::ransac<line2D, point2D>(samples, config, estimateLine, lineInlierTester{0.05f});
+    auto result = ez::math::ransac<line2D, point2D>(samples, config, estimateLine, lineInlierTester{0.05f});
     CTEST_ASSERT(result.success);
     CTEST_ASSERT(result.inlierIndices.size() >= 90);
     return true;
@@ -178,12 +178,12 @@ bool TestEzRansac_DegenerateEstimatorIsSkipped() {
     for (std::size_t i = 0; i < 20; ++i) {
         samples.push_back({1.0f, static_cast<float>(i)});  // all share x = 1
     }
-    ez::ransacConfig config;
+    ez::math::ransacConfig config;
     config.minModelSamples = 2;
     config.maxIterations = 500;
     config.randomSeed = 99;
 
-    auto result = ez::ransac<line2D, point2D>(samples, config, estimateLine, lineInlierTester{0.5f});
+    auto result = ez::math::ransac<line2D, point2D>(samples, config, estimateLine, lineInlierTester{0.5f});
     CTEST_ASSERT(!result.success);
     CTEST_ASSERT(result.iterations == 500);  // stopped on iteration cap
     return true;

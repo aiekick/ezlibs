@@ -27,6 +27,7 @@ SOFTWARE.
 // ezPlane is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 namespace ez {
+namespace math {
 
 template <typename T>
 class plane {
@@ -82,4 +83,5 @@ inline bool is_on_plane(const plane<T>& pln, const vec3<T>& p) {
     return (fabs(dotS<T>(pln.n, p) - pln.d) < std::numeric_limits<T>::epsilon());
 }
 
+}  // namespace math
 }  // namespace ez

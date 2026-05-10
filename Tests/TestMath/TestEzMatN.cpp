@@ -1,5 +1,5 @@
-#include <ezlibs/ezMatN.hpp>
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezMatN.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 #include <ezlibs/ezCTest.hpp>
 
 #ifdef _MSC_VER
@@ -18,7 +18,7 @@
 
 template <typename T>
 bool TestEzMatN_DefaultConstructor() {
-    ez::matN<T> matrix;
+    ez::math::matN<T> matrix;
     CTEST_ASSERT(matrix.rows() == 0);
     CTEST_ASSERT(matrix.columns() == 0);
     CTEST_ASSERT(matrix.size() == 0);
@@ -28,14 +28,14 @@ bool TestEzMatN_DefaultConstructor() {
 
 template <typename T>
 bool TestEzMatN_DimensionConstructor() {
-    ez::matN<T> matrix(3, 4);
+    ez::math::matN<T> matrix(3, 4);
     CTEST_ASSERT(matrix.rows() == 3);
     CTEST_ASSERT(matrix.columns() == 4);
     CTEST_ASSERT(matrix.size() == 12);
     CTEST_ASSERT(!matrix.empty());
     for (std::size_t rowIndex = 0; rowIndex < 3; ++rowIndex) {
         for (std::size_t columnIndex = 0; columnIndex < 4; ++columnIndex) {
-            CTEST_ASSERT(ez::isEqual(matrix(rowIndex, columnIndex), static_cast<T>(0)));
+            CTEST_ASSERT(ez::math::isEqual(matrix(rowIndex, columnIndex), static_cast<T>(0)));
         }
     }
     return true;
@@ -43,12 +43,12 @@ bool TestEzMatN_DimensionConstructor() {
 
 template <typename T>
 bool TestEzMatN_DimensionConstructorWithFillValue() {
-    ez::matN<T> matrix(2, 3, static_cast<T>(7));
+    ez::math::matN<T> matrix(2, 3, static_cast<T>(7));
     CTEST_ASSERT(matrix.rows() == 2);
     CTEST_ASSERT(matrix.columns() == 3);
     for (std::size_t rowIndex = 0; rowIndex < 2; ++rowIndex) {
         for (std::size_t columnIndex = 0; columnIndex < 3; ++columnIndex) {
-            CTEST_ASSERT(ez::isEqual(matrix(rowIndex, columnIndex), static_cast<T>(7)));
+            CTEST_ASSERT(ez::math::isEqual(matrix(rowIndex, columnIndex), static_cast<T>(7)));
         }
     }
     return true;
@@ -56,13 +56,13 @@ bool TestEzMatN_DimensionConstructorWithFillValue() {
 
 template <typename T>
 bool TestEzMatN_Identity() {
-    ez::matN<T> matrix = ez::matN<T>::Identity(3);
+    ez::math::matN<T> matrix = ez::math::matN<T>::Identity(3);
     CTEST_ASSERT(matrix.rows() == 3);
     CTEST_ASSERT(matrix.columns() == 3);
     for (std::size_t rowIndex = 0; rowIndex < 3; ++rowIndex) {
         for (std::size_t columnIndex = 0; columnIndex < 3; ++columnIndex) {
             T expected = (rowIndex == columnIndex) ? static_cast<T>(1) : static_cast<T>(0);
-            CTEST_ASSERT(ez::isEqual(matrix(rowIndex, columnIndex), expected));
+            CTEST_ASSERT(ez::math::isEqual(matrix(rowIndex, columnIndex), expected));
         }
     }
     return true;
@@ -70,12 +70,12 @@ bool TestEzMatN_Identity() {
 
 template <typename T>
 bool TestEzMatN_Zero() {
-    ez::matN<T> matrix = ez::matN<T>::Zero(2, 4);
+    ez::math::matN<T> matrix = ez::math::matN<T>::Zero(2, 4);
     CTEST_ASSERT(matrix.rows() == 2);
     CTEST_ASSERT(matrix.columns() == 4);
     for (std::size_t rowIndex = 0; rowIndex < 2; ++rowIndex) {
         for (std::size_t columnIndex = 0; columnIndex < 4; ++columnIndex) {
-            CTEST_ASSERT(ez::isEqual(matrix(rowIndex, columnIndex), static_cast<T>(0)));
+            CTEST_ASSERT(ez::math::isEqual(matrix(rowIndex, columnIndex), static_cast<T>(0)));
         }
     }
     return true;
@@ -83,19 +83,19 @@ bool TestEzMatN_Zero() {
 
 template <typename T>
 bool TestEzMatN_AccessAndAssign() {
-    ez::matN<T> matrix(2, 3);
+    ez::math::matN<T> matrix(2, 3);
     matrix(0, 0) = static_cast<T>(1);
     matrix(0, 1) = static_cast<T>(2);
     matrix(0, 2) = static_cast<T>(3);
     matrix(1, 0) = static_cast<T>(4);
     matrix(1, 1) = static_cast<T>(5);
     matrix(1, 2) = static_cast<T>(6);
-    CTEST_ASSERT(ez::isEqual(matrix(0, 0), static_cast<T>(1)));
-    CTEST_ASSERT(ez::isEqual(matrix(0, 1), static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(matrix(0, 2), static_cast<T>(3)));
-    CTEST_ASSERT(ez::isEqual(matrix(1, 0), static_cast<T>(4)));
-    CTEST_ASSERT(ez::isEqual(matrix(1, 1), static_cast<T>(5)));
-    CTEST_ASSERT(ez::isEqual(matrix(1, 2), static_cast<T>(6)));
+    CTEST_ASSERT(ez::math::isEqual(matrix(0, 0), static_cast<T>(1)));
+    CTEST_ASSERT(ez::math::isEqual(matrix(0, 1), static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(matrix(0, 2), static_cast<T>(3)));
+    CTEST_ASSERT(ez::math::isEqual(matrix(1, 0), static_cast<T>(4)));
+    CTEST_ASSERT(ez::math::isEqual(matrix(1, 1), static_cast<T>(5)));
+    CTEST_ASSERT(ez::math::isEqual(matrix(1, 2), static_cast<T>(6)));
     return true;
 }
 
@@ -104,7 +104,7 @@ bool TestEzMatN_Transpose() {
     // 2x3 matrix:
     //   [1 2 3]
     //   [4 5 6]
-    ez::matN<T> matrix(2, 3);
+    ez::math::matN<T> matrix(2, 3);
     matrix(0, 0) = static_cast<T>(1);
     matrix(0, 1) = static_cast<T>(2);
     matrix(0, 2) = static_cast<T>(3);
@@ -112,15 +112,15 @@ bool TestEzMatN_Transpose() {
     matrix(1, 1) = static_cast<T>(5);
     matrix(1, 2) = static_cast<T>(6);
 
-    ez::matN<T> transposed = matrix.transpose();
+    ez::math::matN<T> transposed = matrix.transpose();
     CTEST_ASSERT(transposed.rows() == 3);
     CTEST_ASSERT(transposed.columns() == 2);
-    CTEST_ASSERT(ez::isEqual(transposed(0, 0), static_cast<T>(1)));
-    CTEST_ASSERT(ez::isEqual(transposed(1, 0), static_cast<T>(2)));
-    CTEST_ASSERT(ez::isEqual(transposed(2, 0), static_cast<T>(3)));
-    CTEST_ASSERT(ez::isEqual(transposed(0, 1), static_cast<T>(4)));
-    CTEST_ASSERT(ez::isEqual(transposed(1, 1), static_cast<T>(5)));
-    CTEST_ASSERT(ez::isEqual(transposed(2, 1), static_cast<T>(6)));
+    CTEST_ASSERT(ez::math::isEqual(transposed(0, 0), static_cast<T>(1)));
+    CTEST_ASSERT(ez::math::isEqual(transposed(1, 0), static_cast<T>(2)));
+    CTEST_ASSERT(ez::math::isEqual(transposed(2, 0), static_cast<T>(3)));
+    CTEST_ASSERT(ez::math::isEqual(transposed(0, 1), static_cast<T>(4)));
+    CTEST_ASSERT(ez::math::isEqual(transposed(1, 1), static_cast<T>(5)));
+    CTEST_ASSERT(ez::math::isEqual(transposed(2, 1), static_cast<T>(6)));
     return true;
 }
 
@@ -130,31 +130,31 @@ bool TestEzMatN_Multiplication() {
     //   [1 2 3]   [ 7  8]   [ 58  64]
     //   [4 5 6] * [ 9 10] = [139 154]
     //             [11 12]
-    ez::matN<T> left(2, 3);
+    ez::math::matN<T> left(2, 3);
     left(0, 0) = static_cast<T>(1); left(0, 1) = static_cast<T>(2); left(0, 2) = static_cast<T>(3);
     left(1, 0) = static_cast<T>(4); left(1, 1) = static_cast<T>(5); left(1, 2) = static_cast<T>(6);
 
-    ez::matN<T> right(3, 2);
+    ez::math::matN<T> right(3, 2);
     right(0, 0) = static_cast<T>(7);  right(0, 1) = static_cast<T>(8);
     right(1, 0) = static_cast<T>(9);  right(1, 1) = static_cast<T>(10);
     right(2, 0) = static_cast<T>(11); right(2, 1) = static_cast<T>(12);
 
-    ez::matN<T> product = left * right;
+    ez::math::matN<T> product = left * right;
     CTEST_ASSERT(product.rows() == 2);
     CTEST_ASSERT(product.columns() == 2);
-    CTEST_ASSERT(ez::isEqual(product(0, 0), static_cast<T>(58)));
-    CTEST_ASSERT(ez::isEqual(product(0, 1), static_cast<T>(64)));
-    CTEST_ASSERT(ez::isEqual(product(1, 0), static_cast<T>(139)));
-    CTEST_ASSERT(ez::isEqual(product(1, 1), static_cast<T>(154)));
+    CTEST_ASSERT(ez::math::isEqual(product(0, 0), static_cast<T>(58)));
+    CTEST_ASSERT(ez::math::isEqual(product(0, 1), static_cast<T>(64)));
+    CTEST_ASSERT(ez::math::isEqual(product(1, 0), static_cast<T>(139)));
+    CTEST_ASSERT(ez::math::isEqual(product(1, 1), static_cast<T>(154)));
     return true;
 }
 
 template <typename T>
 bool TestEzMatN_MultiplicationDimensionMismatch() {
     // (2x3) * (4x2) → cannot multiply (3 != 4), expect empty result
-    ez::matN<T> left(2, 3, static_cast<T>(1));
-    ez::matN<T> right(4, 2, static_cast<T>(1));
-    ez::matN<T> product = left * right;
+    ez::math::matN<T> left(2, 3, static_cast<T>(1));
+    ez::math::matN<T> right(4, 2, static_cast<T>(1));
+    ez::math::matN<T> product = left * right;
     CTEST_ASSERT(product.empty());
     return true;
 }

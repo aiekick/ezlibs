@@ -75,6 +75,7 @@ SOFTWARE.
 #endif
 
 namespace ez {
+namespace math {
 namespace eigenSym {
 
 template <typename T>
@@ -344,6 +345,7 @@ public:
 };
 
 }  // namespace eigenSym
+}  // namespace math
 }  // namespace ez
 
 #ifdef _MSC_VER

@@ -32,7 +32,7 @@ SOFTWARE.
 #include <string>
 #include <cmath>
 
-#include "ezVec2.hpp"
+#include "ezMath/ezVec2.hpp"
 #include "ezCnt.hpp"
 
 namespace ez {
@@ -41,13 +41,13 @@ class FdGraph {
 public:
     typedef void* UserDatas;
     struct NodeDatas {
-        ez::fvec2 pos;
-        ez::fvec2 force;
+        ez::math::fvec2 pos;
+        ez::math::fvec2 force;
         float mass{1.0f};
         uint32_t connCount{0};
         UserDatas userDatas = nullptr;
         NodeDatas() = default;
-        NodeDatas(const ez::fvec2& vPos, const ez::fvec2& vForce, float vMass) : pos(vPos), force(vForce), mass(vMass) {}
+        NodeDatas(const ez::math::fvec2& vPos, const ez::math::fvec2& vForce, float vMass) : pos(vPos), force(vForce), mass(vMass) {}
     };
     class Node {
     private:
@@ -166,7 +166,7 @@ public:
                     if (dir.emptyAND()) {
                         dir = 0.01f;
                     }
-                    auto force = dir * m_config.forceFactor / ez::dot(dir, dir);
+                    auto force = dir * m_config.forceFactor / ez::math::dot(dir, dir);
                     node_a_ptr->getDatasRef().force -= force * deltaTime;
                     node_b_ptr->getDatasRef().force += force * deltaTime;
                 }

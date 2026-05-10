@@ -47,6 +47,7 @@ SOFTWARE.
 #endif
 
 namespace ez {
+namespace math {
 
 template <typename T>
 class matN {
@@ -139,6 +140,7 @@ public:
     }
 };
 
+}  // namespace math
 }  // namespace ez
 
 #ifdef _MSC_VER

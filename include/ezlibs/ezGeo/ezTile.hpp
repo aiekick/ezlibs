@@ -34,17 +34,19 @@ SOFTWARE.
 #include <type_traits>
 
 #include "ezGeo.hpp"
-#include "../ezMath.hpp"
+#include "../ezMath/ezMath.hpp"
 
 namespace ez {
 
 // --------------------------------------------------------------------------------------
 // Convention used here (critical for consistency):
-// - vec2<geo::dms> stores: x = latitude, y = longitude
+// - math::vec2<geo::dms> stores: x = latitude, y = longitude
 // - Datas container is addressed as m_datas[latIndex][lonIndex]
 //   meaning "rows = latitudes, cols = longitudes"
 // - Grid spacing is 1.0 degree in both latitude and longitude.
 // --------------------------------------------------------------------------------------
+
+namespace math {
 
 template <>
 struct vec2<geo::dms> {
@@ -60,7 +62,9 @@ struct vec2<geo::dms> {
     dvec2 toAngle() const { return dvec2(x.toAngle(), y.toAngle()); }
 };
 
-typedef vec2<geo::dms> dmsCoord;
+}  // namespace math
+
+typedef math::vec2<geo::dms> dmsCoord;
 
 namespace geo {
 
@@ -81,7 +85,7 @@ private:
     dmsCoord m_max;      // max latitude (x) and max longitude (y) in DMS
     uint32_t m_nLats{};  // number of rows (latitude samples)
     uint32_t m_nLons{};  // number of cols (longitude samples)
-    ez::range<TDATAS> m_range;
+    ez::math::range<TDATAS> m_range;
     bool m_valid{false};
 
 public:
@@ -102,7 +106,7 @@ public:
     const dmsCoord& getMaxDms() const { return m_max; }
 
     // range
-    ez::range<TDATAS> getRange() const { return m_range; }
+    ez::math::range<TDATAS> getRange() const { return m_range; }
 
     DatasContainer& getDatasRef() { return m_datas; }
     const DatasContainer& getDatas() const { return m_datas; }
@@ -112,7 +116,7 @@ public:
     // vCoord = {lonIndex, latIndex}
     // Returns the raw TDATAS sample (no int32_terpolation).
     // -----------------------------------------------------------------------------
-    bool getValue(const uvec2& vCoord, TDATAS& voValue) const {
+    bool getValue(const math::uvec2& vCoord, TDATAS& voValue) const {
         if (!m_valid) {
             return false;
         }
@@ -235,7 +239,7 @@ public:
         // If no neighbor and no wrap requested, fallback to nearest neighbor
         if ((!vWrapLat && (iLat + 1 >= static_cast<int32_t>(m_nLats))) || (!vWrapLon && (iLon + 1 >= static_cast<int32_t>(m_nLons)))) {
             TDATAS nearest{};
-            if (!getValue(uvec2(iLon0, iLat0), nearest)) {
+            if (!getValue(math::uvec2(iLon0, iLat0), nearest)) {
                 return false;
             }
             voValue = static_cast<double>(nearest);
@@ -248,10 +252,10 @@ public:
         TDATAS v01{};
         TDATAS v11{};
         bool ok = true;
-        ok &= getValue(uvec2(iLon0, iLat0), v00);
-        ok &= getValue(uvec2(iLon0, iLat1), v10);
-        ok &= getValue(uvec2(iLon1, iLat0), v01);
-        ok &= getValue(uvec2(iLon1, iLat1), v11);
+        ok &= getValue(math::uvec2(iLon0, iLat0), v00);
+        ok &= getValue(math::uvec2(iLon0, iLat1), v10);
+        ok &= getValue(math::uvec2(iLon1, iLat0), v01);
+        ok &= getValue(math::uvec2(iLon1, iLat1), v11);
         if (!ok) {
             return false;
         }

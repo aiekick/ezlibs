@@ -2,7 +2,7 @@
 #include "glContext.h"
 #include <ezlibs/ezGL/ezGL.hpp>
 #include <ezlibs/ezCTest.hpp>
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 
 bool TestEzGL_Texture_CreateEmpty() {
     CTEST_ASSERT(GLContext::initGLContext());
@@ -158,18 +158,18 @@ bool TestEzGL_Texture_SetPixels() {
     CTEST_ASSERT(texture != nullptr);
 
     constexpr size_t len = 5 * 5;
-    std::vector<ez::fvec4> buffer(len);
-    for (auto& it : buffer) { it = ez::fvec4(1.0f, 0.5f, 0.0f, 1.0f); }
+    std::vector<ez::math::fvec4> buffer(len);
+    for (auto& it : buffer) { it = ez::math::fvec4(1.0f, 0.5f, 0.0f, 1.0f); }
 
-    CTEST_ASSERT((texture->setPixels<ez::fvec4, 1>(0, 0, 5, 5, buffer.data())));
+    CTEST_ASSERT((texture->setPixels<ez::math::fvec4, 1>(0, 0, 5, 5, buffer.data())));
 
     buffer.clear();
     CTEST_ASSERT(buffer.empty());
 
-    buffer = texture->getPixels<ez::fvec4, 1>(5, 5);
+    buffer = texture->getPixels<ez::math::fvec4, 1>(5, 5);
     CTEST_ASSERT(!buffer.empty());
 
-    CTEST_ASSERT(buffer[20] == ez::fvec4(1.0f, 0.5f, 0.0f, 1.0f));
+    CTEST_ASSERT(buffer[20] == ez::math::fvec4(1.0f, 0.5f, 0.0f, 1.0f));
 
     GLContext::unitGLContext();
     return true;
@@ -182,30 +182,30 @@ bool TestEzGL_Texture_SetPixels_PartialUpdate() {
 
     // Initialise toute la texture à zéro
     constexpr size_t totalLen = 5 * 5;
-    std::vector<ez::fvec4> zeros(totalLen, ez::fvec4(0.0f, 0.0f, 0.0f, 0.0f));
-    CTEST_ASSERT((texture->setPixels<ez::fvec4, 1>(0, 0, 5, 5, zeros.data())));
+    std::vector<ez::math::fvec4> zeros(totalLen, ez::math::fvec4(0.0f, 0.0f, 0.0f, 0.0f));
+    CTEST_ASSERT((texture->setPixels<ez::math::fvec4, 1>(0, 0, 5, 5, zeros.data())));
 
     // Update partiel sur la zone (1,1) -> (4,4)
     constexpr size_t len = 4 * 4;
-    std::vector<ez::fvec4> buffer(len);
-    for (auto& it : buffer) { it = ez::fvec4(1.0f, 0.5f, 0.0f, 1.0f); }
-    CTEST_ASSERT((texture->setPixels<ez::fvec4, 1>(1, 1, 4, 4, buffer.data())));
+    std::vector<ez::math::fvec4> buffer(len);
+    for (auto& it : buffer) { it = ez::math::fvec4(1.0f, 0.5f, 0.0f, 1.0f); }
+    CTEST_ASSERT((texture->setPixels<ez::math::fvec4, 1>(1, 1, 4, 4, buffer.data())));
 
     // Relecture
-    auto pixels = texture->getPixels<ez::fvec4, 1>(5, 5);
+    auto pixels = texture->getPixels<ez::math::fvec4, 1>(5, 5);
     CTEST_ASSERT(!pixels.empty());
 
     // Row 0 : toute la ligne est intacte (y=0, hors de la zone)
-    CTEST_ASSERT(pixels[0] == ez::fvec4(0.0f, 0.0f, 0.0f, 0.0f));  // (0,0)
-    CTEST_ASSERT(pixels[1] == ez::fvec4(0.0f, 0.0f, 0.0f, 0.0f));  // (1,0)
-    CTEST_ASSERT(pixels[4] == ez::fvec4(0.0f, 0.0f, 0.0f, 0.0f));  // (4,0)
+    CTEST_ASSERT(pixels[0] == ez::math::fvec4(0.0f, 0.0f, 0.0f, 0.0f));  // (0,0)
+    CTEST_ASSERT(pixels[1] == ez::math::fvec4(0.0f, 0.0f, 0.0f, 0.0f));  // (1,0)
+    CTEST_ASSERT(pixels[4] == ez::math::fvec4(0.0f, 0.0f, 0.0f, 0.0f));  // (4,0)
 
     // Row 1 : x=0 intact, x=1..4 modifié
-    CTEST_ASSERT(pixels[5] == ez::fvec4(0.0f, 0.0f, 0.0f, 0.0f));  // (0,1)
-    CTEST_ASSERT(pixels[6] == ez::fvec4(1.0f, 0.5f, 0.0f, 1.0f));  // (1,1)
-    CTEST_ASSERT(pixels[7] == ez::fvec4(1.0f, 0.5f, 0.0f, 1.0f));  // (2,1)
-    CTEST_ASSERT(pixels[8] == ez::fvec4(1.0f, 0.5f, 0.0f, 1.0f));  // (3,1)
-    CTEST_ASSERT(pixels[9] == ez::fvec4(1.0f, 0.5f, 0.0f, 1.0f));  // (4,1)
+    CTEST_ASSERT(pixels[5] == ez::math::fvec4(0.0f, 0.0f, 0.0f, 0.0f));  // (0,1)
+    CTEST_ASSERT(pixels[6] == ez::math::fvec4(1.0f, 0.5f, 0.0f, 1.0f));  // (1,1)
+    CTEST_ASSERT(pixels[7] == ez::math::fvec4(1.0f, 0.5f, 0.0f, 1.0f));  // (2,1)
+    CTEST_ASSERT(pixels[8] == ez::math::fvec4(1.0f, 0.5f, 0.0f, 1.0f));  // (3,1)
+    CTEST_ASSERT(pixels[9] == ez::math::fvec4(1.0f, 0.5f, 0.0f, 1.0f));  // (4,1)
 
     GLContext::unitGLContext();
     return true;

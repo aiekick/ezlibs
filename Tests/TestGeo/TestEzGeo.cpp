@@ -33,7 +33,7 @@ static inline bool approxEqual(double a, double b, double eps = 1e-6) {
 
 bool TestEzGeo_Mercator_Degrees_RoundTrip_Paris() {
     // Paris: lon=2.352222, lat=48.856613
-    ez::dvec2 deg{2.352222, 48.856613};
+    ez::math::dvec2 deg{2.352222, 48.856613};
     auto m = ez::geo::fromDegressToMercatorMeters(deg);   // degrees -> meters
     auto back = ez::geo::fromMercatorMetersToDegrees(m);  // meters -> degrees
     CTEST_ASSERT(approxEqual(back.x, deg.x, 1e-8));
@@ -42,7 +42,7 @@ bool TestEzGeo_Mercator_Degrees_RoundTrip_Paris() {
 }
 
 bool TestEzGeo_Mercator_Degrees_RoundTrip_NYC() {
-    ez::dvec2 deg{-74.0060, 40.7128};
+    ez::math::dvec2 deg{-74.0060, 40.7128};
     auto m = ez::geo::fromDegressToMercatorMeters(deg);
     auto back = ez::geo::fromMercatorMetersToDegrees(m);
     CTEST_ASSERT(approxEqual(back.x, deg.x, 1e-8));
@@ -51,7 +51,7 @@ bool TestEzGeo_Mercator_Degrees_RoundTrip_NYC() {
 }
 
 bool TestEzGeo_Mercator_Degrees_RoundTrip_Sydney() {
-    ez::dvec2 deg{151.2093, -33.8688};
+    ez::math::dvec2 deg{151.2093, -33.8688};
     auto m = ez::geo::fromDegressToMercatorMeters(deg);
     auto back = ez::geo::fromMercatorMetersToDegrees(m);
     CTEST_ASSERT(approxEqual(back.x, deg.x, 1e-8));
@@ -67,7 +67,7 @@ bool TestEzGeo_MercatorYToUnrolledY() {
     const double R = ez::geo::EARTH_RADIUS;
     const double degs[] = {-60.0, -45.0, -10.0, 0.0, 10.0, 45.0, 60.0};
     for (double latDeg : degs) {
-        ez::dvec2 d{0.0, latDeg};
+        ez::math::dvec2 d{0.0, latDeg};
         auto meters = ez::geo::fromDegressToMercatorMeters(d);
         const double unrolled = ez::geo::mercatorYToUnrolledY(meters.y);
         const double phi = latDeg * M_PI / 180.0;

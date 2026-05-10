@@ -1,5 +1,5 @@
 
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 #include <ezlibs/ezGL/camera.hpp>
 #include <ezlibs/ezCTest.hpp>
 
@@ -29,15 +29,15 @@ bool TestEzGL_Camera_TurntableInitialState() {
     const auto target = turntable.getTarget();
     const auto up = turntable.getUp();
     const T tolerance = static_cast<T>(1e-5);
-    CTEST_ASSERT(ez::isEqual(position[0], static_cast<T>(0), tolerance));
-    CTEST_ASSERT(ez::isEqual(position[1], static_cast<T>(0), tolerance));
-    CTEST_ASSERT(ez::isEqual(position[2], static_cast<T>(3), tolerance));
-    CTEST_ASSERT(ez::isEqual(target[0], static_cast<T>(0), tolerance));
-    CTEST_ASSERT(ez::isEqual(target[1], static_cast<T>(0), tolerance));
-    CTEST_ASSERT(ez::isEqual(target[2], static_cast<T>(0), tolerance));
-    CTEST_ASSERT(ez::isEqual(up[0], static_cast<T>(0), tolerance));
-    CTEST_ASSERT(ez::isEqual(up[1], static_cast<T>(1), tolerance));
-    CTEST_ASSERT(ez::isEqual(up[2], static_cast<T>(0), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(position[0], static_cast<T>(0), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(position[1], static_cast<T>(0), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(position[2], static_cast<T>(3), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(target[0], static_cast<T>(0), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(target[1], static_cast<T>(0), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(target[2], static_cast<T>(0), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(up[0], static_cast<T>(0), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(up[1], static_cast<T>(1), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(up[2], static_cast<T>(0), tolerance));
     return true;
 }
 
@@ -49,9 +49,9 @@ bool TestEzGL_Camera_TurntableYawRotatesAroundY() {
     turntable.update();
     const auto position = turntable.getPosition();
     const T tolerance = static_cast<T>(1e-5);
-    CTEST_ASSERT(ez::isEqual(position[0], static_cast<T>(3), tolerance));
-    CTEST_ASSERT(ez::isEqual(position[1], static_cast<T>(0), tolerance));
-    CTEST_ASSERT(ez::isEqual(position[2], static_cast<T>(0), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(position[0], static_cast<T>(3), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(position[1], static_cast<T>(0), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(position[2], static_cast<T>(0), tolerance));
     return true;
 }
 
@@ -65,7 +65,7 @@ bool TestEzGL_Camera_TurntablePitchLiftsEye() {
     // sin(pi/4) * 3 ≈ 2.1213
     const T expectedY = static_cast<T>(std::sin(0.7853981633974483) * 3.0);
     const T tolerance = static_cast<T>(1e-5);
-    CTEST_ASSERT(ez::isEqual(position[1], expectedY, tolerance));
+    CTEST_ASSERT(ez::math::isEqual(position[1], expectedY, tolerance));
     CTEST_ASSERT(position[1] > static_cast<T>(0));
     return true;
 }
@@ -77,10 +77,10 @@ bool TestEzGL_Camera_TurntablePitchIsClamped() {
     turntable.setPitch(static_cast<T>(10.0));  // way above pi/2
     const T limit = static_cast<T>(1.57079632679489661923) - static_cast<T>(0.01);
     const T tolerance = static_cast<T>(1e-5);
-    CTEST_ASSERT(ez::isEqual(turntable.getPitch(), limit, tolerance));
+    CTEST_ASSERT(ez::math::isEqual(turntable.getPitch(), limit, tolerance));
 
     turntable.setPitch(static_cast<T>(-10.0));
-    CTEST_ASSERT(ez::isEqual(turntable.getPitch(), -limit, tolerance));
+    CTEST_ASSERT(ez::math::isEqual(turntable.getPitch(), -limit, tolerance));
     return true;
 }
 
@@ -92,8 +92,8 @@ bool TestEzGL_Camera_TurntableAddYawAndPitchAccumulate() {
     turntable.addPitch(static_cast<T>(0.2));
     turntable.addPitch(static_cast<T>(0.1));
     const T tolerance = static_cast<T>(1e-5);
-    CTEST_ASSERT(ez::isEqual(turntable.getYaw(), static_cast<T>(0.8), tolerance));
-    CTEST_ASSERT(ez::isEqual(turntable.getPitch(), static_cast<T>(0.3), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(turntable.getYaw(), static_cast<T>(0.8), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(turntable.getPitch(), static_cast<T>(0.3), tolerance));
     return true;
 }
 
@@ -102,9 +102,9 @@ bool TestEzGL_Camera_TurntableMultiplyDistance() {
     ez::gl::Camera3DTurntable<T> turntable;  // default distance = 3
     turntable.multiplyDistance(static_cast<T>(2));
     const T tolerance = static_cast<T>(1e-5);
-    CTEST_ASSERT(ez::isEqual(turntable.getDistance(), static_cast<T>(6), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(turntable.getDistance(), static_cast<T>(6), tolerance));
     turntable.multiplyDistance(static_cast<T>(0.25));
-    CTEST_ASSERT(ez::isEqual(turntable.getDistance(), static_cast<T>(1.5), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(turntable.getDistance(), static_cast<T>(1.5), tolerance));
     return true;
 }
 
@@ -114,7 +114,7 @@ bool TestEzGL_Camera_TurntableDistanceClampedToMin() {
     turntable.setMinDistance(static_cast<T>(0.5));
     turntable.setDistance(static_cast<T>(0.1));  // below the min
     const T tolerance = static_cast<T>(1e-5);
-    CTEST_ASSERT(ez::isEqual(turntable.getDistance(), static_cast<T>(0.5), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(turntable.getDistance(), static_cast<T>(0.5), tolerance));
     return true;
 }
 
@@ -124,7 +124,7 @@ bool TestEzGL_Camera_TurntableSetAngleIsAliasForSetYaw() {
     ez::gl::Camera3DTurntable<T> turntable;
     turntable.setAngle(static_cast<T>(0.42));
     const T tolerance = static_cast<T>(1e-5);
-    CTEST_ASSERT(ez::isEqual(turntable.getYaw(), static_cast<T>(0.42), tolerance));
+    CTEST_ASSERT(ez::math::isEqual(turntable.getYaw(), static_cast<T>(0.42), tolerance));
     return true;
 }
 
@@ -137,7 +137,7 @@ bool TestEzGL_Camera_ComputeViewMatrixInstantiates() {
     // the resulting matrix is non-degenerate.
     ez::gl::Camera3DTurntable<T> turntable;
     turntable.update();
-    const ez::mat4<T> viewMatrix = turntable.computeViewMatrix();
+    const ez::math::mat4<T> viewMatrix = turntable.computeViewMatrix();
     bool anyNonZero = false;
     for (int i = 0; i < 16; ++i) {
         if (viewMatrix.data()[i] != T(0)) {

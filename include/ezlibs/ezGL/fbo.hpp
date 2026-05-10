@@ -55,19 +55,19 @@ struct ScalarType {
 
 // Spécialisations pour tes types vec
 template <>
-struct ScalarType<ez::fvec4> {
+struct ScalarType<ez::math::fvec4> {
     using type = float;
 };
 template <>
-struct ScalarType<ez::fvec3> {
+struct ScalarType<ez::math::fvec3> {
     using type = float;
 };
 template <>
-struct ScalarType<ez::fvec2> {
+struct ScalarType<ez::math::fvec2> {
     using type = float;
 };
 template <>
-struct ScalarType<ez::u8vec4> {
+struct ScalarType<ez::math::u8vec4> {
     using type = uint8_t;
 };
 

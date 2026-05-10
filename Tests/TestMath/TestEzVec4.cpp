@@ -1,4 +1,4 @@
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -21,167 +21,167 @@
 
 template <typename T>
 bool TestEzVec4_Offset() {
-    ez::vec4<T> v(1, 2, 3, 4);
-    ez::vec4<T> offsetResult = v.Offset(1, 1, 1, 1);
-    if (!ez::isEqual(offsetResult.x, static_cast<T>(2)))
+    ez::math::vec4<T> v(1, 2, 3, 4);
+    ez::math::vec4<T> offsetResult = v.Offset(1, 1, 1, 1);
+    if (!ez::math::isEqual(offsetResult.x, static_cast<T>(2)))
         return false;
-    if (!ez::isEqual(offsetResult.y, static_cast<T>(3)))
+    if (!ez::math::isEqual(offsetResult.y, static_cast<T>(3)))
         return false;
-    if (!ez::isEqual(offsetResult.z, static_cast<T>(4)))
+    if (!ez::math::isEqual(offsetResult.z, static_cast<T>(4)))
         return false;
-    if (!ez::isEqual(offsetResult.w, static_cast<T>(5)))
+    if (!ez::math::isEqual(offsetResult.w, static_cast<T>(5)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Set() {
-    ez::vec4<T> v;
+    ez::math::vec4<T> v;
     v.Set(4, 5, 6, 7);
-    if (!ez::isEqual(v.x, static_cast<T>(4)))
+    if (!ez::math::isEqual(v.x, static_cast<T>(4)))
         return false;
-    if (!ez::isEqual(v.y, static_cast<T>(5)))
+    if (!ez::math::isEqual(v.y, static_cast<T>(5)))
         return false;
-    if (!ez::isEqual(v.z, static_cast<T>(6)))
+    if (!ez::math::isEqual(v.z, static_cast<T>(6)))
         return false;
-    if (!ez::isEqual(v.w, static_cast<T>(7)))
+    if (!ez::math::isEqual(v.w, static_cast<T>(7)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Negate() {
-    ez::vec4<T> v(1, -2, 3, -4);
-    ez::vec4<T> negateResult = -v;
-    if (!ez::isEqual(negateResult.x, static_cast<T>(-1)))
+    ez::math::vec4<T> v(1, -2, 3, -4);
+    ez::math::vec4<T> negateResult = -v;
+    if (!ez::math::isEqual(negateResult.x, static_cast<T>(-1)))
         return false;
-    if (!ez::isEqual(negateResult.y, static_cast<T>(2)))
+    if (!ez::math::isEqual(negateResult.y, static_cast<T>(2)))
         return false;
-    if (!ez::isEqual(negateResult.z, static_cast<T>(-3)))
+    if (!ez::math::isEqual(negateResult.z, static_cast<T>(-3)))
         return false;
-    if (!ez::isEqual(negateResult.w, static_cast<T>(4)))
+    if (!ez::math::isEqual(negateResult.w, static_cast<T>(4)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_LogicalNot() {
-    ez::vec4<T> v(1, 0, 3, 0);
-    ez::vec4<T> notResult = !v;
-    if (!ez::isEqual(notResult.x, static_cast<T>(0)))
+    ez::math::vec4<T> v(1, 0, 3, 0);
+    ez::math::vec4<T> notResult = !v;
+    if (!ez::math::isEqual(notResult.x, static_cast<T>(0)))
         return false;
-    if (!ez::isEqual(notResult.y, static_cast<T>(1)))
+    if (!ez::math::isEqual(notResult.y, static_cast<T>(1)))
         return false;
-    if (!ez::isEqual(notResult.z, static_cast<T>(0)))
+    if (!ez::math::isEqual(notResult.z, static_cast<T>(0)))
         return false;
-    if (!ez::isEqual(notResult.w, static_cast<T>(1)))
+    if (!ez::math::isEqual(notResult.w, static_cast<T>(1)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_XY() {
-    ez::vec4<T> v(1, 2, 3, 4);
-    ez::vec2<T> xyResult = v.xy();
-    if (!ez::isEqual(xyResult.x, static_cast<T>(1)))
+    ez::math::vec4<T> v(1, 2, 3, 4);
+    ez::math::vec2<T> xyResult = v.xy();
+    if (!ez::math::isEqual(xyResult.x, static_cast<T>(1)))
         return false;
-    if (!ez::isEqual(xyResult.y, static_cast<T>(2)))
+    if (!ez::math::isEqual(xyResult.y, static_cast<T>(2)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_XYZ() {
-    ez::vec4<T> v(1, 2, 3, 4);
-    ez::vec3<T> xyzResult = v.xyz();
-    if (!ez::isEqual(xyzResult.x, static_cast<T>(1)))
+    ez::math::vec4<T> v(1, 2, 3, 4);
+    ez::math::vec3<T> xyzResult = v.xyz();
+    if (!ez::math::isEqual(xyzResult.x, static_cast<T>(1)))
         return false;
-    if (!ez::isEqual(xyzResult.y, static_cast<T>(2)))
+    if (!ez::math::isEqual(xyzResult.y, static_cast<T>(2)))
         return false;
-    if (!ez::isEqual(xyzResult.z, static_cast<T>(3)))
+    if (!ez::math::isEqual(xyzResult.z, static_cast<T>(3)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_ZW() {
-    ez::vec4<T> v(1, 2, 3, 4);
-    ez::vec2<T> zwResult = v.zw();
-    if (!ez::isEqual(zwResult.x, static_cast<T>(3)))
+    ez::math::vec4<T> v(1, 2, 3, 4);
+    ez::math::vec2<T> zwResult = v.zw();
+    if (!ez::math::isEqual(zwResult.x, static_cast<T>(3)))
         return false;
-    if (!ez::isEqual(zwResult.y, static_cast<T>(4)))
+    if (!ez::math::isEqual(zwResult.y, static_cast<T>(4)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Increment() {
-    ez::vec4<T> v(1, 2, 3, 4);
+    ez::math::vec4<T> v(1, 2, 3, 4);
     ++v;
-    if (!ez::isEqual(v.x, static_cast<T>(2)))
+    if (!ez::math::isEqual(v.x, static_cast<T>(2)))
         return false;
-    if (!ez::isEqual(v.y, static_cast<T>(3)))
+    if (!ez::math::isEqual(v.y, static_cast<T>(3)))
         return false;
-    if (!ez::isEqual(v.z, static_cast<T>(4)))
+    if (!ez::math::isEqual(v.z, static_cast<T>(4)))
         return false;
-    if (!ez::isEqual(v.w, static_cast<T>(5)))
+    if (!ez::math::isEqual(v.w, static_cast<T>(5)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Decrement() {
-    ez::vec4<T> v(1, 2, 3, 4);
+    ez::math::vec4<T> v(1, 2, 3, 4);
     --v;
-    if (!ez::isEqual(v.x, static_cast<T>(0)))
+    if (!ez::math::isEqual(v.x, static_cast<T>(0)))
         return false;
-    if (!ez::isEqual(v.y, static_cast<T>(1)))
+    if (!ez::math::isEqual(v.y, static_cast<T>(1)))
         return false;
-    if (!ez::isEqual(v.z, static_cast<T>(2)))
+    if (!ez::math::isEqual(v.z, static_cast<T>(2)))
         return false;
-    if (!ez::isEqual(v.w, static_cast<T>(3)))
+    if (!ez::math::isEqual(v.w, static_cast<T>(3)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Length() {
-    ez::vec4<T> v(1, 2, 3, 4);
-    if (!ez::isEqual(v.length(), static_cast<T>(5.4772255750516612)))
+    ez::math::vec4<T> v(1, 2, 3, 4);
+    if (!ez::math::isEqual(v.length(), static_cast<T>(5.4772255750516612)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Normalize() {
-    ez::vec4<T> v(1, 2, 2, 1);
+    ez::math::vec4<T> v(1, 2, 2, 1);
     v.normalize();
-    if (ez::isDifferent(v.length(), static_cast<T>(1.0)))
+    if (ez::math::isDifferent(v.length(), static_cast<T>(1.0)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Sum() {
-    ez::vec4<T> v(1, 2, 3, 4);
+    ez::math::vec4<T> v(1, 2, 3, 4);
     T sum = v.sum();
-    if (!ez::isEqual(sum, static_cast<T>(10)))
+    if (!ez::math::isEqual(sum, static_cast<T>(10)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_SumAbs() {
-    ez::vec4<T> v(1, -2, 3, -4);
+    ez::math::vec4<T> v(1, -2, 3, -4);
     T sumAbs = v.sumAbs();
-    if (!ez::isEqual(sumAbs, static_cast<T>(10)))
+    if (!ez::math::isEqual(sumAbs, static_cast<T>(10)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_EmptyAND() {
-    ez::vec4<T> v;
+    ez::math::vec4<T> v;
     if (!v.emptyAND())
         return false;
     v.x = 1;
@@ -192,7 +192,7 @@ bool TestEzVec4_EmptyAND() {
 
 template <typename T>
 bool TestEzVec4_EmptyOR() {
-    ez::vec4<T> v(0, 1, 1, 1);
+    ez::math::vec4<T> v(0, 1, 1, 1);
     if (!v.emptyOR())
         return false;
     v.x = 1;
@@ -203,7 +203,7 @@ bool TestEzVec4_EmptyOR() {
 
 template <typename T>
 bool TestEzVec4_String() {
-    ez::vec4<T> v(1, 2, 3, 4);
+    ez::math::vec4<T> v(1, 2, 3, 4);
     const std::string str = v.string();
     if (str != "1;2;3;4")
         return false;
@@ -212,113 +212,113 @@ bool TestEzVec4_String() {
 
 template <typename T>
 bool TestEzVec4_Mini() {
-   const ez::vec4<T> v(1, 2, 3, 4);
+   const ez::math::vec4<T> v(1, 2, 3, 4);
     T mini = v.mini();
-    if (!ez::isEqual(mini, static_cast<T>(1)))
+    if (!ez::math::isEqual(mini, static_cast<T>(1)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Maxi() {
-    ez::vec4<T> v(1, 2, 3, 4);
+    ez::math::vec4<T> v(1, 2, 3, 4);
     T maxi = v.maxi();
-    if (!ez::isEqual(maxi, static_cast<T>(4)))
+    if (!ez::math::isEqual(maxi, static_cast<T>(4)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Equality() {
-    ez::vec4<T> v1(1, 2, 3, 4);
-    ez::vec4<T> v2(1, 2, 3, 4);
-    if (!ez::isEqual(v1, v2))
+    ez::math::vec4<T> v1(1, 2, 3, 4);
+    ez::math::vec4<T> v2(1, 2, 3, 4);
+    if (!ez::math::isEqual(v1, v2))
         return false;
-    ez::vec4<T> v3(5, 6, 7, 8);
-    if (ez::isEqual(v1, v3))
+    ez::math::vec4<T> v3(5, 6, 7, 8);
+    if (ez::math::isEqual(v1, v3))
         return false;
     return true;
 }
 
 template <>
 bool TestEzVec4_Equality<float>() {
-    const ez::vec4<float> v1(1.0f, 2.0f, 3.0f, 4.0f);
-    const ez::vec4<float> v2(1.0f, 2.0f, 3.0f, 4.0f);
-    if (!ez::isEqual(v1, v2))
+    const ez::math::vec4<float> v1(1.0f, 2.0f, 3.0f, 4.0f);
+    const ez::math::vec4<float> v2(1.0f, 2.0f, 3.0f, 4.0f);
+    if (!ez::math::isEqual(v1, v2))
         return false;
-    const ez::vec4<float> v3(5.0f, 2.0f, 3.0f, 4.0f);
-    if (ez::isEqual(v1, v3))
+    const ez::math::vec4<float> v3(5.0f, 2.0f, 3.0f, 4.0f);
+    if (ez::math::isEqual(v1, v3))
         return false;
-    const ez::vec4<float> v4(1.0f, 5.0f, 3.0f, 4.0f);
-    if (ez::isEqual(v1, v4))
+    const ez::math::vec4<float> v4(1.0f, 5.0f, 3.0f, 4.0f);
+    if (ez::math::isEqual(v1, v4))
         return false;
-    const ez::vec4<float> v5(1.0f, 2.0f, 5.0f, 4.0f);
-    if (ez::isEqual(v1, v4))
+    const ez::math::vec4<float> v5(1.0f, 2.0f, 5.0f, 4.0f);
+    if (ez::math::isEqual(v1, v4))
         return false;
-    const ez::vec4<float> v6(1.0f, 2.0f, 3.0f, 5.0f);
-    if (ez::isEqual(v1, v6))
+    const ez::math::vec4<float> v6(1.0f, 2.0f, 3.0f, 5.0f);
+    if (ez::math::isEqual(v1, v6))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Addition() {
-    ez::vec4<T> v1(1, 2, 3, 4);
-    ez::vec4<T> v2(5, 6, 7, 8);
-    ez::vec4<T> result = v1 + v2;
-    if (!ez::isEqual(result.x, static_cast<T>(6)))
+    ez::math::vec4<T> v1(1, 2, 3, 4);
+    ez::math::vec4<T> v2(5, 6, 7, 8);
+    ez::math::vec4<T> result = v1 + v2;
+    if (!ez::math::isEqual(result.x, static_cast<T>(6)))
         return false;
-    if (!ez::isEqual(result.y, static_cast<T>(8)))
+    if (!ez::math::isEqual(result.y, static_cast<T>(8)))
         return false;
-    if (!ez::isEqual(result.z, static_cast<T>(10)))
+    if (!ez::math::isEqual(result.z, static_cast<T>(10)))
         return false;
-    if (!ez::isEqual(result.w, static_cast<T>(12)))
+    if (!ez::math::isEqual(result.w, static_cast<T>(12)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Subtraction() {
-    ez::vec4<T> v1(5, 6, 7, 8);
-    ez::vec4<T> v2(1, 2, 3, 4);
-    ez::vec4<T> result = v1 - v2;
-    if (!ez::isEqual(result.x, static_cast<T>(4)))
+    ez::math::vec4<T> v1(5, 6, 7, 8);
+    ez::math::vec4<T> v2(1, 2, 3, 4);
+    ez::math::vec4<T> result = v1 - v2;
+    if (!ez::math::isEqual(result.x, static_cast<T>(4)))
         return false;
-    if (!ez::isEqual(result.y, static_cast<T>(4)))
+    if (!ez::math::isEqual(result.y, static_cast<T>(4)))
         return false;
-    if (!ez::isEqual(result.z, static_cast<T>(4)))
+    if (!ez::math::isEqual(result.z, static_cast<T>(4)))
         return false;
-    if (!ez::isEqual(result.w, static_cast<T>(4)))
+    if (!ez::math::isEqual(result.w, static_cast<T>(4)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Multiplication() {
-    ez::vec4<T> v(1, 2, 3, 4);
-    ez::vec4<T> result = v * static_cast<T>(2);
-    if (!ez::isEqual(result.x, static_cast<T>(2)))
+    ez::math::vec4<T> v(1, 2, 3, 4);
+    ez::math::vec4<T> result = v * static_cast<T>(2);
+    if (!ez::math::isEqual(result.x, static_cast<T>(2)))
         return false;
-    if (!ez::isEqual(result.y, static_cast<T>(4)))
+    if (!ez::math::isEqual(result.y, static_cast<T>(4)))
         return false;
-    if (!ez::isEqual(result.z, static_cast<T>(6)))
+    if (!ez::math::isEqual(result.z, static_cast<T>(6)))
         return false;
-    if (!ez::isEqual(result.w, static_cast<T>(8)))
+    if (!ez::math::isEqual(result.w, static_cast<T>(8)))
         return false;
     return true;
 }
 
 template <typename T>
 bool TestEzVec4_Division() {
-    ez::vec4<T> v(4, 8, 12, 16);
-    ez::vec4<T> result = v / static_cast<T>(2);
-    if (!ez::isEqual(result.x, static_cast<T>(2)))
+    ez::math::vec4<T> v(4, 8, 12, 16);
+    ez::math::vec4<T> result = v / static_cast<T>(2);
+    if (!ez::math::isEqual(result.x, static_cast<T>(2)))
         return false;
-    if (!ez::isEqual(result.y, static_cast<T>(4)))
+    if (!ez::math::isEqual(result.y, static_cast<T>(4)))
         return false;
-    if (!ez::isEqual(result.z, static_cast<T>(6)))
+    if (!ez::math::isEqual(result.z, static_cast<T>(6)))
         return false;
-    if (!ez::isEqual(result.w, static_cast<T>(8)))
+    if (!ez::math::isEqual(result.w, static_cast<T>(8)))
         return false;
     return true;
 }

@@ -223,12 +223,12 @@ bool TestEzGL_BufferBlock_UBOAuto_Recreate() {
 
     float value = 0.0f;
     CTEST_ASSERT(ubo.getVar("myFloat", value));
-    CTEST_ASSERT(ez::isEqual(value, 42.0f));
+    CTEST_ASSERT(ez::math::isEqual(value, 42.0f));
 
     CTEST_ASSERT(ubo.recreate());
 
     CTEST_ASSERT(ubo.getVar("myFloat", value));
-    CTEST_ASSERT(ez::isEqual(value, 42.0f));
+    CTEST_ASSERT(ez::math::isEqual(value, 42.0f));
 
     GLContext::unitGLContext();
     return true;

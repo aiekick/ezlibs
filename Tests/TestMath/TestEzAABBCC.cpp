@@ -1,7 +1,7 @@
 #include <TestEzAABBCC.h>
-#include <ezlibs/ezMath.hpp>
-#include <ezlibs/ezVec3.hpp>
-#include <ezlibs/ezAABBCC.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
+#include <ezlibs/ezMath/ezVec3.hpp>
+#include <ezlibs/ezMath/ezAABBCC.hpp>
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -23,22 +23,22 @@
 ////////////////////////////////////////////////////////////////////////////
 
 bool TestEzAABBCC_Constructor() {
-    ez::fAABBCC aabb;
+    ez::math::fAABBCC aabb;
     if (aabb.lowerBound.x != 0.0f || aabb.lowerBound.y != 0.0f || aabb.lowerBound.z != 0.0f)
         return false;
     if (aabb.upperBound.x != 0.0f || aabb.upperBound.y != 0.0f || aabb.upperBound.z != 0.0f)
         return false;
 
-    ez::fvec3 lower(1.0f, 2.0f, 3.0f);
-    ez::fvec3 upper(4.0f, 5.0f, 6.0f);
-    ez::fAABBCC aabb2(lower, upper);
+    ez::math::fvec3 lower(1.0f, 2.0f, 3.0f);
+    ez::math::fvec3 upper(4.0f, 5.0f, 6.0f);
+    ez::math::fAABBCC aabb2(lower, upper);
     if (aabb2.lowerBound != lower)
         return false;
     if (aabb2.upperBound != upper)
         return false;
 
     // Test with swapped bounds (should auto-correct)
-    ez::fAABBCC aabb3(upper, lower);
+    ez::math::fAABBCC aabb3(upper, lower);
     if (aabb3.lowerBound != lower)
         return false;
     if (aabb3.upperBound != upper)
@@ -48,11 +48,11 @@ bool TestEzAABBCC_Constructor() {
 }
 
 bool TestEzAABBCC_GetCenter() {
-    ez::fvec3 lower(0.0f, 0.0f, 0.0f);
-    ez::fvec3 upper(10.0f, 20.0f, 30.0f);
-    ez::fAABBCC aabb(lower, upper);
+    ez::math::fvec3 lower(0.0f, 0.0f, 0.0f);
+    ez::math::fvec3 upper(10.0f, 20.0f, 30.0f);
+    ez::math::fAABBCC aabb(lower, upper);
 
-    ez::fvec3 center = aabb.GetCenter();
+    ez::math::fvec3 center = aabb.GetCenter();
     if (center.x != 5.0f || center.y != 10.0f || center.z != 15.0f)
         return false;
 
@@ -60,11 +60,11 @@ bool TestEzAABBCC_GetCenter() {
 }
 
 bool TestEzAABBCC_GetExtents() {
-    ez::fvec3 lower(0.0f, 0.0f, 0.0f);
-    ez::fvec3 upper(10.0f, 20.0f, 30.0f);
-    ez::fAABBCC aabb(lower, upper);
+    ez::math::fvec3 lower(0.0f, 0.0f, 0.0f);
+    ez::math::fvec3 upper(10.0f, 20.0f, 30.0f);
+    ez::math::fAABBCC aabb(lower, upper);
 
-    ez::fvec3 extents = aabb.GetExtents();
+    ez::math::fvec3 extents = aabb.GetExtents();
     if (extents.x != 5.0f || extents.y != 10.0f || extents.z != 15.0f)
         return false;
 
@@ -72,9 +72,9 @@ bool TestEzAABBCC_GetExtents() {
 }
 
 bool TestEzAABBCC_GetPerimeter() {
-    ez::fvec3 lower(0.0f, 0.0f, 0.0f);
-    ez::fvec3 upper(10.0f, 20.0f, 30.0f);
-    ez::fAABBCC aabb(lower, upper);
+    ez::math::fvec3 lower(0.0f, 0.0f, 0.0f);
+    ez::math::fvec3 upper(10.0f, 20.0f, 30.0f);
+    ez::math::fAABBCC aabb(lower, upper);
 
     float perimeter = aabb.GetPerimeter();
     // Perimeter = 2 * (wx + wy + wz) = 2 * (10 + 20 + 30) = 120
@@ -85,11 +85,11 @@ bool TestEzAABBCC_GetPerimeter() {
 }
 
 bool TestEzAABBCC_Size() {
-    ez::fvec3 lower(0.0f, 0.0f, 0.0f);
-    ez::fvec3 upper(10.0f, 20.0f, 30.0f);
-    ez::fAABBCC aabb(lower, upper);
+    ez::math::fvec3 lower(0.0f, 0.0f, 0.0f);
+    ez::math::fvec3 upper(10.0f, 20.0f, 30.0f);
+    ez::math::fAABBCC aabb(lower, upper);
 
-    ez::fvec3 size = aabb.Size();
+    ez::math::fvec3 size = aabb.Size();
     if (size.x != 10.0f || size.y != 20.0f || size.z != 30.0f)
         return false;
 
@@ -97,56 +97,56 @@ bool TestEzAABBCC_Size() {
 }
 
 bool TestEzAABBCC_CombineAABB() {
-    ez::fAABBCC aabb1(ez::fvec3(0.0f, 0.0f, 0.0f), ez::fvec3(10.0f, 10.0f, 10.0f));
-    ez::fAABBCC aabb2(ez::fvec3(5.0f, 5.0f, 5.0f), ez::fvec3(15.0f, 15.0f, 15.0f));
+    ez::math::fAABBCC aabb1(ez::math::fvec3(0.0f, 0.0f, 0.0f), ez::math::fvec3(10.0f, 10.0f, 10.0f));
+    ez::math::fAABBCC aabb2(ez::math::fvec3(5.0f, 5.0f, 5.0f), ez::math::fvec3(15.0f, 15.0f, 15.0f));
 
     aabb1.Combine(aabb2);
 
-    if (aabb1.lowerBound != ez::fvec3(0.0f, 0.0f, 0.0f))
+    if (aabb1.lowerBound != ez::math::fvec3(0.0f, 0.0f, 0.0f))
         return false;
-    if (aabb1.upperBound != ez::fvec3(15.0f, 15.0f, 15.0f))
+    if (aabb1.upperBound != ez::math::fvec3(15.0f, 15.0f, 15.0f))
         return false;
 
     return true;
 }
 
 bool TestEzAABBCC_CombineTwoAABBs() {
-    ez::fAABBCC aabb1(ez::fvec3(0.0f, 0.0f, 0.0f), ez::fvec3(10.0f, 10.0f, 10.0f));
-    ez::fAABBCC aabb2(ez::fvec3(5.0f, 5.0f, 5.0f), ez::fvec3(15.0f, 15.0f, 15.0f));
-    ez::fAABBCC result;
+    ez::math::fAABBCC aabb1(ez::math::fvec3(0.0f, 0.0f, 0.0f), ez::math::fvec3(10.0f, 10.0f, 10.0f));
+    ez::math::fAABBCC aabb2(ez::math::fvec3(5.0f, 5.0f, 5.0f), ez::math::fvec3(15.0f, 15.0f, 15.0f));
+    ez::math::fAABBCC result;
 
     result.Combine(aabb1, aabb2);
 
-    if (result.lowerBound != ez::fvec3(0.0f, 0.0f, 0.0f))
+    if (result.lowerBound != ez::math::fvec3(0.0f, 0.0f, 0.0f))
         return false;
-    if (result.upperBound != ez::fvec3(15.0f, 15.0f, 15.0f))
+    if (result.upperBound != ez::math::fvec3(15.0f, 15.0f, 15.0f))
         return false;
 
     return true;
 }
 
 bool TestEzAABBCC_CombinePoint() {
-    ez::fAABBCC aabb(ez::fvec3(0.0f, 0.0f, 0.0f), ez::fvec3(10.0f, 10.0f, 10.0f));
+    ez::math::fAABBCC aabb(ez::math::fvec3(0.0f, 0.0f, 0.0f), ez::math::fvec3(10.0f, 10.0f, 10.0f));
 
-    aabb.Combine(ez::fvec3(15.0f, 5.0f, 5.0f));
+    aabb.Combine(ez::math::fvec3(15.0f, 5.0f, 5.0f));
 
-    if (aabb.lowerBound != ez::fvec3(0.0f, 0.0f, 0.0f))
+    if (aabb.lowerBound != ez::math::fvec3(0.0f, 0.0f, 0.0f))
         return false;
-    if (aabb.upperBound != ez::fvec3(15.0f, 10.0f, 10.0f))
+    if (aabb.upperBound != ez::math::fvec3(15.0f, 10.0f, 10.0f))
         return false;
 
-    aabb.Combine(ez::fvec3(-5.0f, 5.0f, 5.0f));
+    aabb.Combine(ez::math::fvec3(-5.0f, 5.0f, 5.0f));
 
-    if (aabb.lowerBound != ez::fvec3(-5.0f, 0.0f, 0.0f))
+    if (aabb.lowerBound != ez::math::fvec3(-5.0f, 0.0f, 0.0f))
         return false;
 
     return true;
 }
 
 bool TestEzAABBCC_Contains() {
-    ez::fAABBCC aabb1(ez::fvec3(0.0f, 0.0f, 0.0f), ez::fvec3(10.0f, 10.0f, 10.0f));
-    ez::fAABBCC aabb2(ez::fvec3(2.0f, 2.0f, 2.0f), ez::fvec3(8.0f, 8.0f, 8.0f));
-    ez::fAABBCC aabb3(ez::fvec3(5.0f, 5.0f, 5.0f), ez::fvec3(15.0f, 15.0f, 15.0f));
+    ez::math::fAABBCC aabb1(ez::math::fvec3(0.0f, 0.0f, 0.0f), ez::math::fvec3(10.0f, 10.0f, 10.0f));
+    ez::math::fAABBCC aabb2(ez::math::fvec3(2.0f, 2.0f, 2.0f), ez::math::fvec3(8.0f, 8.0f, 8.0f));
+    ez::math::fAABBCC aabb3(ez::math::fvec3(5.0f, 5.0f, 5.0f), ez::math::fvec3(15.0f, 15.0f, 15.0f));
 
     if (!aabb1.Contains(aabb2))
         return false;
@@ -157,51 +157,51 @@ bool TestEzAABBCC_Contains() {
 }
 
 bool TestEzAABBCC_ContainsPoint() {
-    ez::fAABBCC aabb(ez::fvec3(0.0f, 0.0f, 0.0f), ez::fvec3(10.0f, 10.0f, 10.0f));
+    ez::math::fAABBCC aabb(ez::math::fvec3(0.0f, 0.0f, 0.0f), ez::math::fvec3(10.0f, 10.0f, 10.0f));
 
-    if (!aabb.ContainsPoint(ez::fvec3(5.0f, 5.0f, 5.0f)))
+    if (!aabb.ContainsPoint(ez::math::fvec3(5.0f, 5.0f, 5.0f)))
         return false;
-    if (!aabb.ContainsPoint(ez::fvec3(0.0f, 0.0f, 0.0f)))
+    if (!aabb.ContainsPoint(ez::math::fvec3(0.0f, 0.0f, 0.0f)))
         return false;
-    if (!aabb.ContainsPoint(ez::fvec3(10.0f, 10.0f, 10.0f)))
+    if (!aabb.ContainsPoint(ez::math::fvec3(10.0f, 10.0f, 10.0f)))
         return false;
-    if (aabb.ContainsPoint(ez::fvec3(-1.0f, 5.0f, 5.0f)))
+    if (aabb.ContainsPoint(ez::math::fvec3(-1.0f, 5.0f, 5.0f)))
         return false;
-    if (aabb.ContainsPoint(ez::fvec3(11.0f, 5.0f, 5.0f)))
+    if (aabb.ContainsPoint(ez::math::fvec3(11.0f, 5.0f, 5.0f)))
         return false;
 
     return true;
 }
 
 bool TestEzAABBCC_Operators() {
-    ez::fAABBCC aabb(ez::fvec3(0.0f, 0.0f, 0.0f), ez::fvec3(10.0f, 10.0f, 10.0f));
+    ez::math::fAABBCC aabb(ez::math::fvec3(0.0f, 0.0f, 0.0f), ez::math::fvec3(10.0f, 10.0f, 10.0f));
 
     // Test += operator
-    aabb += ez::fvec3(5.0f, 5.0f, 5.0f);
-    if (aabb.lowerBound != ez::fvec3(5.0f, 5.0f, 5.0f))
+    aabb += ez::math::fvec3(5.0f, 5.0f, 5.0f);
+    if (aabb.lowerBound != ez::math::fvec3(5.0f, 5.0f, 5.0f))
         return false;
-    if (aabb.upperBound != ez::fvec3(15.0f, 15.0f, 15.0f))
+    if (aabb.upperBound != ez::math::fvec3(15.0f, 15.0f, 15.0f))
         return false;
 
     // Test -= operator
-    aabb -= ez::fvec3(5.0f, 5.0f, 5.0f);
-    if (aabb.lowerBound != ez::fvec3(0.0f, 0.0f, 0.0f))
+    aabb -= ez::math::fvec3(5.0f, 5.0f, 5.0f);
+    if (aabb.lowerBound != ez::math::fvec3(0.0f, 0.0f, 0.0f))
         return false;
-    if (aabb.upperBound != ez::fvec3(10.0f, 10.0f, 10.0f))
+    if (aabb.upperBound != ez::math::fvec3(10.0f, 10.0f, 10.0f))
         return false;
 
     // Test *= operator
     aabb *= 2.0f;
-    if (aabb.lowerBound != ez::fvec3(0.0f, 0.0f, 0.0f))
+    if (aabb.lowerBound != ez::math::fvec3(0.0f, 0.0f, 0.0f))
         return false;
-    if (aabb.upperBound != ez::fvec3(20.0f, 20.0f, 20.0f))
+    if (aabb.upperBound != ez::math::fvec3(20.0f, 20.0f, 20.0f))
         return false;
 
     // Test /= operator
     aabb /= 2.0f;
-    if (aabb.lowerBound != ez::fvec3(0.0f, 0.0f, 0.0f))
+    if (aabb.lowerBound != ez::math::fvec3(0.0f, 0.0f, 0.0f))
         return false;
-    if (aabb.upperBound != ez::fvec3(10.0f, 10.0f, 10.0f))
+    if (aabb.upperBound != ez::math::fvec3(10.0f, 10.0f, 10.0f))
         return false;
 
     return true;

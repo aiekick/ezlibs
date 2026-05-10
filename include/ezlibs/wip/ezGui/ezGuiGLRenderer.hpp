@@ -84,27 +84,27 @@ private:
     const std::string vertShader =
         u8R"(
 #version 450
-layout (location = 0) in vec2 Position;
-layout (location = 1) in vec2 UV;
-layout (location = 2) in vec4 Color;
-uniform mat4 uProjMtx;
-out vec2 Frag_UV;
-out vec4 Frag_Color;
+layout (location = 0) in math::vec2 Position;
+layout (location = 1) in math::vec2 UV;
+layout (location = 2) in math::vec4 Color;
+uniform math::mat4 uProjMtx;
+out math::vec2 Frag_UV;
+out math::vec4 Frag_Color;
 void main()
 {
     Frag_UV = UV;
     Frag_Color = Color;
-    gl_Position = uProjMtx * vec4(Position.xy, 0.0, 1.0);
+    gl_Position = uProjMtx * math::vec4(Position.xy, 0.0, 1.0);
 };
 )";
 
     const std::string fragShader =
         u8R"(
 #version 450
-in vec2 Frag_UV;
-in vec4 Frag_Color;
+in math::vec2 Frag_UV;
+in math::vec4 Frag_Color;
 uniform sampler2D uTexture;
-layout (location = 0) out vec4 Out_Color;
+layout (location = 0) out math::vec4 Out_Color;
 void main() {
     Out_Color = Frag_Color * texture(uTexture, Frag_UV.st).a;
 };

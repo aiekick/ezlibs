@@ -1,4 +1,4 @@
-#include <ezlibs/ezMath.hpp>
+#include <ezlibs/ezMath/ezMath.hpp>
 #include <cmath>
 #include <limits>
 
@@ -24,8 +24,8 @@
 // Test for Offset function
 template <typename T>
 bool TestEzVec3_Offset() {
-    ez::vec3<T> v(1, 2, 3);
-    ez::vec3<T> offsetResult = v.Offset(1, 1, 1);
+    ez::math::vec3<T> v(1, 2, 3);
+    ez::math::vec3<T> offsetResult = v.Offset(1, 1, 1);
     if (offsetResult.x != 2)
         return false;
     if (offsetResult.y != 3)
@@ -38,7 +38,7 @@ bool TestEzVec3_Offset() {
 // Test for Set function
 template <typename T>
 bool TestEzVec3_Set() {
-    ez::vec3<T> v;
+    ez::math::vec3<T> v;
     v.Set(4, 5, 6);
     if (v.x != 4)
         return false;
@@ -52,8 +52,8 @@ bool TestEzVec3_Set() {
 // Test for Negate operator
 template <typename T>
 bool TestEzVec3_Negate() {
-    ez::vec3<T> v(1, -2, 3);
-    ez::vec3<T> negateResult = -v;
+    ez::math::vec3<T> v(1, -2, 3);
+    ez::math::vec3<T> negateResult = -v;
     if (negateResult.x != -1)
         return false;
     if (negateResult.y != 2)
@@ -66,8 +66,8 @@ bool TestEzVec3_Negate() {
 // Test for logical NOT operator
 template <typename T>
 bool TestEzVec3_LogicalNot() {
-    ez::vec3<T> v(1, 0, 3);
-    ez::vec3<T> notResult = !v;
+    ez::math::vec3<T> v(1, 0, 3);
+    ez::math::vec3<T> notResult = !v;
     if (notResult.x != 0)
         return false;
     if (notResult.y != 1)
@@ -80,8 +80,8 @@ bool TestEzVec3_LogicalNot() {
 // Test for xy function
 template <typename T>
 bool TestEzVec3_XY() {
-    ez::vec3<T> v(1, 2, 3);
-    ez::vec2<T> xyResult = v.xy();
+    ez::math::vec3<T> v(1, 2, 3);
+    ez::math::vec2<T> xyResult = v.xy();
     if (xyResult.x != 1)
         return false;
     if (xyResult.y != 2)
@@ -92,8 +92,8 @@ bool TestEzVec3_XY() {
 // Test for xz function
 template <typename T>
 bool TestEzVec3_XZ() {
-    ez::vec3<T> v(1, 2, 3);
-    ez::vec2<T> xzResult = v.xz();
+    ez::math::vec3<T> v(1, 2, 3);
+    ez::math::vec2<T> xzResult = v.xz();
     if (xzResult.x != 1)
         return false;
     if (xzResult.y != 3)
@@ -104,8 +104,8 @@ bool TestEzVec3_XZ() {
 // Test for yz function
 template <typename T>
 bool TestEzVec3_YZ() {
-    ez::vec3<T> v(1, 2, 3);
-    ez::vec2<T> yzResult = v.yz();
+    ez::math::vec3<T> v(1, 2, 3);
+    ez::math::vec2<T> yzResult = v.yz();
     if (yzResult.x != 2)
         return false;
     if (yzResult.y != 3)
@@ -116,8 +116,8 @@ bool TestEzVec3_YZ() {
 // Test for yzx function
 template <typename T>
 bool TestEzVec3_YZX() {
-    ez::vec3<T> v(1, 2, 3);
-    ez::vec3<T> yzxResult = v.yzx();
+    ez::math::vec3<T> v(1, 2, 3);
+    ez::math::vec3<T> yzxResult = v.yzx();
     if (yzxResult.x != 2)
         return false;
     if (yzxResult.y != 3)
@@ -130,7 +130,7 @@ bool TestEzVec3_YZX() {
 // Test for Increment operator
 template <typename T>
 bool TestEzVec3_Increment() {
-    ez::vec3<T> v(1, 2, 3);
+    ez::math::vec3<T> v(1, 2, 3);
     ++v;
     if (v.x != 2)
         return false;
@@ -144,7 +144,7 @@ bool TestEzVec3_Increment() {
 // Test for Decrement operator
 template <typename T>
 bool TestEzVec3_Decrement() {
-    ez::vec3<T> v(1, 2, 3);
+    ez::math::vec3<T> v(1, 2, 3);
     --v;
     if (v.x != 0)
         return false;
@@ -158,7 +158,7 @@ bool TestEzVec3_Decrement() {
 // Test for Length function
 template <typename T>
 bool TestEzVec3_Length() {
-    ez::vec3<T> v(3, 4, 0);
+    ez::math::vec3<T> v(3, 4, 0);
     T len = v.length();
     if (len != 5)
         return false;
@@ -167,9 +167,9 @@ bool TestEzVec3_Length() {
 
 template <>
 bool TestEzVec3_Length<float>() {
-    ez::vec3<float> v(3.0f, 4.0f, 0.0f);
+    ez::math::vec3<float> v(3.0f, 4.0f, 0.0f);
     float len = v.length();
-    if (ez::abs(len - 5.0f) > 0.0001f)
+    if (ez::math::abs(len - 5.0f) > 0.0001f)
         return false;
     return true;
 }
@@ -177,9 +177,9 @@ bool TestEzVec3_Length<float>() {
 // Test for Normalize function
 template <typename T>
 bool TestEzVec3_Normalize() {
-    ez::vec3<T> v(3, 4, 0);
+    ez::math::vec3<T> v(3, 4, 0);
     v.normalize();
-    if (ez::isDifferent(v.length(), static_cast<T>(1.0)))
+    if (ez::math::isDifferent(v.length(), static_cast<T>(1.0)))
         return false;
     return true;
 }
@@ -197,7 +197,7 @@ bool TestEzVec3_Normalize<int64_t>() {
 // Test for Sum function
 template <typename T>
 bool TestEzVec3_Sum() {
-    ez::vec3<T> v(1, 2, 3);
+    ez::math::vec3<T> v(1, 2, 3);
     T sum = v.sum();
     if (sum != 6)
         return false;
@@ -207,7 +207,7 @@ bool TestEzVec3_Sum() {
 // Test for SumAbs function
 template <typename T>
 bool TestEzVec3_SumAbs() {
-    ez::vec3<T> v(1, -2, 3);
+    ez::math::vec3<T> v(1, -2, 3);
     T sumAbs = v.sumAbs();
     if (sumAbs != 6)
         return false;
@@ -217,7 +217,7 @@ bool TestEzVec3_SumAbs() {
 // Test for EmptyAND function
 template <typename T>
 bool TestEzVec3_EmptyAND() {
-    ez::vec3<T> v(0, 0, 0);
+    ez::math::vec3<T> v(0, 0, 0);
     if (!v.emptyAND())
         return false;
     v.x = 1;
@@ -229,7 +229,7 @@ bool TestEzVec3_EmptyAND() {
 // Test for EmptyOR function
 template <typename T>
 bool TestEzVec3_EmptyOR() {
-    ez::vec3<T> v(0, 1, 1);
+    ez::math::vec3<T> v(0, 1, 1);
     if (!v.emptyOR())
         return false;
     v.x = 1;
@@ -241,7 +241,7 @@ bool TestEzVec3_EmptyOR() {
 // Test for String conversion
 template <typename T>
 bool TestEzVec3_String() {
-    ez::vec3<T> v(1, 2, 3);
+    ez::math::vec3<T> v(1, 2, 3);
     std::string str = v.string();
     if (str != "1;2;3")
         return false;
@@ -251,8 +251,8 @@ bool TestEzVec3_String() {
 // Test for Mini function
 template <typename T>
 bool TestEzVec3_Mini() {
-    ez::vec3<T> v(1, 2, 3);
-    if (ez::isDifferent(v.mini(), static_cast<T>(1)))
+    ez::math::vec3<T> v(1, 2, 3);
+    if (ez::math::isDifferent(v.mini(), static_cast<T>(1)))
         return false;
     return true;
 }
@@ -260,8 +260,8 @@ bool TestEzVec3_Mini() {
 // Test for Maxi function
 template <typename T>
 bool TestEzVec3_Maxi() {
-    ez::vec3<T> v(1, 2, 3);
-    if (ez::isDifferent(v.maxi(), static_cast<T>(3)))
+    ez::math::vec3<T> v(1, 2, 3);
+    if (ez::math::isDifferent(v.maxi(), static_cast<T>(3)))
         return false;
     return true;
 }
@@ -269,11 +269,11 @@ bool TestEzVec3_Maxi() {
 // Test for Equality operator
 template <typename T>
 bool TestEzVec3_Equality() {
-    ez::vec3<T> v1(1, 2, 3);
-    ez::vec3<T> v2(1, 2, 3);
+    ez::math::vec3<T> v1(1, 2, 3);
+    ez::math::vec3<T> v2(1, 2, 3);
     if (!(v1 == v2))
         return false;
-    ez::vec3<T> v3(4, 5, 6);
+    ez::math::vec3<T> v3(4, 5, 6);
     if (v1 == v3)
         return false;
     return true;
@@ -282,9 +282,9 @@ bool TestEzVec3_Equality() {
 // Test for Arithmetic operators
 template <typename T>
 bool TestEzVec3_Addition() {
-    ez::vec3<T> v1(1, 2, 3);
-    ez::vec3<T> v2(4, 5, 6);
-    ez::vec3<T> result = v1 + v2;
+    ez::math::vec3<T> v1(1, 2, 3);
+    ez::math::vec3<T> v2(4, 5, 6);
+    ez::math::vec3<T> result = v1 + v2;
     if (result.x != 5)
         return false;
     if (result.y != 7)
@@ -296,9 +296,9 @@ bool TestEzVec3_Addition() {
 
 template <typename T>
 bool TestEzVec3_Subtraction() {
-    ez::vec3<T> v1(4, 5, 6);
-    ez::vec3<T> v2(1, 2, 3);
-    ez::vec3<T> result = v1 - v2;
+    ez::math::vec3<T> v1(4, 5, 6);
+    ez::math::vec3<T> v2(1, 2, 3);
+    ez::math::vec3<T> result = v1 - v2;
     if (result.x != 3)
         return false;
     if (result.y != 3)
@@ -310,8 +310,8 @@ bool TestEzVec3_Subtraction() {
 
 template <typename T>
 bool TestEzVec3_Multiplication() {
-    ez::vec3<T> v(1, 2, 3);
-    ez::vec3<T> result = v * static_cast<T>(2);
+    ez::math::vec3<T> v(1, 2, 3);
+    ez::math::vec3<T> result = v * static_cast<T>(2);
     if (result.x != 2)
         return false;
     if (result.y != 4)
@@ -323,8 +323,8 @@ bool TestEzVec3_Multiplication() {
 
 template <typename T>
 bool TestEzVec3_Division() {
-    ez::vec3<T> v(4, 6, 8);
-    ez::vec3<T> result = v / static_cast<T>(2);
+    ez::math::vec3<T> v(4, 6, 8);
+    ez::math::vec3<T> result = v / static_cast<T>(2);
     if (result.x != 2)
         return false;
     if (result.y != 3)

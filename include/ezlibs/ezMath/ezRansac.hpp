@@ -68,6 +68,7 @@ SOFTWARE.
 #endif
 
 namespace ez {
+namespace math {
 
 struct ransacConfig {
     // Minimum number of samples needed to instantiate a model (e.g. 4 for a
@@ -297,6 +298,7 @@ ransacResult<Model> ransac(
     return output;
 }
 
+}  // namespace math
 }  // namespace ez
 
 #ifdef _MSC_VER

@@ -32,9 +32,9 @@ SOFTWARE.
 #include <cmath>
 #include <queue>
 
-// On suppose ici que vous avez déjà une classe/matrice/méthode pour gérer un vec2<T> :
+// On suppose ici que vous avez déjà une classe/matrice/méthode pour gérer un math::vec2<T> :
 // template <typename T>
-// struct vec2 {
+// struct math::vec2 {
 //     T x, y;
 // };
 //
@@ -47,6 +47,7 @@ SOFTWARE.
 
 namespace ez
 {
+namespace math {
 
     /**
      * @brief QuadTree générique permettant d'insérer, de supprimer et de déplacer des points.
@@ -54,7 +55,7 @@ namespace ez
      *
      * @tparam T Type numérique sous-jacent (float, double, etc.)
      *
-     * @warning Nécessite l'existence de vec2<T> (déjà fourni selon l'énoncé).
+     * @warning Nécessite l'existence de math::vec2<T> (déjà fourni selon l'énoncé).
      */
     template <typename T>
     class QuadTree
@@ -82,7 +83,7 @@ namespace ez
          * @param pt Le point à insérer.
          * @return true si l'insertion a réussi, false sinon (hors limite par ex.).
          */
-        bool insert(const vec2<T>& pt)
+        bool insert(const math::vec2<T>& pt)
         {
             return insertImpl(m_root, pt, m_boundary);
         }
@@ -92,7 +93,7 @@ namespace ez
          * @param pt Le point à supprimer.
          * @return true si le point a été trouvé et supprimé, false sinon.
          */
-        bool remove(const vec2<T>& pt)
+        bool remove(const math::vec2<T>& pt)
         {
             return removeImpl(m_root, pt, m_boundary);
         }
@@ -105,7 +106,7 @@ namespace ez
          * @return true si le déplacement a réussi (point trouvé et bien réinséré),
          *         false sinon (point absent ou nouvelle insertion impossible).
          */
-        bool move(const vec2<T>& oldPt, const vec2<T>& newPt)
+        bool move(const math::vec2<T>& oldPt, const math::vec2<T>& newPt)
         {
             if (!remove(oldPt))
                 return false;
@@ -121,22 +122,22 @@ namespace ez
          * @param vMaxNeighbors Nombre maximal de voisins à récupérer.
          * @return Un vecteur des points les plus proches, triés par distance croissante (peut-être moins que vMaxNeighbors si l'arbre ne contient pas assez de points).
          */
-        std::vector<vec2<T>> getNNeighboors(const vec2<T>& pt, std::size_t vMaxNeighbors) const
+        std::vector<math::vec2<T>> getNNeighboors(const math::vec2<T>& pt, std::size_t vMaxNeighbors) const
         {
             // On pourrait optimiser la recherche par région,
             // mais voici une version simple qui parcourt l'ensemble des points.
-            std::vector<vec2<T>> allPoints;
+            std::vector<math::vec2<T>> allPoints;
             collectAllPoints(m_root, allPoints);
 
             // On trie par distance
-            auto distanceSq = [&](const vec2<T>& p1, const vec2<T>& p2)
+            auto distanceSq = [&](const math::vec2<T>& p1, const math::vec2<T>& p2)
             {
                 T dx = p1.x - p2.x;
                 T dy = p1.y - p2.y;
                 return dx * dx + dy * dy;
             };
 
-            std::sort(allPoints.begin(), allPoints.end(), [&](const vec2<T>& a, const vec2<T>& b)
+            std::sort(allPoints.begin(), allPoints.end(), [&](const math::vec2<T>& a, const math::vec2<T>& b)
             {
                 return distanceSq(a, pt) < distanceSq(b, pt);
             });
@@ -156,7 +157,7 @@ namespace ez
             T xMin, xMax;
             T yMin, yMax;
 
-            bool contains(const vec2<T>& p) const
+            bool contains(const math::vec2<T>& p) const
             {
                 return (p.x >= xMin && p.x <= xMax &&
                         p.y >= yMin && p.y <= yMax);
@@ -169,7 +170,7 @@ namespace ez
         struct Node
         {
             // Points stockés dans ce noeud (si pas subdivisé ou si capacité non dépassée).
-            std::vector<vec2<T>> points;
+            std::vector<math::vec2<T>> points;
 
             // Fils du noeud (quad subdivision). S'ils sont non-nuls, on est subdivisé.
             Node* children[4] = {nullptr, nullptr, nullptr, nullptr};
@@ -189,7 +190,7 @@ namespace ez
         /**
          * @brief Insère un point dans l'arbre à partir d'un noeud donné et d'une boundary connue.
          */
-        bool insertImpl(Node*& node, const vec2<T>& pt, const Boundary& boundary)
+        bool insertImpl(Node*& node, const math::vec2<T>& pt, const Boundary& boundary)
         {
             // Si le point n'est pas dans la boundary, on ne l'insère pas
             if (!boundary.contains(pt))
@@ -231,7 +232,7 @@ namespace ez
         /**
          * @brief Supprime un point à partir d'un noeud donné si présent.
          */
-        bool removeImpl(Node*& node, const vec2<T>& pt, const Boundary& boundary)
+        bool removeImpl(Node*& node, const math::vec2<T>& pt, const Boundary& boundary)
         {
             if (!node)
                 return false;
@@ -283,7 +284,7 @@ namespace ez
             }
 
             // Redistribue les points existants dans le noeud vers ses enfants
-            std::vector<vec2<T>> oldPoints = node->points;
+            std::vector<math::vec2<T>> oldPoints = node->points;
             node->points.clear();
 
             for (auto& pt : oldPoints)
@@ -382,7 +383,7 @@ namespace ez
         /**
          * @brief Récupère tous les points (récursivement) d'un sous-arbre.
          */
-        void collectAllPoints(const Node* node, std::vector<vec2<T>>& outPoints) const
+        void collectAllPoints(const Node* node, std::vector<math::vec2<T>>& outPoints) const
         {
             if (!node)
                 return;
@@ -401,6 +402,7 @@ namespace ez
         std::size_t m_capacity = 4;    ///< Capacité de chaque noeud avant subdivision
     };
 
+} // namespace math
 } // namespace ez
 
 /*

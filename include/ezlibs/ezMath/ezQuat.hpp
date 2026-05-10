@@ -29,6 +29,7 @@ SOFTWARE.
 #include <type_traits> // static_assert
 
 namespace ez {
+namespace math {
     	
 template <typename T>
 struct quat {
@@ -89,4 +90,5 @@ struct quat {
 typedef quat<float> fquat;
 typedef quat<double> dquat;
 
+}  // namespace math
 }  // namespace ez

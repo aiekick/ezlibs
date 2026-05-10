@@ -95,9 +95,9 @@ public:
 public:
     Mesh() = default;
     virtual ~Mesh() { unit(); }
-    uint32_t GetVaoID() { return m_VboId; }
-    uint32_t GetVboID() { return m_IboId; }
-    uint32_t GetIboID() { return m_VaoId; }
+    uint32_t GetVaoID() { return m_VaoId; }
+    uint32_t GetVboID() { return m_VboId; }
+    uint32_t GetIboID() { return m_IboId; }
     bool isValid() const { return (glIsVertexArray(m_VaoId) == GL_TRUE); }
     bool init(
         std::vector<T> vVertices,

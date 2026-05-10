@@ -33,7 +33,7 @@ SOFTWARE.
 #include <iomanip>
 #include <utility>  // std::pair
 
-#include "../ezMath.hpp"
+#include "../ezMath/ezMath.hpp"
 
 namespace ez {
 namespace geo {
@@ -42,8 +42,8 @@ namespace geo {
 constexpr double EARTH_RADIUS = 6378137.0;
 
 // Convert Mercator coordinates (x,y in meters) -> (lon,lat) in degrees
-inline ez::dvec2 fromMercatorMetersToDegrees(const ez::dvec2& vPointMeters) {
-    ez::dvec2 ret;
+inline ez::math::dvec2 fromMercatorMetersToDegrees(const ez::math::dvec2& vPointMeters) {
+    ez::math::dvec2 ret;
     double lonRad = vPointMeters.x / EARTH_RADIUS;
     double latRad = 2.0 * std::atan(std::exp(vPointMeters.y / EARTH_RADIUS)) - M_PI / 2.0;
     ret.x = lonRad * 180.0 / M_PI;
@@ -52,8 +52,8 @@ inline ez::dvec2 fromMercatorMetersToDegrees(const ez::dvec2& vPointMeters) {
 }
 
 // Convert (lon,lat) in degrees -> Mercator coordinates (x,y) in meters
-inline ez::dvec2 fromDegressToMercatorMeters(const ez::dvec2& vPointDegree) {
-    ez::dvec2 ret{vPointDegree};
+inline ez::math::dvec2 fromDegressToMercatorMeters(const ez::math::dvec2& vPointDegree) {
+    ez::math::dvec2 ret{vPointDegree};
     // Clamp latitude to avoid infinities at the poles
     const double maxLat = 89.9999;
     if (ret.y > maxLat)
@@ -117,7 +117,7 @@ inline bool checkDemFileName(const std::string& vFileName, std::string& voLat, s
         const char clat = sLat.at(0);
         if (clat == 'S' || clat == 's' || clat == 'N' || clat == 'n') {
             const auto& nLat = sLat.substr(1);
-            if (!ez::isInteger(nLat)) {
+            if (!ez::math::isInteger(nLat)) {
                 ret = false;
             }
         } else {
@@ -127,7 +127,7 @@ inline bool checkDemFileName(const std::string& vFileName, std::string& voLat, s
         const char cLon = sLon.at(0);
         if (cLon == 'E' || cLon == 'e' || cLon == 'W' || cLon == 'w') {
             const auto& cx_num = sLon.substr(1);
-            if (!ez::isInteger(cx_num)) {
+            if (!ez::math::isInteger(cx_num)) {
                 ret = false;
             }
         } else {
@@ -207,7 +207,7 @@ struct dms {
     // Adds degrees, pushes fractional part to minutes, then wraps if lat/lon.
     dms& offsetDeg(float vDeg) {
         // 0) First, purge any existing fractional degrees -> push into minutes
-        const float dIntExisting  = ez::floor(deg);
+        const float dIntExisting  = ez::math::floor(deg);
         const float dFracExisting = deg - dIntExisting;
         deg = dIntExisting;
         if (dFracExisting != 0.0f) {
@@ -216,7 +216,7 @@ struct dms {
         }
 
         // 1) Split input degrees: integer to deg, fractional cascades to min/sec
-        const float dInt  = ez::floor(vDeg);
+        const float dInt  = ez::math::floor(vDeg);
         const float dFrac = vDeg - dInt;
         deg += dInt;
 
@@ -226,32 +226,32 @@ struct dms {
         }
 
         // 2) Normalize seconds -> minutes
-        const float carryMin = ez::floor(sec / 60.0f);
+        const float carryMin = ez::math::floor(sec / 60.0f);
         sec -= carryMin * 60.0f;
         min += carryMin;
 
         // 3) Ensure 'min' is integer: push fractional residue into seconds
-        const float minFrac = min - ez::floor(min);
+        const float minFrac = min - ez::math::floor(min);
         if (minFrac != 0.0f) {
-            min = ez::floor(min);
+            min = ez::math::floor(min);
             sec += minFrac * 60.0f;
 
             // Re-normalize seconds
-            const float carryMin2 = ez::floor(sec / 60.0f);
+            const float carryMin2 = ez::math::floor(sec / 60.0f);
             sec -= carryMin2 * 60.0f;
             min += carryMin2;
         }
 
         // 4) Carry minutes into degrees
-        const float carryDeg = ez::floor(min / 60.0f);
+        const float carryDeg = ez::math::floor(min / 60.0f);
         min -= carryDeg * 60.0f;
         deg += carryDeg;
 
         // 5) Optional wrap
         if (isLat()) {
-            deg = ez::mod(deg, 90.0f);
+            deg = ez::math::mod(deg, 90.0f);
         } else if (isLon()) {
-            deg = ez::mod(deg, 180.0f);
+            deg = ez::math::mod(deg, 180.0f);
         }
         return *this;
     }
@@ -259,7 +259,7 @@ struct dms {
     // Adds minutes, normalizes into [0,60), carries into degrees, wraps if needed.
     dms& offsetMin(float vMin) {
         // 1) Split input minutes: integer part goes to minutes, fractional to seconds
-        const float mInt  = ez::floor(vMin);
+        const float mInt  = ez::math::floor(vMin);
         const float mFrac = vMin - mInt;
 
         // 2) Add integer minutes
@@ -271,32 +271,32 @@ struct dms {
         }
 
         // 4) Normalize seconds -> minutes
-        const float carryMin = ez::floor(sec / 60.0f);
+        const float carryMin = ez::math::floor(sec / 60.0f);
         sec -= carryMin * 60.0f;
         min += carryMin;
 
         // 5) Ensure 'min' is integer: push any fractional residue into seconds
-        const float minFrac = min - ez::floor(min);
+        const float minFrac = min - ez::math::floor(min);
         if (minFrac != 0.0f) {
-            min = ez::floor(min);
+            min = ez::math::floor(min);
             sec += minFrac * 60.0f;
 
             // Re-normalize seconds since we just added some
-            const float carryMin2 = ez::floor(sec / 60.0f);
+            const float carryMin2 = ez::math::floor(sec / 60.0f);
             sec -= carryMin2 * 60.0f;
             min += carryMin2;
         }
 
         // 6) Carry minutes into degrees (keep min in [0,60) and integer)
-        const float carryDeg = ez::floor(min / 60.0f);
+        const float carryDeg = ez::math::floor(min / 60.0f);
         min -= carryDeg * 60.0f;
         deg += carryDeg;
 
         // 7) Optional wrap
         if (isLat()) {
-            deg = ez::mod(deg, 90.0f);
+            deg = ez::math::mod(deg, 90.0f);
         } else if (isLon()) {
-            deg = ez::mod(deg, 180.0f);
+            deg = ez::math::mod(deg, 180.0f);
         }
         return *this;
     }
@@ -307,32 +307,32 @@ struct dms {
         sec += vSec;
 
         // 2) Normalize seconds into [0,60) and carry into minutes (floor works for negatives)
-        const float carryMin = ez::floor(sec / 60.0f);
+        const float carryMin = ez::math::floor(sec / 60.0f);
         sec -= carryMin * 60.0f;
         min += carryMin;
 
         // 3) Ensure 'min' is an integer: push any fractional minutes into seconds
-        const float minFrac = min - ez::floor(min);
+        const float minFrac = min - ez::math::floor(min);
         if (minFrac != 0.0f) {
-            min = ez::floor(min);
+            min = ez::math::floor(min);
             sec += minFrac * 60.0f;
 
             // Re-normalize seconds because we just added some
-            const float carryMin2 = ez::floor(sec / 60.0f);
+            const float carryMin2 = ez::math::floor(sec / 60.0f);
             sec -= carryMin2 * 60.0f;
             min += carryMin2;
         }
 
         // 4) Carry minutes into degrees, keep min in [0,60) and integer
-        const float carryDeg = ez::floor(min / 60.0f);
+        const float carryDeg = ez::math::floor(min / 60.0f);
         min -= carryDeg * 60.0f;
         deg += carryDeg;
 
         // 5) Optional wrap on degrees (no hemisphere flip)
         if (isLat()) {
-            deg = ez::mod(deg, 90.0f);
+            deg = ez::math::mod(deg, 90.0f);
         } else if (isLon()) {
-            deg = ez::mod(deg, 180.0f);
+            deg = ez::math::mod(deg, 180.0f);
         }
         return *this;
     }
