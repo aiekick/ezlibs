@@ -28,6 +28,13 @@ SOFTWARE.
 
 #include <memory>
 
+#ifdef _TESTING_
+#define ASSERT_THROW(cond, msg) \
+    if (!(cond)) throw std::runtime_error(msg)
+#else
+#define ASSERT_THROW(cond, msg) assert((cond) && msg)
+#endif
+
 namespace ez {
 namespace gl {
 
