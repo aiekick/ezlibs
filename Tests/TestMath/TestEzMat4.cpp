@@ -96,6 +96,44 @@ bool TestEzMat4_OrthoGLMapsCornerToNDCCorner() {
     return true;
 }
 
+template <typename T>
+bool TestEzMat4_FromTranslationOnPoint() {
+    // FromTranslation applied to a point (w=1) shifts it by the
+    // translation vector exactly. Applied to a direction (w=0) it
+    // leaves it unchanged.
+    const std::array<T, 3> translationVector{T(1), T(2), T(3)};
+    const ez::math::mat4<T> translationMatrix = ez::math::mat4<T>::FromTranslation(translationVector);
+    const T tolerance = static_cast<T>(1e-6);
+
+    // Point case.
+    {
+        const std::array<T, 4> shifted = translationMatrix.mulVec({T(10), T(20), T(30), T(1)});
+        CTEST_ASSERT(ez::math::isEqual(shifted[0], T(11), tolerance));
+        CTEST_ASSERT(ez::math::isEqual(shifted[1], T(22), tolerance));
+        CTEST_ASSERT(ez::math::isEqual(shifted[2], T(33), tolerance));
+        CTEST_ASSERT(ez::math::isEqual(shifted[3], T(1),  tolerance));
+    }
+    // Direction case (w == 0): translation has no effect.
+    {
+        const std::array<T, 4> shifted = translationMatrix.mulVec({T(10), T(20), T(30), T(0)});
+        CTEST_ASSERT(ez::math::isEqual(shifted[0], T(10), tolerance));
+        CTEST_ASSERT(ez::math::isEqual(shifted[1], T(20), tolerance));
+        CTEST_ASSERT(ez::math::isEqual(shifted[2], T(30), tolerance));
+        CTEST_ASSERT(ez::math::isEqual(shifted[3], T(0),  tolerance));
+    }
+    // Zero translation: identity behaviour.
+    {
+        const ez::math::mat4<T> identityViaZeroTranslation =
+            ez::math::mat4<T>::FromTranslation({T(0), T(0), T(0)});
+        const std::array<T, 4> mapped = identityViaZeroTranslation.mulVec({T(7), T(8), T(9), T(1)});
+        CTEST_ASSERT(ez::math::isEqual(mapped[0], T(7), tolerance));
+        CTEST_ASSERT(ez::math::isEqual(mapped[1], T(8), tolerance));
+        CTEST_ASSERT(ez::math::isEqual(mapped[2], T(9), tolerance));
+        CTEST_ASSERT(ez::math::isEqual(mapped[3], T(1), tolerance));
+    }
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -109,6 +147,8 @@ bool TestEzMat4(const std::string& vTest) {
     else IfTestExist(TestEzMat4_PerspectiveGLClipWEqualsMinusViewZ<double>);
     else IfTestExist(TestEzMat4_OrthoGLMapsCornerToNDCCorner<float>);
     else IfTestExist(TestEzMat4_OrthoGLMapsCornerToNDCCorner<double>);
+    else IfTestExist(TestEzMat4_FromTranslationOnPoint<float>);
+    else IfTestExist(TestEzMat4_FromTranslationOnPoint<double>);
     return false;
 }
 

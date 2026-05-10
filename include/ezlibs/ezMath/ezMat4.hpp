@@ -333,6 +333,18 @@ public:
 
         return r;
     }
+
+    /// Pure translation matrix. Column-vector-on-right convention: applied
+    /// to a homogeneous point (x, y, z, 1) it shifts it by (tx, ty, tz);
+    /// applied to a direction (x, y, z, 0) it leaves it unchanged.
+    /// Translation lives in the LAST COLUMN at rows 0..2.
+    static mat4 FromTranslation(const std::array<T, 3>& vTranslation) {
+        mat4 r = Identity();
+        r(0, 3) = vTranslation[0];
+        r(1, 3) = vTranslation[1];
+        r(2, 3) = vTranslation[2];
+        return r;
+    }
 };
 
 typedef mat4<float> fmat4;

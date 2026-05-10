@@ -539,6 +539,12 @@ AddTest("TestEzVec2_SquaredDistanceToSegment<double>")
 AddTest("TestEzVec2_DistanceToSegment<float>")
 AddTest("TestEzVec2_DistanceToSegment<double>")
 
+AddTest("TestEzVec2_MeanUnitVectorLength<float>")
+AddTest("TestEzVec2_MeanUnitVectorLength<double>")
+
+AddTest("TestEzVec2_MeanOfUnitVectors<float>")
+AddTest("TestEzVec2_MeanOfUnitVectors<double>")
+
 ##########################################################
 ##### TESTS EzVec3 #######################################
 ##########################################################
@@ -881,6 +887,8 @@ AddTest("TestEzMat4_PerspectiveGLClipWEqualsMinusViewZ<float>")
 AddTest("TestEzMat4_PerspectiveGLClipWEqualsMinusViewZ<double>")
 AddTest("TestEzMat4_OrthoGLMapsCornerToNDCCorner<float>")
 AddTest("TestEzMat4_OrthoGLMapsCornerToNDCCorner<double>")
+AddTest("TestEzMat4_FromTranslationOnPoint<float>")
+AddTest("TestEzMat4_FromTranslationOnPoint<double>")
 
 ##########################################################
 ##### TESTS EzMatN #######################################

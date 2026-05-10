@@ -458,6 +458,130 @@ bool TestEzVec2_SquaredDistanceToSegment() {
 }
 
 template <typename T>
+bool TestEzVec2_MeanOfUnitVectors() {
+    const T epsilon = static_cast<T>(1e-5);
+    using vec = ez::math::vec2<T>;
+    // All vectors aligned along +X with varied magnitudes → mean is +X.
+    {
+        std::vector<vec> v;
+        v.push_back(vec(1, 0));
+        v.push_back(vec(5, 0));
+        v.push_back(vec(2, 0));
+        const vec result = ez::math::meanOfUnitVectors<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result.x, static_cast<T>(1), epsilon));
+        CTEST_ASSERT(ez::math::isEqual<T>(result.y, static_cast<T>(0), epsilon));
+    }
+    // Two +X and two -X (antipodal) → mean cancels to (0, 0).
+    {
+        std::vector<vec> v;
+        v.push_back(vec(1, 0));
+        v.push_back(vec(1, 0));
+        v.push_back(vec(-1, 0));
+        v.push_back(vec(-1, 0));
+        const vec result = ez::math::meanOfUnitVectors<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result.x, static_cast<T>(0), epsilon));
+        CTEST_ASSERT(ez::math::isEqual<T>(result.y, static_cast<T>(0), epsilon));
+    }
+    // 3 +X and 1 -X → mean.x = (3 - 1) / 4 = 0.5, mean.y = 0.
+    {
+        std::vector<vec> v;
+        v.push_back(vec(1, 0));
+        v.push_back(vec(1, 0));
+        v.push_back(vec(1, 0));
+        v.push_back(vec(-1, 0));
+        const vec result = ez::math::meanOfUnitVectors<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result.x, static_cast<T>(0.5), epsilon));
+        CTEST_ASSERT(ez::math::isEqual<T>(result.y, static_cast<T>(0), epsilon));
+    }
+    // Diagonal mix: one (1, 0) and one (0, 1) → mean = (0.5, 0.5).
+    {
+        std::vector<vec> v;
+        v.push_back(vec(1, 0));
+        v.push_back(vec(0, 1));
+        const vec result = ez::math::meanOfUnitVectors<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result.x, static_cast<T>(0.5), epsilon));
+        CTEST_ASSERT(ez::math::isEqual<T>(result.y, static_cast<T>(0.5), epsilon));
+    }
+    // Empty input → (0, 0).
+    {
+        std::vector<vec> v;
+        const vec result = ez::math::meanOfUnitVectors<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result.x, static_cast<T>(0), epsilon));
+        CTEST_ASSERT(ez::math::isEqual<T>(result.y, static_cast<T>(0), epsilon));
+    }
+    return true;
+}
+
+template <typename T>
+bool TestEzVec2_MeanUnitVectorLength() {
+    const T epsilon = static_cast<T>(1e-5);
+    using vec = ez::math::vec2<T>;
+    // All vectors point in the same direction (along +X) → length 1.
+    {
+        std::vector<vec> v;
+        v.push_back(vec(1, 0));
+        v.push_back(vec(2, 0));
+        v.push_back(vec(7, 0));  // different magnitudes, same direction
+        const T result = ez::math::meanUnitVectorLength<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(1), epsilon));
+    }
+    // Antipodal: half +X, half -X → mean unit vector is (0,0) → length 0.
+    {
+        std::vector<vec> v;
+        v.push_back(vec(1, 0));
+        v.push_back(vec(1, 0));
+        v.push_back(vec(-1, 0));
+        v.push_back(vec(-1, 0));
+        const T result = ez::math::meanUnitVectorLength<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(0), epsilon));
+    }
+    // Four cardinal directions (uniform) → mean unit vector is (0,0).
+    {
+        std::vector<vec> v;
+        v.push_back(vec(1, 0));
+        v.push_back(vec(0, 1));
+        v.push_back(vec(-1, 0));
+        v.push_back(vec(0, -1));
+        const T result = ez::math::meanUnitVectorLength<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(0), epsilon));
+    }
+    // Three +X, one -X → mean = ((3 - 1) / 4, 0) = (0.5, 0) → length 0.5.
+    {
+        std::vector<vec> v;
+        v.push_back(vec(1, 0));
+        v.push_back(vec(1, 0));
+        v.push_back(vec(1, 0));
+        v.push_back(vec(-1, 0));
+        const T result = ez::math::meanUnitVectorLength<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(0.5), epsilon));
+    }
+    // Single non-zero vector → length 1 by definition.
+    {
+        std::vector<vec> v;
+        v.push_back(vec(3, 4));
+        const T result = ez::math::meanUnitVectorLength<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(1), epsilon));
+    }
+    // Empty input → 0 (no usable directions).
+    {
+        std::vector<vec> v;
+        const T result = ez::math::meanUnitVectorLength<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(0), epsilon));
+    }
+    // Zero-magnitude vectors are skipped: the only usable input is the
+    // non-zero one → length 1.
+    {
+        std::vector<vec> v;
+        v.push_back(vec(0, 0));
+        v.push_back(vec(0, 0));
+        v.push_back(vec(2, 1));
+        const T result = ez::math::meanUnitVectorLength<T>(v);
+        CTEST_ASSERT(ez::math::isEqual<T>(result, static_cast<T>(1), epsilon));
+    }
+    return true;
+}
+
+template <typename T>
 bool TestEzVec2_DistanceToSegment() {
     const T epsilon = static_cast<T>(1e-5);
     // Perpendicular distance 3 → distance 3
@@ -638,6 +762,12 @@ bool TestEzVec2(const std::string& vTest) {
 
     IfTestExist(TestEzVec2_DistanceToSegment<float>);
     else IfTestExist(TestEzVec2_DistanceToSegment<double>);
+
+    IfTestExist(TestEzVec2_MeanUnitVectorLength<float>);
+    else IfTestExist(TestEzVec2_MeanUnitVectorLength<double>);
+
+    IfTestExist(TestEzVec2_MeanOfUnitVectors<float>);
+    else IfTestExist(TestEzVec2_MeanOfUnitVectors<double>);
 
     return false;
 }

@@ -31,6 +31,8 @@ SOFTWARE.
 // ezVec2 is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 #include <cmath>
+#include <cstddef>
+#include <limits>
 #include <type_traits>
 #include <string>
 #include <vector>
@@ -463,6 +465,51 @@ inline T squaredDistanceToSegment(const vec2<T>& aPoint, const vec2<T>& aSegA, c
 template <typename T>
 inline T distanceToSegment(const vec2<T>& aPoint, const vec2<T>& aSegA, const vec2<T>& aSegB) {
     return ez::math::sqrt(squaredDistanceToSegment(aPoint, aSegA, aSegB));
+}
+
+// Average direction of a set of 2D vectors: each input is normalised to
+// unit length, then the unit vectors are summed and divided by the
+// usable count. The returned vec2 lives inside the unit disk:
+//   length == 1.0 → every input points in the same direction
+//   length == 0.0 → inputs are uniformly distributed in direction
+// Inputs of magnitude < epsilon are skipped (their direction is
+// undefined). Returns (0, 0) when the count of usable inputs is 0
+// (empty or only zero-magnitude inputs). Floating-point types only.
+// The classical "mean resultant length" from circular statistics is
+// just length() of this vector — see meanUnitVectorLength below for
+// that scalar form.
+template <typename T>
+inline vec2<T> meanOfUnitVectors(const std::vector<vec2<T>>& aVectors) {
+    static_assert(std::is_floating_point<T>::value, "meanOfUnitVectors requires a floating-point type");
+    T sumX = static_cast<T>(0);
+    T sumY = static_cast<T>(0);
+    std::size_t usableCount = 0;
+    for (const vec2<T>& currentVector : aVectors) {
+        const T squaredMagnitude = ez::math::dot(currentVector, currentVector);
+        if (squaredMagnitude > std::numeric_limits<T>::epsilon()) {
+            const T magnitude = ez::math::sqrt(squaredMagnitude);
+            sumX += currentVector.x / magnitude;
+            sumY += currentVector.y / magnitude;
+            ++usableCount;
+        }
+    }
+    if (usableCount == 0) {
+        return vec2<T>(static_cast<T>(0), static_cast<T>(0));
+    }
+    return vec2<T>(sumX / static_cast<T>(usableCount),
+                   sumY / static_cast<T>(usableCount));
+}
+
+// Directional concentration of a set of 2D vectors, in [0, 1]: 1.0 means
+// every input points in the same direction (perfectly aligned), 0.0
+// means inputs are uniformly distributed (no preferred direction).
+// Wrapper around meanOfUnitVectors — see its doc for the per-input
+// handling (zero-magnitude skip, empty input → 0). Floating-point
+// types only.
+template <typename T>
+inline T meanUnitVectorLength(const std::vector<vec2<T>>& aVectors) {
+    static_assert(std::is_floating_point<T>::value, "meanUnitVectorLength requires a floating-point type");
+    return ez::math::length(meanOfUnitVectors(aVectors));
 }
 
 template <typename T>
