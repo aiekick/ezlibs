@@ -75,10 +75,10 @@ ez::math::matN<T> makeRotationY(T aAngleRadians) {
 // image coordinates. World frame is taken as camera 1's frame, so the first
 // view is just (X / Z, Y / Z); the second is computed from (R, t).
 template <typename T>
-ez::vision::correspondence<T> projectThroughPair(
+ez::viz::correspondence<T> projectThroughPair(
     const ez::math::matN<T>& aR, const ez::math::vecN<T>& aT,
     T aX, T aY, T aZ) {
-    ez::vision::correspondence<T> result;
+    ez::viz::correspondence<T> result;
     result.x1 = aX / aZ;
     result.y1 = aY / aZ;
     const T xCam2 = aR(0, 0) * aX + aR(0, 1) * aY + aR(0, 2) * aZ + aT[0];
@@ -117,8 +117,8 @@ T det3(const ez::math::matN<T>& aMatrix) {
 template <typename T>
 bool TestEzEpipolar_DecomposeRejectsNonSquare() {
     ez::math::matN<T> wrongShape(3, 4);
-    std::array<ez::vision::pose<T>, 4> candidates;
-    CTEST_ASSERT(!ez::vision::decomposeEssentialMatrix(wrongShape, candidates));
+    std::array<ez::viz::pose<T>, 4> candidates;
+    CTEST_ASSERT(!ez::viz::decomposeEssentialMatrix(wrongShape, candidates));
     return true;
 }
 
@@ -133,8 +133,8 @@ bool TestEzEpipolar_DecomposePureXTranslation() {
     essential(1, 0) = T(0); essential(1, 1) = T(0);  essential(1, 2) = T(-1);
     essential(2, 0) = T(0); essential(2, 1) = T(1);  essential(2, 2) = T(0);
 
-    std::array<ez::vision::pose<T>, 4> candidates;
-    CTEST_ASSERT(ez::vision::decomposeEssentialMatrix(essential, candidates));
+    std::array<ez::viz::pose<T>, 4> candidates;
+    CTEST_ASSERT(ez::viz::decomposeEssentialMatrix(essential, candidates));
 
     ez::math::matN<T> identity = makeIdentity3<T>();
     ez::math::vecN<T> expectedTranslationPositive(3);
@@ -164,8 +164,8 @@ bool TestEzEpipolar_DecomposeProducesProperRotations() {
     essential(1, 0) = T(0); essential(1, 1) = T(0);  essential(1, 2) = T(-1);
     essential(2, 0) = T(0); essential(2, 1) = T(1);  essential(2, 2) = T(0);
 
-    std::array<ez::vision::pose<T>, 4> candidates;
-    CTEST_ASSERT(ez::vision::decomposeEssentialMatrix(essential, candidates));
+    std::array<ez::viz::pose<T>, 4> candidates;
+    CTEST_ASSERT(ez::viz::decomposeEssentialMatrix(essential, candidates));
 
     const T tolerance = static_cast<T>(1e-5);
     for (std::size_t i = 0; i < 4; ++i) {
@@ -185,7 +185,7 @@ bool TestEzEpipolar_TriangulateRejectsBadDimensions() {
     ez::math::matN<T> p1(3, 4);
     ez::math::matN<T> p2WrongShape(3, 3);  // wrong: needs to be 3x4
     ez::math::vecN<T> point3D;
-    CTEST_ASSERT(!ez::vision::triangulatePointDLT(p1, p2WrongShape, T(0), T(0), T(0), T(0), point3D));
+    CTEST_ASSERT(!ez::viz::triangulatePointDLT(p1, p2WrongShape, T(0), T(0), T(0), T(0), point3D));
     return true;
 }
 
@@ -208,7 +208,7 @@ bool TestEzEpipolar_TriangulateAxisAlignedCameras() {
     p2(2, 0) = T(0); p2(2, 1) = T(0); p2(2, 2) = T(1); p2(2, 3) = T(0);
 
     ez::math::vecN<T> point3D;
-    CTEST_ASSERT(ez::vision::triangulatePointDLT(p1, p2, T(0), T(0), static_cast<T>(-0.2), T(0), point3D));
+    CTEST_ASSERT(ez::viz::triangulatePointDLT(p1, p2, T(0), T(0), static_cast<T>(-0.2), T(0), point3D));
     CTEST_ASSERT(point3D.size() == 3);
 
     const T tolerance = static_cast<T>(1e-4);
@@ -220,17 +220,17 @@ bool TestEzEpipolar_TriangulateAxisAlignedCameras() {
 
 template <typename T>
 bool TestEzEpipolar_CheiralityHandlesEmptySamples() {
-    std::array<ez::vision::pose<T>, 4> candidates;
+    std::array<ez::viz::pose<T>, 4> candidates;
     // Build any plausible candidate so we hit the empty-samples guard, not
     // the all-degenerate guard.
     for (std::size_t i = 0; i < 4; ++i) {
         candidates[i].rotation = makeIdentity3<T>();
         candidates[i].translation = ez::math::vecN<T>(3);
     }
-    std::vector<ez::vision::correspondence<T>> empty;
-    ez::vision::pose<T> selected;
+    std::vector<ez::viz::correspondence<T>> empty;
+    ez::viz::pose<T> selected;
     std::size_t inFront = 0;
-    CTEST_ASSERT(!ez::vision::selectPoseByCheirality(candidates, empty, selected, inFront));
+    CTEST_ASSERT(!ez::viz::selectPoseByCheirality(candidates, empty, selected, inFront));
     return true;
 }
 
@@ -247,7 +247,7 @@ bool TestEzEpipolar_CheiralitySelectsCorrectPose() {
     truthTranslation[1] = T(0);
     truthTranslation[2] = T(0);
 
-    std::vector<ez::vision::correspondence<T>> samples;
+    std::vector<ez::viz::correspondence<T>> samples;
     samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(0),  T(5)));
     samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(1),  T(0),  T(5)));
     samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(1),  T(6)));
@@ -256,13 +256,13 @@ bool TestEzEpipolar_CheiralitySelectsCorrectPose() {
 
     // Build the true essential matrix and decompose it.
     ez::math::matN<T> essential = makeEssentialMatrix(truthRotation, truthTranslation);
-    std::array<ez::vision::pose<T>, 4> candidates;
-    CTEST_ASSERT(ez::vision::decomposeEssentialMatrix(essential, candidates));
+    std::array<ez::viz::pose<T>, 4> candidates;
+    CTEST_ASSERT(ez::viz::decomposeEssentialMatrix(essential, candidates));
 
     // Select via cheirality.
-    ez::vision::pose<T> selected;
+    ez::viz::pose<T> selected;
     std::size_t inFront = 0;
-    CTEST_ASSERT(ez::vision::selectPoseByCheirality(candidates, samples, selected, inFront));
+    CTEST_ASSERT(ez::viz::selectPoseByCheirality(candidates, samples, selected, inFront));
 
     // The winner must have all 5 samples in front of both cameras.
     CTEST_ASSERT(inFront == samples.size());

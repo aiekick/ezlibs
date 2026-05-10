@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-// ez::vision::epipolar utilities are part of the ezLibs project : https://github.com/aiekick/ezLibs.git
+// ez::viz::epipolar utilities are part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 //
 // Two-view geometry utilities for Structure-from-Motion: decomposition of an
 // essential matrix into the four (R, t) candidates, linear DLT triangulation
@@ -75,7 +75,7 @@ SOFTWARE.
 #endif
 
 namespace ez {
-namespace vision {
+namespace viz {
 
 // Camera pose: the 3x3 rotation matrix R and the 3-vector translation t
 // expressed in the first camera's frame. A 3D point X (in camera-1 frame)
