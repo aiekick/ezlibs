@@ -54,41 +54,41 @@ class matN {
     static_assert(std::is_floating_point<T>::value, "matN requires a floating-point T");
 
 public:
-    static matN Identity(std::size_t aDimension) {
+    static matN Identity(size_t aDimension) {
         matN result(aDimension, aDimension);
-        for (std::size_t indexOnDiagonal = 0; indexOnDiagonal < aDimension; ++indexOnDiagonal) {
+        for (size_t indexOnDiagonal = 0; indexOnDiagonal < aDimension; ++indexOnDiagonal) {
             result(indexOnDiagonal, indexOnDiagonal) = T(1);
         }
         return result;
     }
 
-    static matN Zero(std::size_t aRowCount, std::size_t aColumnCount) {
+    static matN Zero(size_t aRowCount, size_t aColumnCount) {
         return matN(aRowCount, aColumnCount);
     }
 
 private:
     std::vector<T> m_data{};
-    std::size_t m_rows{0};
-    std::size_t m_columns{0};
+    size_t m_rows{0};
+    size_t m_columns{0};
 
 public:
     matN() = default;
 
-    matN(std::size_t aRowCount, std::size_t aColumnCount)
+    matN(size_t aRowCount, size_t aColumnCount)
         : m_data(aRowCount * aColumnCount, T(0)), m_rows(aRowCount), m_columns(aColumnCount) {
     }
 
-    matN(std::size_t aRowCount, std::size_t aColumnCount, T aFillValue)
+    matN(size_t aRowCount, size_t aColumnCount, T aFillValue)
         : m_data(aRowCount * aColumnCount, aFillValue), m_rows(aRowCount), m_columns(aColumnCount) {
     }
 
-    std::size_t rows() const {
+    size_t rows() const {
         return m_rows;
     }
-    std::size_t columns() const {
+    size_t columns() const {
         return m_columns;
     }
-    std::size_t size() const {
+    size_t size() const {
         return m_data.size();
     }
     bool empty() const {
@@ -103,17 +103,17 @@ public:
     }
 
     // Column-major linear index: (column * rows) + row
-    T& operator()(std::size_t aRowIndex, std::size_t aColumnIndex) {
+    T& operator()(size_t aRowIndex, size_t aColumnIndex) {
         return m_data[aColumnIndex * m_rows + aRowIndex];
     }
-    T operator()(std::size_t aRowIndex, std::size_t aColumnIndex) const {
+    T operator()(size_t aRowIndex, size_t aColumnIndex) const {
         return m_data[aColumnIndex * m_rows + aRowIndex];
     }
 
     matN transpose() const {
         matN result(m_columns, m_rows);
-        for (std::size_t columnIndex = 0; columnIndex < m_columns; ++columnIndex) {
-            for (std::size_t rowIndex = 0; rowIndex < m_rows; ++rowIndex) {
+        for (size_t columnIndex = 0; columnIndex < m_columns; ++columnIndex) {
+            for (size_t rowIndex = 0; rowIndex < m_rows; ++rowIndex) {
                 result(columnIndex, rowIndex) = (*this)(rowIndex, columnIndex);
             }
         }
@@ -127,10 +127,10 @@ public:
             return matN();
         }
         matN result(m_rows, aRight.m_columns);
-        for (std::size_t columnIndex = 0; columnIndex < aRight.m_columns; ++columnIndex) {
-            for (std::size_t rowIndex = 0; rowIndex < m_rows; ++rowIndex) {
+        for (size_t columnIndex = 0; columnIndex < aRight.m_columns; ++columnIndex) {
+            for (size_t rowIndex = 0; rowIndex < m_rows; ++rowIndex) {
                 T accumulator = T(0);
-                for (std::size_t innerIndex = 0; innerIndex < m_columns; ++innerIndex) {
+                for (size_t innerIndex = 0; innerIndex < m_columns; ++innerIndex) {
                     accumulator += (*this)(rowIndex, innerIndex) * aRight(innerIndex, columnIndex);
                 }
                 result(rowIndex, columnIndex) = accumulator;

@@ -27,13 +27,13 @@ namespace {
 // Used to validate the kdTree results on small sets where the exact
 // answer is easy to compute.
 struct bruteHit {
-    std::size_t index;
+    size_t index;
     float squaredDistance;
 };
 
 float squaredDistanceL2(const std::vector<float>& a, const std::vector<float>& b) {
     float total = 0.0f;
-    for (std::size_t i = 0; i < a.size(); ++i) {
+    for (size_t i = 0; i < a.size(); ++i) {
         const float d = a[i] - b[i];
         total += d * d;
     }
@@ -43,10 +43,10 @@ float squaredDistanceL2(const std::vector<float>& a, const std::vector<float>& b
 std::vector<bruteHit> bruteForceNearest(
     const std::vector<std::vector<float>>& aPoints,
     const std::vector<float>& aQuery,
-    std::size_t aK) {
+    size_t aK) {
     std::vector<bruteHit> all;
     all.reserve(aPoints.size());
-    for (std::size_t i = 0; i < aPoints.size(); ++i) {
+    for (size_t i = 0; i < aPoints.size(); ++i) {
         all.push_back({i, squaredDistanceL2(aPoints[i], aQuery)});
     }
     std::sort(all.begin(), all.end(),
@@ -139,8 +139,8 @@ bool TestEzKdTree_AgreesWithBruteForceOnSmallSet() {
         {0.1f, 0.1f, 0.1f},
         {4.0f, 4.0f, 4.0f},
     };
-    ez::math::kdTree<std::size_t> tree(3);
-    for (std::size_t i = 0; i < points.size(); ++i) {
+    ez::math::kdTree<size_t> tree(3);
+    for (size_t i = 0; i < points.size(); ++i) {
         tree.put(points[i], i);
     }
 
@@ -150,11 +150,11 @@ bool TestEzKdTree_AgreesWithBruteForceOnSmallSet() {
         {-3.0f, 4.0f, 0.0f},
     };
     for (const auto& query : queries) {
-        std::vector<ez::math::kdTree<std::size_t>::hit> treeHits;
+        std::vector<ez::math::kdTree<size_t>::hit> treeHits;
         tree.nearest(query, std::numeric_limits<float>::max(), 100, 3, treeHits);
         const auto bruteHits = bruteForceNearest(points, query, 3);
         CTEST_ASSERT(treeHits.size() == bruteHits.size());
-        for (std::size_t i = 0; i < treeHits.size(); ++i) {
+        for (size_t i = 0; i < treeHits.size(); ++i) {
             CTEST_ASSERT(treeHits[i].value == bruteHits[i].index);
             CTEST_ASSERT(ez::math::isEqual(treeHits[i].squaredDistance, bruteHits[i].squaredDistance, 1e-5f));
         }
@@ -165,7 +165,7 @@ bool TestEzKdTree_AgreesWithBruteForceOnSmallSet() {
 bool TestEzKdTree_DepthGrowsAfterSplit() {
     // Insert more points than k_leafCapacity to force at least one split.
     ez::math::kdTree<int> tree(2);
-    for (std::size_t i = 0; i < 100; ++i) {
+    for (size_t i = 0; i < 100; ++i) {
         const float x = static_cast<float>(i);
         tree.put(std::vector<float>{x, x * 0.5f}, static_cast<int>(i));
     }

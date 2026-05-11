@@ -69,7 +69,7 @@ namespace math {
          * @param yMax   Borne maximale en Y de la zone couverte par le QuadTree.
          * @param capacity Nombre maximum de points qu'un noeud peut contenir avant subdivision.
          */
-        QuadTree(T xMin, T xMax, T yMin, T yMax, std::size_t capacity = 4)
+        QuadTree(T xMin, T xMax, T yMin, T yMax, size_t capacity = 4)
             : m_capacity(capacity)
         {
             m_boundary.xMin = xMin;
@@ -122,7 +122,7 @@ namespace math {
          * @param vMaxNeighbors Nombre maximal de voisins à récupérer.
          * @return Un vecteur des points les plus proches, triés par distance croissante (peut-être moins que vMaxNeighbors si l'arbre ne contient pas assez de points).
          */
-        std::vector<math::vec2<T>> getNNeighboors(const math::vec2<T>& pt, std::size_t vMaxNeighbors) const
+        std::vector<math::vec2<T>> getNNeighboors(const math::vec2<T>& pt, size_t vMaxNeighbors) const
         {
             // On pourrait optimiser la recherche par région,
             // mais voici une version simple qui parcourt l'ensemble des points.
@@ -399,7 +399,7 @@ namespace math {
     private:
         Node* m_root = nullptr;        ///< Racine du QuadTree
         Boundary m_boundary;           ///< Zone englobante de la racine
-        std::size_t m_capacity = 4;    ///< Capacité de chaque noeud avant subdivision
+        size_t m_capacity = 4;    ///< Capacité de chaque noeud avant subdivision
     };
 
 } // namespace math

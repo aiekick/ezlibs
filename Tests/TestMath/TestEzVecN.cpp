@@ -29,7 +29,7 @@ bool TestEzVecN_SizeConstructor() {
     ez::math::vecN<T> vector(4);
     CTEST_ASSERT(vector.size() == 4);
     CTEST_ASSERT(!vector.empty());
-    for (std::size_t componentIndex = 0; componentIndex < 4; ++componentIndex) {
+    for (size_t componentIndex = 0; componentIndex < 4; ++componentIndex) {
         CTEST_ASSERT(ez::math::isEqual(vector[componentIndex], static_cast<T>(0)));
     }
     return true;
@@ -39,7 +39,7 @@ template <typename T>
 bool TestEzVecN_SizeConstructorWithFillValue() {
     ez::math::vecN<T> vector(3, static_cast<T>(5));
     CTEST_ASSERT(vector.size() == 3);
-    for (std::size_t componentIndex = 0; componentIndex < 3; ++componentIndex) {
+    for (size_t componentIndex = 0; componentIndex < 3; ++componentIndex) {
         CTEST_ASSERT(ez::math::isEqual(vector[componentIndex], static_cast<T>(5)));
     }
     return true;
@@ -59,7 +59,7 @@ template <typename T>
 bool TestEzVecN_Zero() {
     ez::math::vecN<T> vector = ez::math::vecN<T>::Zero(5);
     CTEST_ASSERT(vector.size() == 5);
-    for (std::size_t componentIndex = 0; componentIndex < 5; ++componentIndex) {
+    for (size_t componentIndex = 0; componentIndex < 5; ++componentIndex) {
         CTEST_ASSERT(ez::math::isEqual(vector[componentIndex], static_cast<T>(0)));
     }
     return true;

@@ -23,9 +23,9 @@ namespace {
 // Build the (n x n) diagonal matrix from an n-vector.
 template <typename T>
 ez::math::matN<T> makeDiagonal(const ez::math::vecN<T>& aValues) {
-    std::size_t n = aValues.size();
+    size_t n = aValues.size();
     ez::math::matN<T> diagonal(n, n);
-    for (std::size_t i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
         diagonal(i, i) = aValues[i];
     }
     return diagonal;
@@ -36,8 +36,8 @@ bool matrixIsEqual(const ez::math::matN<T>& aLeft, const ez::math::matN<T>& aRig
     if (aLeft.rows() != aRight.rows() || aLeft.columns() != aRight.columns()) {
         return false;
     }
-    for (std::size_t i = 0; i < aLeft.rows(); ++i) {
-        for (std::size_t j = 0; j < aLeft.columns(); ++j) {
+    for (size_t i = 0; i < aLeft.rows(); ++i) {
+        for (size_t j = 0; j < aLeft.columns(); ++j) {
             if (!ez::math::isEqual(aLeft(i, j), aRight(i, j), aTolerance)) {
                 return false;
             }

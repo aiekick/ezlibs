@@ -483,7 +483,7 @@ inline vec2<T> meanOfUnitVectors(const std::vector<vec2<T>>& aVectors) {
     static_assert(std::is_floating_point<T>::value, "meanOfUnitVectors requires a floating-point type");
     T sumX = static_cast<T>(0);
     T sumY = static_cast<T>(0);
-    std::size_t usableCount = 0;
+    size_t usableCount = 0;
     for (const vec2<T>& currentVector : aVectors) {
         const T squaredMagnitude = ez::math::dot(currentVector, currentVector);
         if (squaredMagnitude > std::numeric_limits<T>::epsilon()) {

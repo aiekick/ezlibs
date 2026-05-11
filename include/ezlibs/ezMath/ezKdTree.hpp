@@ -69,7 +69,7 @@ template <typename U>
 class kdTree {
 public:
     // Maximum number of (point, value) pairs stored in a leaf before it splits.
-    static constexpr std::size_t k_leafCapacity = 64;
+    static constexpr size_t k_leafCapacity = 64;
 
     // Result of a k-NN query: associated value + squared distance to the
     // query point. Squared (not sqrt) to keep comparisons exact and faster.
@@ -88,33 +88,33 @@ private:
         // Leaf data (only meaningful when isLeaf == true).
         std::vector<entry> entries;
         // Internal node data (only meaningful when isLeaf == false).
-        std::size_t pivotAxis{0};
+        size_t pivotAxis{0};
         float pivotValue{0.0f};
         std::unique_ptr<node> left{};
         std::unique_ptr<node> right{};
         bool isLeaf{true};
     };
 
-    std::size_t m_dimension{0};
-    std::size_t m_size{0};
-    std::size_t m_depth{0};
+    size_t m_dimension{0};
+    size_t m_size{0};
+    size_t m_depth{0};
     std::unique_ptr<node> m_root{};
 
 public:
-    explicit kdTree(std::size_t aDimension)
+    explicit kdTree(size_t aDimension)
         : m_dimension(aDimension)
         // std::make_unique is C++14; ezlibs targets C++11 strict, hence the
         // explicit std::unique_ptr<node>(new node()) form.
         , m_root(std::unique_ptr<node>(new node())) {
     }
 
-    std::size_t size() const {
+    size_t size() const {
         return m_size;
     }
-    std::size_t depth() const {
+    size_t depth() const {
         return m_depth;
     }
-    std::size_t dimension() const {
+    size_t dimension() const {
         return m_dimension;
     }
     bool empty() const {
@@ -140,14 +140,14 @@ public:
     void nearest(
         const std::vector<float>& aQuery,
         float aMaxSquaredDistance,
-        std::size_t aMaxTry,
-        std::size_t aMaxElements,
+        size_t aMaxTry,
+        size_t aMaxElements,
         std::vector<hit>& aoResults) const {
         aoResults.clear();
         if (aQuery.size() != m_dimension || aMaxElements == 0 || m_size == 0) {
             return;
         }
-        std::size_t triedLeaves = 0;
+        size_t triedLeaves = 0;
         searchRecursive(*m_root, aQuery, aMaxSquaredDistance, aMaxTry, aMaxElements, aoResults, triedLeaves);
         // Heap order is reverse: largest distance at the front. Sort ascending.
         std::sort(aoResults.begin(), aoResults.end(), [](const hit& a, const hit& b) {
@@ -156,7 +156,7 @@ public:
     }
 
 private:
-    void insertRecursive(node& aoNode, std::vector<float> aPoint, U aValue, std::size_t aDepth) {
+    void insertRecursive(node& aoNode, std::vector<float> aPoint, U aValue, size_t aDepth) {
         if (aoNode.isLeaf) {
             aoNode.entries.push_back(entry{std::move(aPoint), std::move(aValue)});
             if (aDepth + 1 > m_depth) {
@@ -176,14 +176,14 @@ private:
 
     // Promote a leaf to an internal node by choosing the axis with the
     // largest empirical variance and cutting at the midpoint of its range.
-    void splitLeaf(node& aoNode, std::size_t aDepth) {
-        const std::size_t entryCount = aoNode.entries.size();
+    void splitLeaf(node& aoNode, size_t aDepth) {
+        const size_t entryCount = aoNode.entries.size();
 
         // Pick the axis with maximum variance via running sums:
         //   var(j) = (Σx²)/n − (Σx/n)² = (n·Σx² − (Σx)²) / n²
-        std::size_t bestAxis = 0;
+        size_t bestAxis = 0;
         float bestVariance = -1.0f;
-        for (std::size_t axis = 0; axis < m_dimension; ++axis) {
+        for (size_t axis = 0; axis < m_dimension; ++axis) {
             float sum = 0.0f;
             float sumOfSquares = 0.0f;
             for (const auto& current : aoNode.entries) {
@@ -238,8 +238,8 @@ private:
         aoNode.left = std::move(leftChild);
         aoNode.right = std::move(rightChild);
 
-        const std::size_t leftCount = aoNode.left->entries.size();
-        const std::size_t rightCount = aoNode.right->entries.size();
+        const size_t leftCount = aoNode.left->entries.size();
+        const size_t rightCount = aoNode.right->entries.size();
         if (leftCount > k_leafCapacity) {
             splitLeaf(*aoNode.left, aDepth + 1);
         }
@@ -256,10 +256,10 @@ private:
         const node& aNode,
         const std::vector<float>& aQuery,
         float aMaxSquaredDistance,
-        std::size_t aMaxTry,
-        std::size_t aMaxElements,
+        size_t aMaxTry,
+        size_t aMaxElements,
         std::vector<hit>& aoResults,
-        std::size_t& aoTriedLeaves) const {
+        size_t& aoTriedLeaves) const {
         if (aoTriedLeaves >= aMaxTry) {
             return;
         }
@@ -292,8 +292,8 @@ private:
 
     static float squaredDistanceL2(const std::vector<float>& aLeft, const std::vector<float>& aRight) {
         float total = 0.0f;
-        const std::size_t n = aLeft.size();
-        for (std::size_t i = 0; i < n; ++i) {
+        const size_t n = aLeft.size();
+        for (size_t i = 0; i < n; ++i) {
             const float delta = aLeft[i] - aRight[i];
             total += delta * delta;
         }
@@ -302,7 +302,7 @@ private:
 
     // Maintain aoResults as a max-heap of size <= aMaxElements. The largest
     // squared distance sits at the front and is the first to be evicted.
-    static void insertHit(std::vector<hit>& aoResults, hit aCandidate, std::size_t aMaxElements) {
+    static void insertHit(std::vector<hit>& aoResults, hit aCandidate, size_t aMaxElements) {
         const auto compare = [](const hit& a, const hit& b) {
             return a.squaredDistance < b.squaredDistance;
         };

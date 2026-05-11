@@ -33,8 +33,8 @@ bool TestEzMatN_DimensionConstructor() {
     CTEST_ASSERT(matrix.columns() == 4);
     CTEST_ASSERT(matrix.size() == 12);
     CTEST_ASSERT(!matrix.empty());
-    for (std::size_t rowIndex = 0; rowIndex < 3; ++rowIndex) {
-        for (std::size_t columnIndex = 0; columnIndex < 4; ++columnIndex) {
+    for (size_t rowIndex = 0; rowIndex < 3; ++rowIndex) {
+        for (size_t columnIndex = 0; columnIndex < 4; ++columnIndex) {
             CTEST_ASSERT(ez::math::isEqual(matrix(rowIndex, columnIndex), static_cast<T>(0)));
         }
     }
@@ -46,8 +46,8 @@ bool TestEzMatN_DimensionConstructorWithFillValue() {
     ez::math::matN<T> matrix(2, 3, static_cast<T>(7));
     CTEST_ASSERT(matrix.rows() == 2);
     CTEST_ASSERT(matrix.columns() == 3);
-    for (std::size_t rowIndex = 0; rowIndex < 2; ++rowIndex) {
-        for (std::size_t columnIndex = 0; columnIndex < 3; ++columnIndex) {
+    for (size_t rowIndex = 0; rowIndex < 2; ++rowIndex) {
+        for (size_t columnIndex = 0; columnIndex < 3; ++columnIndex) {
             CTEST_ASSERT(ez::math::isEqual(matrix(rowIndex, columnIndex), static_cast<T>(7)));
         }
     }
@@ -59,8 +59,8 @@ bool TestEzMatN_Identity() {
     ez::math::matN<T> matrix = ez::math::matN<T>::Identity(3);
     CTEST_ASSERT(matrix.rows() == 3);
     CTEST_ASSERT(matrix.columns() == 3);
-    for (std::size_t rowIndex = 0; rowIndex < 3; ++rowIndex) {
-        for (std::size_t columnIndex = 0; columnIndex < 3; ++columnIndex) {
+    for (size_t rowIndex = 0; rowIndex < 3; ++rowIndex) {
+        for (size_t columnIndex = 0; columnIndex < 3; ++columnIndex) {
             T expected = (rowIndex == columnIndex) ? static_cast<T>(1) : static_cast<T>(0);
             CTEST_ASSERT(ez::math::isEqual(matrix(rowIndex, columnIndex), expected));
         }
@@ -73,8 +73,8 @@ bool TestEzMatN_Zero() {
     ez::math::matN<T> matrix = ez::math::matN<T>::Zero(2, 4);
     CTEST_ASSERT(matrix.rows() == 2);
     CTEST_ASSERT(matrix.columns() == 4);
-    for (std::size_t rowIndex = 0; rowIndex < 2; ++rowIndex) {
-        for (std::size_t columnIndex = 0; columnIndex < 4; ++columnIndex) {
+    for (size_t rowIndex = 0; rowIndex < 2; ++rowIndex) {
+        for (size_t columnIndex = 0; columnIndex < 4; ++columnIndex) {
             CTEST_ASSERT(ez::math::isEqual(matrix(rowIndex, columnIndex), static_cast<T>(0)));
         }
     }

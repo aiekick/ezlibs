@@ -23,9 +23,9 @@ namespace {
 // Build the (n x n) diagonal matrix of singular values.
 template <typename T>
 ez::math::matN<T> makeSigma(const ez::math::vecN<T>& aSingularValues) {
-    std::size_t n = aSingularValues.size();
+    size_t n = aSingularValues.size();
     ez::math::matN<T> sigma(n, n);
-    for (std::size_t i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
         sigma(i, i) = aSingularValues[i];
     }
     return sigma;
@@ -37,8 +37,8 @@ bool matrixIsEqual(const ez::math::matN<T>& aLeft, const ez::math::matN<T>& aRig
     if (aLeft.rows() != aRight.rows() || aLeft.columns() != aRight.columns()) {
         return false;
     }
-    for (std::size_t i = 0; i < aLeft.rows(); ++i) {
-        for (std::size_t j = 0; j < aLeft.columns(); ++j) {
+    for (size_t i = 0; i < aLeft.rows(); ++i) {
+        for (size_t j = 0; j < aLeft.columns(); ++j) {
             if (!ez::math::isEqual(aLeft(i, j), aRight(i, j), aTolerance)) {
                 return false;
             }

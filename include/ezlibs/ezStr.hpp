@@ -405,7 +405,7 @@ inline size_t getCountOccurenceInSection(const std::string& vSrcString, size_t v
 // std::wstring(unicode/multibytes/char16/wchar_t) to std::string(char)
 inline std::string wstringToString(const std::wstring& wstr) {
     std::mbstate_t state = std::mbstate_t();
-    const std::size_t len = wstr.size();
+    const size_t len = wstr.size();
     std::vector<char> mbstr(len);
     const wchar_t* wptr = wstr.c_str();
 #ifdef _MSC_VER
@@ -421,7 +421,7 @@ inline std::string wstringToString(const std::wstring& wstr) {
 // std::string(char) to std::wstring(unicode/multibytes/char16/wchar_t)
 inline std::wstring stringToWstring(const std::string& mbstr) {
     std::mbstate_t state = std::mbstate_t();
-    const std::size_t len = mbstr.size();
+    const size_t len = mbstr.size();
     std::vector<wchar_t> wstr(len);
     const char* ptr = mbstr.c_str();
 #ifdef _MSC_VER

@@ -111,8 +111,8 @@ inline T det3x3(const math::matN<T>& aMatrix) {
 
 // In-place negation of a single column.
 template <typename T>
-inline void negateColumn(math::matN<T>& aoMatrix, std::size_t aColumnIndex) {
-    for (std::size_t rowIndex = 0; rowIndex < aoMatrix.rows(); ++rowIndex) {
+inline void negateColumn(math::matN<T>& aoMatrix, size_t aColumnIndex) {
+    for (size_t rowIndex = 0; rowIndex < aoMatrix.rows(); ++rowIndex) {
         aoMatrix(rowIndex, aColumnIndex) = -aoMatrix(rowIndex, aColumnIndex);
     }
 }
@@ -241,7 +241,7 @@ bool triangulatePointDLT(
     }
 
     math::matN<T> aMatrix(4, 4);
-    for (std::size_t columnIndex = 0; columnIndex < 4; ++columnIndex) {
+    for (size_t columnIndex = 0; columnIndex < 4; ++columnIndex) {
         aMatrix(0, columnIndex) = aX1 * aP1(2, columnIndex) - aP1(0, columnIndex);
         aMatrix(1, columnIndex) = aY1 * aP1(2, columnIndex) - aP1(1, columnIndex);
         aMatrix(2, columnIndex) = aX2 * aP2(2, columnIndex) - aP2(0, columnIndex);
@@ -256,7 +256,7 @@ bool triangulatePointDLT(
 
     // Right singular vector with smallest singular value = last column of V
     // (singular values are sorted descending).
-    const std::size_t lastColumn = svdResult.v.columns() - 1;
+    const size_t lastColumn = svdResult.v.columns() - 1;
     const T xHomogeneous = svdResult.v(0, lastColumn);
     const T yHomogeneous = svdResult.v(1, lastColumn);
     const T zHomogeneous = svdResult.v(2, lastColumn);
@@ -293,7 +293,7 @@ bool selectPoseByCheirality(
     const std::array<pose<T>, 4>& aCandidates,
     const std::vector<correspondence<T>>& aSamples,
     pose<T>& aoSelected,
-    std::size_t& aoInFrontCount) {
+    size_t& aoInFrontCount) {
     static_assert(std::is_floating_point<T>::value, "selectPoseByCheirality requires a floating-point T");
 
     if (aSamples.empty()) {
@@ -306,11 +306,11 @@ bool selectPoseByCheirality(
     projectionFirst(1, 0) = T(0); projectionFirst(1, 1) = T(1); projectionFirst(1, 2) = T(0); projectionFirst(1, 3) = T(0);
     projectionFirst(2, 0) = T(0); projectionFirst(2, 1) = T(0); projectionFirst(2, 2) = T(1); projectionFirst(2, 3) = T(0);
 
-    std::size_t bestCount = 0;
-    std::size_t bestIndex = 0;
+    size_t bestCount = 0;
+    size_t bestIndex = 0;
     bool anyValid = false;
 
-    for (std::size_t candidateIndex = 0; candidateIndex < 4; ++candidateIndex) {
+    for (size_t candidateIndex = 0; candidateIndex < 4; ++candidateIndex) {
         const pose<T>& candidate = aCandidates[candidateIndex];
         if (candidate.rotation.rows() != 3 || candidate.rotation.columns() != 3) {
             continue;
@@ -321,15 +321,15 @@ bool selectPoseByCheirality(
 
         // P2 = [R | t]
         math::matN<T> projectionSecond(3, 4);
-        for (std::size_t rowIndex = 0; rowIndex < 3; ++rowIndex) {
-            for (std::size_t columnIndex = 0; columnIndex < 3; ++columnIndex) {
+        for (size_t rowIndex = 0; rowIndex < 3; ++rowIndex) {
+            for (size_t columnIndex = 0; columnIndex < 3; ++columnIndex) {
                 projectionSecond(rowIndex, columnIndex) = candidate.rotation(rowIndex, columnIndex);
             }
             projectionSecond(rowIndex, 3) = candidate.translation[rowIndex];
         }
 
-        std::size_t inFrontForCandidate = 0;
-        for (std::size_t sampleIndex = 0; sampleIndex < aSamples.size(); ++sampleIndex) {
+        size_t inFrontForCandidate = 0;
+        for (size_t sampleIndex = 0; sampleIndex < aSamples.size(); ++sampleIndex) {
             const correspondence<T>& sample = aSamples[sampleIndex];
             math::vecN<T> point3D;
             if (!triangulatePointDLT(projectionFirst, projectionSecond,

@@ -55,7 +55,7 @@ class vecN {
     static_assert(std::is_floating_point<T>::value, "vecN requires a floating-point T");
 
 public:
-    static vecN Zero(std::size_t aSize) {
+    static vecN Zero(size_t aSize) {
         return vecN(aSize);
     }
 
@@ -65,16 +65,16 @@ private:
 public:
     vecN() = default;
 
-    explicit vecN(std::size_t aSize) : m_data(aSize, T(0)) {
+    explicit vecN(size_t aSize) : m_data(aSize, T(0)) {
     }
 
-    vecN(std::size_t aSize, T aFillValue) : m_data(aSize, aFillValue) {
+    vecN(size_t aSize, T aFillValue) : m_data(aSize, aFillValue) {
     }
 
     vecN(std::initializer_list<T> aValues) : m_data(aValues) {
     }
 
-    std::size_t size() const {
+    size_t size() const {
         return m_data.size();
     }
     bool empty() const {
@@ -88,16 +88,16 @@ public:
         return m_data.data();
     }
 
-    T& operator[](std::size_t aIndex) {
+    T& operator[](size_t aIndex) {
         return m_data[aIndex];
     }
-    T operator[](std::size_t aIndex) const {
+    T operator[](size_t aIndex) const {
         return m_data[aIndex];
     }
 
     T lengthSquared() const {
         T accumulator = T(0);
-        for (std::size_t componentIndex = 0; componentIndex < m_data.size(); ++componentIndex) {
+        for (size_t componentIndex = 0; componentIndex < m_data.size(); ++componentIndex) {
             accumulator += m_data[componentIndex] * m_data[componentIndex];
         }
         return accumulator;
@@ -114,7 +114,7 @@ public:
             return T(0);
         }
         T accumulator = T(0);
-        for (std::size_t componentIndex = 0; componentIndex < m_data.size(); ++componentIndex) {
+        for (size_t componentIndex = 0; componentIndex < m_data.size(); ++componentIndex) {
             accumulator += m_data[componentIndex] * aRight.m_data[componentIndex];
         }
         return accumulator;
@@ -128,7 +128,7 @@ public:
             return false;
         }
         T inverseLength = T(1) / currentLength;
-        for (std::size_t componentIndex = 0; componentIndex < m_data.size(); ++componentIndex) {
+        for (size_t componentIndex = 0; componentIndex < m_data.size(); ++componentIndex) {
             m_data[componentIndex] *= inverseLength;
         }
         return true;

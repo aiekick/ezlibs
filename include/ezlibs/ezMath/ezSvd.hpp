@@ -150,8 +150,8 @@ public:
         // From here on m >= n.
         // m: number of rows of the working matrix
         // n: number of columns of the working matrix
-        const std::size_t m = workInput.rows();
-        const std::size_t n = workInput.columns();
+        const size_t m = workInput.rows();
+        const size_t n = workInput.columns();
 
         // Working buffers. JAMA convention:
         //   work : m x n matrix progressively reduced to bidiagonal form
@@ -169,24 +169,24 @@ public:
 
         // Number of column / row Householder transforms to actually perform
         // (last column / row would only annihilate already-zero entries).
-        const std::size_t nct = (m < n) ? m : n;             // = n here
-        const std::size_t nrt = (n >= 2) ? (n - 2) : 0;
-        const std::size_t outerLimit = (nct > nrt) ? nct : nrt;
+        const size_t nct = (m < n) ? m : n;             // = n here
+        const size_t nrt = (n >= 2) ? (n - 2) : 0;
+        const size_t outerLimit = (nct > nrt) ? nct : nrt;
 
         // ---------- Phase 1 : Householder bidiagonalization ----------
-        for (std::size_t k = 0; k < outerLimit; ++k) {
+        for (size_t k = 0; k < outerLimit; ++k) {
             if (k < nct) {
                 // Compute the transformation for the k-th column and place
                 // the resulting norm in s[k].
                 T columnNorm = T(0);
-                for (std::size_t i = k; i < m; ++i) {
+                for (size_t i = k; i < m; ++i) {
                     columnNorm = detail::safeHypot(columnNorm, work(i, k));
                 }
                 if (columnNorm != T(0)) {
                     if (work(k, k) < T(0)) {
                         columnNorm = -columnNorm;
                     }
-                    for (std::size_t i = k; i < m; ++i) {
+                    for (size_t i = k; i < m; ++i) {
                         work(i, k) = work(i, k) / columnNorm;
                     }
                     work(k, k) = work(k, k) + T(1);
@@ -195,14 +195,14 @@ public:
             }
 
             // Apply the column transform to the remaining columns.
-            for (std::size_t j = k + 1; j < n; ++j) {
+            for (size_t j = k + 1; j < n; ++j) {
                 if (k < nct && s[k] != T(0)) {
                     T t = T(0);
-                    for (std::size_t i = k; i < m; ++i) {
+                    for (size_t i = k; i < m; ++i) {
                         t += work(i, k) * work(i, j);
                     }
                     t = -t / work(k, k);
-                    for (std::size_t i = k; i < m; ++i) {
+                    for (size_t i = k; i < m; ++i) {
                         work(i, j) += t * work(i, k);
                     }
                 }
@@ -214,7 +214,7 @@ public:
             if (k < nct) {
                 // Save the column transform in the appropriate column of
                 // uMat so it can be replayed when generating U.
-                for (std::size_t i = k; i < m; ++i) {
+                for (size_t i = k; i < m; ++i) {
                     uMat(i, k) = work(i, k);
                 }
             }
@@ -222,14 +222,14 @@ public:
             if (k < nrt) {
                 // Compute the transformation for the k-th row.
                 T rowNorm = T(0);
-                for (std::size_t i = k + 1; i < n; ++i) {
+                for (size_t i = k + 1; i < n; ++i) {
                     rowNorm = detail::safeHypot(rowNorm, e[i]);
                 }
                 if (rowNorm != T(0)) {
                     if (e[k + 1] < T(0)) {
                         rowNorm = -rowNorm;
                     }
-                    for (std::size_t i = k + 1; i < n; ++i) {
+                    for (size_t i = k + 1; i < n; ++i) {
                         e[i] = e[i] / rowNorm;
                     }
                     e[k + 1] = e[k + 1] + T(1);
@@ -239,28 +239,28 @@ public:
                 if (k + 1 < m && e[k] != T(0)) {
                     // Apply the row transform to the remaining rows of work.
                     vecN<T> work2(m, T(0));
-                    for (std::size_t i = k + 1; i < m; ++i) {
-                        for (std::size_t j = k + 1; j < n; ++j) {
+                    for (size_t i = k + 1; i < m; ++i) {
+                        for (size_t j = k + 1; j < n; ++j) {
                             work2[i] += e[j] * work(i, j);
                         }
                     }
-                    for (std::size_t j = k + 1; j < n; ++j) {
+                    for (size_t j = k + 1; j < n; ++j) {
                         T t = -e[j] / e[k + 1];
-                        for (std::size_t i = k + 1; i < m; ++i) {
+                        for (size_t i = k + 1; i < m; ++i) {
                             work(i, j) += t * work2[i];
                         }
                     }
                 }
 
                 // Save the row transform in vMat to replay when generating V.
-                for (std::size_t i = k + 1; i < n; ++i) {
+                for (size_t i = k + 1; i < n; ++i) {
                     vMat(i, k) = e[i];
                 }
             }
         }
 
         // Number of singular values to handle below.
-        std::size_t p = n;
+        size_t p = n;
         if (nct < n) {
             s[nct] = work(nct, nct);
         }
@@ -273,34 +273,34 @@ public:
         e[p - 1] = T(0);
 
         // ---------- Generate U from the saved column transforms ----------
-        for (std::size_t j = nct; j < n; ++j) {
-            for (std::size_t i = 0; i < m; ++i) {
+        for (size_t j = nct; j < n; ++j) {
+            for (size_t i = 0; i < m; ++i) {
                 uMat(i, j) = T(0);
             }
             uMat(j, j) = T(1);
         }
-        for (std::size_t kStep = nct; kStep > 0; --kStep) {
-            std::size_t k = kStep - 1;
+        for (size_t kStep = nct; kStep > 0; --kStep) {
+            size_t k = kStep - 1;
             if (s[k] != T(0)) {
-                for (std::size_t j = k + 1; j < n; ++j) {
+                for (size_t j = k + 1; j < n; ++j) {
                     T t = T(0);
-                    for (std::size_t i = k; i < m; ++i) {
+                    for (size_t i = k; i < m; ++i) {
                         t += uMat(i, k) * uMat(i, j);
                     }
                     t = -t / uMat(k, k);
-                    for (std::size_t i = k; i < m; ++i) {
+                    for (size_t i = k; i < m; ++i) {
                         uMat(i, j) += t * uMat(i, k);
                     }
                 }
-                for (std::size_t i = k; i < m; ++i) {
+                for (size_t i = k; i < m; ++i) {
                     uMat(i, k) = -uMat(i, k);
                 }
                 uMat(k, k) = T(1) + uMat(k, k);
-                for (std::size_t i = 0; i + 1 < k; ++i) {
+                for (size_t i = 0; i + 1 < k; ++i) {
                     uMat(i, k) = T(0);
                 }
             } else {
-                for (std::size_t i = 0; i < m; ++i) {
+                for (size_t i = 0; i < m; ++i) {
                     uMat(i, k) = T(0);
                 }
                 uMat(k, k) = T(1);
@@ -308,21 +308,21 @@ public:
         }
 
         // ---------- Generate V from the saved row transforms ----------
-        for (std::size_t kStep = n; kStep > 0; --kStep) {
-            std::size_t k = kStep - 1;
+        for (size_t kStep = n; kStep > 0; --kStep) {
+            size_t k = kStep - 1;
             if (k < nrt && e[k] != T(0)) {
-                for (std::size_t j = k + 1; j < n; ++j) {
+                for (size_t j = k + 1; j < n; ++j) {
                     T t = T(0);
-                    for (std::size_t i = k + 1; i < n; ++i) {
+                    for (size_t i = k + 1; i < n; ++i) {
                         t += vMat(i, k) * vMat(i, j);
                     }
                     t = -t / vMat(k + 1, k);
-                    for (std::size_t i = k + 1; i < n; ++i) {
+                    for (size_t i = k + 1; i < n; ++i) {
                         vMat(i, j) += t * vMat(i, k);
                     }
                 }
             }
-            for (std::size_t i = 0; i < n; ++i) {
+            for (size_t i = 0; i < n; ++i) {
                 vMat(i, k) = T(0);
             }
             vMat(k, k) = T(1);
@@ -332,15 +332,15 @@ public:
         //
         // Indices in this phase use signed int because k and ks are required
         // to take the sentinel value -1 ("not found"), and arithmetic such as
-        // p - 2 with p == 1 would underflow std::size_t. The cast helper
+        // p - 2 with p == 1 would underflow size_t. The cast helper
         // converts back when accessing the size_t-indexed s/e/uMat/vMat.
         const int pp = static_cast<int>(p) - 1;
         int pSigned = static_cast<int>(p);
         int iter = 0;
         bool converged = true;
 
-        auto toIndex = [](int aSignedIndex) -> std::size_t {
-            return static_cast<std::size_t>(aSignedIndex);
+        auto toIndex = [](int aSignedIndex) -> size_t {
+            return static_cast<size_t>(aSignedIndex);
         };
 
         while (pSigned > 0) {
@@ -405,7 +405,7 @@ public:
                             f = -sn * e[toIndex(j - 1)];
                             e[toIndex(j - 1)] = c * e[toIndex(j - 1)];
                         }
-                        for (std::size_t i = 0; i < n; ++i) {
+                        for (size_t i = 0; i < n; ++i) {
                             T tmp = c * vMat(i, toIndex(j)) + sn * vMat(i, toIndex(pSigned - 1));
                             vMat(i, toIndex(pSigned - 1)) = -sn * vMat(i, toIndex(j)) + c * vMat(i, toIndex(pSigned - 1));
                             vMat(i, toIndex(j)) = tmp;
@@ -424,7 +424,7 @@ public:
                         s[toIndex(j)] = t;
                         f = -sn * e[toIndex(j)];
                         e[toIndex(j)] = c * e[toIndex(j)];
-                        for (std::size_t i = 0; i < m; ++i) {
+                        for (size_t i = 0; i < m; ++i) {
                             T tmp = c * uMat(i, toIndex(j)) + sn * uMat(i, toIndex(k - 1));
                             uMat(i, toIndex(k - 1)) = -sn * uMat(i, toIndex(j)) + c * uMat(i, toIndex(k - 1));
                             uMat(i, toIndex(j)) = tmp;
@@ -472,7 +472,7 @@ public:
                         e[toIndex(j)] = c * e[toIndex(j)] - sn * s[toIndex(j)];
                         g = sn * s[toIndex(j + 1)];
                         s[toIndex(j + 1)] = c * s[toIndex(j + 1)];
-                        for (std::size_t i = 0; i < n; ++i) {
+                        for (size_t i = 0; i < n; ++i) {
                             T tmp = c * vMat(i, toIndex(j)) + sn * vMat(i, toIndex(j + 1));
                             vMat(i, toIndex(j + 1)) = -sn * vMat(i, toIndex(j)) + c * vMat(i, toIndex(j + 1));
                             vMat(i, toIndex(j)) = tmp;
@@ -486,7 +486,7 @@ public:
                         g = sn * e[toIndex(j + 1)];
                         e[toIndex(j + 1)] = c * e[toIndex(j + 1)];
                         if (j < static_cast<int>(m) - 1) {
-                            for (std::size_t i = 0; i < m; ++i) {
+                            for (size_t i = 0; i < m; ++i) {
                                 T tmp = c * uMat(i, toIndex(j)) + sn * uMat(i, toIndex(j + 1));
                                 uMat(i, toIndex(j + 1)) = -sn * uMat(i, toIndex(j)) + c * uMat(i, toIndex(j + 1));
                                 uMat(i, toIndex(j)) = tmp;
@@ -520,12 +520,12 @@ public:
                         }
                         std::swap(s[toIndex(k)], s[toIndex(k + 1)]);
                         if (k < static_cast<int>(n) - 1) {
-                            for (std::size_t i = 0; i < n; ++i) {
+                            for (size_t i = 0; i < n; ++i) {
                                 std::swap(vMat(i, toIndex(k)), vMat(i, toIndex(k + 1)));
                             }
                         }
                         if (k < static_cast<int>(m) - 1) {
-                            for (std::size_t i = 0; i < m; ++i) {
+                            for (size_t i = 0; i < m; ++i) {
                                 std::swap(uMat(i, toIndex(k)), uMat(i, toIndex(k + 1)));
                             }
                         }

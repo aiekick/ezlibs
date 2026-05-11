@@ -29,8 +29,8 @@ bool matrixIsClose(const ez::math::matN<T>& aLeft, const ez::math::matN<T>& aRig
     if (aLeft.rows() != aRight.rows() || aLeft.columns() != aRight.columns()) {
         return false;
     }
-    for (std::size_t rowIndex = 0; rowIndex < aLeft.rows(); ++rowIndex) {
-        for (std::size_t columnIndex = 0; columnIndex < aLeft.columns(); ++columnIndex) {
+    for (size_t rowIndex = 0; rowIndex < aLeft.rows(); ++rowIndex) {
+        for (size_t columnIndex = 0; columnIndex < aLeft.columns(); ++columnIndex) {
             if (!ez::math::isEqual(aLeft(rowIndex, columnIndex), aRight(rowIndex, columnIndex), aTolerance)) {
                 return false;
             }
@@ -45,7 +45,7 @@ bool vectorIsClose(const ez::math::vecN<T>& aLeft, const ez::math::vecN<T>& aRig
     if (aLeft.size() != aRight.size()) {
         return false;
     }
-    for (std::size_t componentIndex = 0; componentIndex < aLeft.size(); ++componentIndex) {
+    for (size_t componentIndex = 0; componentIndex < aLeft.size(); ++componentIndex) {
         if (!ez::math::isEqual(aLeft[componentIndex], aRight[componentIndex], aTolerance)) {
             return false;
         }
@@ -145,7 +145,7 @@ bool TestEzEpipolar_DecomposePureXTranslation() {
     // Among the four candidates, at least one must be (R = I, t = (1, 0, 0)).
     bool foundExpected = false;
     const T tolerance = static_cast<T>(1e-5);
-    for (std::size_t i = 0; i < 4; ++i) {
+    for (size_t i = 0; i < 4; ++i) {
         if (matrixIsClose(candidates[i].rotation, identity, tolerance)
          && vectorIsClose(candidates[i].translation, expectedTranslationPositive, tolerance)) {
             foundExpected = true;
@@ -168,7 +168,7 @@ bool TestEzEpipolar_DecomposeProducesProperRotations() {
     CTEST_ASSERT(ez::viz::decomposeEssentialMatrix(essential, candidates));
 
     const T tolerance = static_cast<T>(1e-5);
-    for (std::size_t i = 0; i < 4; ++i) {
+    for (size_t i = 0; i < 4; ++i) {
         const ez::math::matN<T>& rotation = candidates[i].rotation;
         // Check det(R) = +1.
         const T determinant = det3(rotation);
@@ -223,13 +223,13 @@ bool TestEzEpipolar_CheiralityHandlesEmptySamples() {
     std::array<ez::viz::pose<T>, 4> candidates;
     // Build any plausible candidate so we hit the empty-samples guard, not
     // the all-degenerate guard.
-    for (std::size_t i = 0; i < 4; ++i) {
+    for (size_t i = 0; i < 4; ++i) {
         candidates[i].rotation = makeIdentity3<T>();
         candidates[i].translation = ez::math::vecN<T>(3);
     }
     std::vector<ez::viz::correspondence<T>> empty;
     ez::viz::pose<T> selected;
-    std::size_t inFront = 0;
+    size_t inFront = 0;
     CTEST_ASSERT(!ez::viz::selectPoseByCheirality(candidates, empty, selected, inFront));
     return true;
 }
@@ -261,7 +261,7 @@ bool TestEzEpipolar_CheiralitySelectsCorrectPose() {
 
     // Select via cheirality.
     ez::viz::pose<T> selected;
-    std::size_t inFront = 0;
+    size_t inFront = 0;
     CTEST_ASSERT(ez::viz::selectPoseByCheirality(candidates, samples, selected, inFront));
 
     // The winner must have all 5 samples in front of both cameras.

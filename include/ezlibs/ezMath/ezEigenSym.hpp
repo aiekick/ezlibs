@@ -120,7 +120,7 @@ template <typename T>
 void householderTridiag(matN<T>& aoZ, vecN<T>& aoDiag, vecN<T>& aoOffDiag) {
     const int n = static_cast<int>(aoZ.rows());
 
-    auto idx = [](int aSignedIndex) -> std::size_t { return static_cast<std::size_t>(aSignedIndex); };
+    auto idx = [](int aSignedIndex) -> size_t { return static_cast<size_t>(aSignedIndex); };
 
     for (int i = n - 1; i > 0; --i) {
         int l = i - 1;
@@ -206,7 +206,7 @@ template <typename T>
 bool qlIteration(vecN<T>& aoDiag, vecN<T>& aoOffDiag, matN<T>& aoZ, int aMaxIterations, T aTolerance) {
     const int n = static_cast<int>(aoDiag.size());
 
-    auto idx = [](int aSignedIndex) -> std::size_t { return static_cast<std::size_t>(aSignedIndex); };
+    auto idx = [](int aSignedIndex) -> size_t { return static_cast<size_t>(aSignedIndex); };
 
     // Shift the off-diagonal: tred2 stored e at index i, tqli expects it at index i-1.
     for (int i = 1; i < n; ++i) {
@@ -278,11 +278,11 @@ bool qlIteration(vecN<T>& aoDiag, vecN<T>& aoOffDiag, matN<T>& aoZ, int aMaxIter
 // to the eigenvector matrix.
 template <typename T>
 void sortDescending(vecN<T>& aoDiag, matN<T>& aoZ) {
-    const std::size_t n = aoDiag.size();
-    for (std::size_t i = 0; i + 1 < n; ++i) {
-        std::size_t maxIndex = i;
+    const size_t n = aoDiag.size();
+    for (size_t i = 0; i + 1 < n; ++i) {
+        size_t maxIndex = i;
         T maxValue = aoDiag[i];
-        for (std::size_t j = i + 1; j < n; ++j) {
+        for (size_t j = i + 1; j < n; ++j) {
             if (aoDiag[j] > maxValue) {
                 maxValue = aoDiag[j];
                 maxIndex = j;
@@ -290,7 +290,7 @@ void sortDescending(vecN<T>& aoDiag, matN<T>& aoZ) {
         }
         if (maxIndex != i) {
             std::swap(aoDiag[i], aoDiag[maxIndex]);
-            for (std::size_t k = 0; k < n; ++k) {
+            for (size_t k = 0; k < n; ++k) {
                 std::swap(aoZ(k, i), aoZ(k, maxIndex));
             }
         }
@@ -325,7 +325,7 @@ public:
             return output;
         }
 
-        const std::size_t n = aMatrix.rows();
+        const size_t n = aMatrix.rows();
         matN<T> z = aMatrix;
         vecN<T> diag(n);
         vecN<T> offDiag(n);

@@ -63,8 +63,8 @@ struct lineInlierTester {
 std::vector<point2D> makeLineDataset(
     float aTrueA,
     float aTrueB,
-    std::size_t aInlierCount,
-    std::size_t aOutlierCount,
+    size_t aInlierCount,
+    size_t aOutlierCount,
     float aNoiseAmplitude) {
     std::vector<point2D> samples;
     samples.reserve(aInlierCount + aOutlierCount);
@@ -75,12 +75,12 @@ std::vector<point2D> makeLineDataset(
         seed = seed * 1664525u + 1013904223u;
         return static_cast<float>(seed & 0xFFFF) / 65535.0f;  // [0, 1]
     };
-    for (std::size_t i = 0; i < aInlierCount; ++i) {
+    for (size_t i = 0; i < aInlierCount; ++i) {
         const float x = static_cast<float>(i) * 0.1f;
         const float noise = (next() - 0.5f) * aNoiseAmplitude;
         samples.push_back({x, aTrueA * x + aTrueB + noise});
     }
-    for (std::size_t i = 0; i < aOutlierCount; ++i) {
+    for (size_t i = 0; i < aOutlierCount; ++i) {
         const float x = next() * 10.0f;
         const float y = next() * 100.0f - 50.0f;  // far from the true line
         samples.push_back({x, y});
@@ -175,7 +175,7 @@ bool TestEzRansac_DegenerateEstimatorIsSkipped() {
     // All samples on the same x: estimator returns nullopt for every draw.
     // The function must terminate without succeeding, not loop forever.
     std::vector<point2D> samples;
-    for (std::size_t i = 0; i < 20; ++i) {
+    for (size_t i = 0; i < 20; ++i) {
         samples.push_back({1.0f, static_cast<float>(i)});  // all share x = 1
     }
     ez::math::ransacConfig config;
