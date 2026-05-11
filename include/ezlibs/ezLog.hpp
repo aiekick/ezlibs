@@ -186,6 +186,7 @@ public:
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)
         ZoneScoped;
 #endif
+        m_createFileOnDisk();
     }
     ~Log() {
 #if defined(TRACY_ENABLE) && defined(LOG_TRACY_MESSAGES)

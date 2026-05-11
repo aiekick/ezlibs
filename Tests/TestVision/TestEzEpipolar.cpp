@@ -235,6 +235,61 @@ bool TestEzEpipolar_CheiralityHandlesEmptySamples() {
 }
 
 template <typename T>
+bool TestEzEpipolar_CheiralityWithScoresReportsAllCounts() {
+    // Same synthetic scene as CheiralitySelectsCorrectPose: 5 points all
+    // strictly in front of both cameras (R = I, t = (1, 0, 0)). For this
+    // clean geometry exactly ONE of the four candidates must reach the full
+    // sample count; the others must be strictly below it. That property is
+    // exactly what makes the new score-returning variant useful as a
+    // diagnostic on real datasets (a pair where two candidates tie is the
+    // fingerprint of a flipped-camera ambiguity).
+    ez::math::matN<T> truthRotation = makeIdentity3<T>();
+    ez::math::vecN<T> truthTranslation(3);
+    truthTranslation[0] = T(1);
+    truthTranslation[1] = T(0);
+    truthTranslation[2] = T(0);
+
+    std::vector<ez::viz::correspondence<T>> samples;
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(0),  T(5)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(1),  T(0),  T(5)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(1),  T(6)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(-1), T(0),  T(5)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(-1), T(7)));
+
+    ez::math::matN<T> essential = makeEssentialMatrix(truthRotation, truthTranslation);
+    std::array<ez::viz::pose<T>, 4> candidates;
+    CTEST_ASSERT(ez::viz::decomposeEssentialMatrix(essential, candidates));
+
+    ez::viz::pose<T> selected;
+    size_t selectedIndex = 0;
+    std::array<size_t, 4> counts = {{0, 0, 0, 0}};
+    CTEST_ASSERT(ez::viz::selectPoseByCheiralityWithScores(candidates, samples, selected, selectedIndex, counts));
+
+    CTEST_ASSERT(selectedIndex < 4);
+    CTEST_ASSERT(counts[selectedIndex] == samples.size());
+
+    size_t winnersWithMax = 0;
+    for (size_t candIdx = 0; candIdx < 4; ++candIdx) {
+        if (counts[candIdx] == samples.size()) {
+            ++winnersWithMax;
+        }
+    }
+    CTEST_ASSERT(winnersWithMax == 1);
+
+    // The selected pose returned by the score variant must match the one
+    // the historical wrapper would return.
+    ez::viz::pose<T> wrapperSelected;
+    size_t wrapperInFront = 0;
+    CTEST_ASSERT(ez::viz::selectPoseByCheirality(candidates, samples, wrapperSelected, wrapperInFront));
+    CTEST_ASSERT(wrapperInFront == counts[selectedIndex]);
+
+    const T tolerance = static_cast<T>(1e-5);
+    CTEST_ASSERT(matrixIsClose(wrapperSelected.rotation, selected.rotation, tolerance));
+    CTEST_ASSERT(vectorIsClose(wrapperSelected.translation, selected.translation, tolerance));
+    return true;
+}
+
+template <typename T>
 bool TestEzEpipolar_CheiralitySelectsCorrectPose() {
     // Synthetic scene:
     //   - Camera 1 at world origin (R = I, t = 0).
@@ -276,6 +331,137 @@ bool TestEzEpipolar_CheiralitySelectsCorrectPose() {
     return true;
 }
 
+template <typename T>
+bool TestEzEpipolar_MedianParallaxOnKnownScene() {
+    // Scene: camera 1 at origin, camera 2 at world position (-1, 0, 0)
+    // with R = I (same orientation), so t = (1, 0, 0). Points at depth
+    // z = 5 in front of both cameras.
+    //
+    // For a 3D point at (0, 0, 5):
+    //   ray1 = (0, 0, 5), norm = 5
+    //   ray2 = (0-(-1), 0, 5) = (1, 0, 5), norm = sqrt(26)
+    //   cos(parallax) = 5 / (5 * sqrt(26)) = 1 / sqrt(26)
+    //   parallax = acos(0.196) ≈ 11.3 deg
+    //
+    // For (1, 0, 5):
+    //   ray1 = (1, 0, 5), norm = sqrt(26)
+    //   ray2 = (2, 0, 5), norm = sqrt(29)
+    //   cos = (2 + 25) / (sqrt(26) * sqrt(29)) ≈ 0.9824
+    //   parallax ≈ 10.8 deg
+    //
+    // The 5 sample scene from CheiralitySelectsCorrectPose has parallax
+    // values clustered around 10-12 deg; the median must fall in that
+    // window.
+    ez::math::matN<T> truthRotation = makeIdentity3<T>();
+    ez::math::vecN<T> truthTranslation(3);
+    truthTranslation[0] = T(1);
+    truthTranslation[1] = T(0);
+    truthTranslation[2] = T(0);
+
+    std::vector<ez::viz::correspondence<T>> samples;
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(0),  T(5)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(1),  T(0),  T(5)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(1),  T(6)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(-1), T(0),  T(5)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(-1), T(7)));
+
+    ez::viz::pose<T> truthPose;
+    truthPose.rotation = truthRotation;
+    truthPose.translation = truthTranslation;
+
+    const T parallaxDeg = ez::viz::computeMedianParallaxDegrees(truthPose, samples);
+    // Expected median is in the 5-15 deg range for this geometry.
+    CTEST_ASSERT(parallaxDeg > static_cast<T>(5));
+    CTEST_ASSERT(parallaxDeg < static_cast<T>(15));
+    return true;
+}
+
+template <typename T>
+bool TestEzEpipolar_MedianParallaxEmptyReturnsZero() {
+    ez::viz::pose<T> p;
+    p.rotation = makeIdentity3<T>();
+    p.translation = ez::math::vecN<T>(3);
+    p.translation[0] = T(1);
+    std::vector<ez::viz::correspondence<T>> empty;
+    const T parallaxDeg = ez::viz::computeMedianParallaxDegrees(p, empty);
+    CTEST_ASSERT(ez::math::isEqual(parallaxDeg, T(0), static_cast<T>(1e-6)));
+    return true;
+}
+
+template <typename T>
+bool TestEzEpipolar_HomographyFitRejectsTooFewSamples() {
+    std::vector<ez::viz::correspondence<T>> samples;
+    samples.resize(3);  // 3 < 4
+    T medianError = T(-1);
+    CTEST_ASSERT(!ez::viz::fitHomographyAndMedianError(samples, medianError));
+    return true;
+}
+
+template <typename T>
+bool TestEzEpipolar_HomographyFitRecoversKnownPlanarH() {
+    // Build a known homography (identity + small perturbation), generate
+    // 8 exact correspondences via it, then fit and verify the median
+    // reprojection error is essentially zero.
+    //
+    // H = [[1.1,  0.0, 0.02],
+    //      [0.0,  1.2, 0.03],
+    //      [0.0,  0.0, 1.0 ]]
+    ez::math::matN<T> truthH(3, 3);
+    truthH(0, 0) = static_cast<T>(1.1); truthH(0, 1) = T(0);            truthH(0, 2) = static_cast<T>(0.02);
+    truthH(1, 0) = T(0);                truthH(1, 1) = static_cast<T>(1.2); truthH(1, 2) = static_cast<T>(0.03);
+    truthH(2, 0) = T(0);                truthH(2, 1) = T(0);            truthH(2, 2) = T(1);
+
+    std::vector<ez::viz::correspondence<T>> samples;
+    const T sourcePoints[8][2] = {
+        {T(-1), T(-1)}, {T(1), T(-1)}, {T(1), T(1)}, {T(-1), T(1)},
+        {T(0),  T(-1)}, {T(1), T(0)},  {T(0), T(1)}, {T(-1), T(0)}
+    };
+    for (size_t i = 0; i < 8; ++i) {
+        const T x1 = sourcePoints[i][0];
+        const T y1 = sourcePoints[i][1];
+        const T xp = truthH(0, 0) * x1 + truthH(0, 1) * y1 + truthH(0, 2);
+        const T yp = truthH(1, 0) * x1 + truthH(1, 1) * y1 + truthH(1, 2);
+        const T wp = truthH(2, 0) * x1 + truthH(2, 1) * y1 + truthH(2, 2);
+        ez::viz::correspondence<T> sample;
+        sample.x1 = x1;
+        sample.y1 = y1;
+        sample.x2 = xp / wp;
+        sample.y2 = yp / wp;
+        samples.push_back(sample);
+    }
+
+    T medianError = T(-1);
+    CTEST_ASSERT(ez::viz::fitHomographyAndMedianError(samples, medianError));
+    // Exact data → median error should be at floating-point noise level.
+    CTEST_ASSERT(medianError < static_cast<T>(1e-4));
+    return true;
+}
+
+template <typename T>
+bool TestEzEpipolar_EpipolarErrorOnExactScene() {
+    // Same scene as CheiralitySelectsCorrectPose: 5 in-front points with
+    // R = I, t = (1, 0, 0). The matches projected exactly through this
+    // (R, t) must give a median epipolar error close to zero under the
+    // matching E = [t]x * R.
+    ez::math::matN<T> truthRotation = makeIdentity3<T>();
+    ez::math::vecN<T> truthTranslation(3);
+    truthTranslation[0] = T(1);
+    truthTranslation[1] = T(0);
+    truthTranslation[2] = T(0);
+
+    std::vector<ez::viz::correspondence<T>> samples;
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(0),  T(5)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(1),  T(0),  T(5)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(1),  T(6)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(-1), T(0),  T(5)));
+    samples.push_back(projectThroughPair(truthRotation, truthTranslation, T(0),  T(-1), T(7)));
+
+    ez::math::matN<T> essential = makeEssentialMatrix(truthRotation, truthTranslation);
+    const T medianError = ez::viz::computeMedianEpipolarError(essential, samples);
+    CTEST_ASSERT(medianError < static_cast<T>(1e-4));
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -293,8 +479,20 @@ bool TestEzEpipolar(const std::string& vTest) {
     else IfTestExist(TestEzEpipolar_TriangulateAxisAlignedCameras<double>);
     else IfTestExist(TestEzEpipolar_CheiralityHandlesEmptySamples<float>);
     else IfTestExist(TestEzEpipolar_CheiralityHandlesEmptySamples<double>);
+    else IfTestExist(TestEzEpipolar_CheiralityWithScoresReportsAllCounts<float>);
+    else IfTestExist(TestEzEpipolar_CheiralityWithScoresReportsAllCounts<double>);
     else IfTestExist(TestEzEpipolar_CheiralitySelectsCorrectPose<float>);
     else IfTestExist(TestEzEpipolar_CheiralitySelectsCorrectPose<double>);
+    else IfTestExist(TestEzEpipolar_MedianParallaxOnKnownScene<float>);
+    else IfTestExist(TestEzEpipolar_MedianParallaxOnKnownScene<double>);
+    else IfTestExist(TestEzEpipolar_MedianParallaxEmptyReturnsZero<float>);
+    else IfTestExist(TestEzEpipolar_MedianParallaxEmptyReturnsZero<double>);
+    else IfTestExist(TestEzEpipolar_HomographyFitRejectsTooFewSamples<float>);
+    else IfTestExist(TestEzEpipolar_HomographyFitRejectsTooFewSamples<double>);
+    else IfTestExist(TestEzEpipolar_HomographyFitRecoversKnownPlanarH<float>);
+    else IfTestExist(TestEzEpipolar_HomographyFitRecoversKnownPlanarH<double>);
+    else IfTestExist(TestEzEpipolar_EpipolarErrorOnExactScene<float>);
+    else IfTestExist(TestEzEpipolar_EpipolarErrorOnExactScene<double>);
     return false;
 }
 
