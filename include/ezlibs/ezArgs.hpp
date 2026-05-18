@@ -60,6 +60,7 @@ private:
         char m_delimiter = 0;
         bool m_is_present = false;
         bool m_has_value = false;
+        bool m_required = false;
         std::string m_value;
         bool m_is_array = false;
         size_t m_array_min_count = 0;
@@ -172,10 +173,14 @@ private:
     class PositionalArgument final : public Argument {
         friend class Args;
         friend class CommandArgument;
-
     public:
+        PositionalArgument() : Argument() { m_required = true; }
         PositionalArgument &help(const std::string &vHelp, const std::string &vVarName) { return Argument::help<PositionalArgument>(vHelp, vVarName); }
         PositionalArgument &type(const std::string &vType) { return Argument::type<PositionalArgument>(vType); }
+        PositionalArgument &required(bool vValue) {
+            m_required = vValue;
+            return *this;
+        }
         PositionalArgument &array(size_t vCount) { return Argument::array<PositionalArgument>(vCount); }
         PositionalArgument &array(size_t vMinCount, size_t vMaxCount) { return Argument::array<PositionalArgument>(vMinCount, vMaxCount); }
         PositionalArgument &arrayUnlimited() { return Argument::arrayUnlimited<PositionalArgument>(); }
@@ -184,11 +189,8 @@ private:
     class OptionalArgument final : public Argument {
         friend class Args;
         friend class CommandArgument;
-
-    private:
-        bool m_required = false;
-
     public:
+        OptionalArgument() : Argument() { m_required = false; }
         OptionalArgument &help(const std::string &vHelp, const std::string &vVarName) { return Argument::help<OptionalArgument>(vHelp, vVarName); }
         OptionalArgument &def(const std::string &vDefValue) { return Argument::def<OptionalArgument>(vDefValue); }
         OptionalArgument &type(const std::string &vType) { return Argument::type<OptionalArgument>(vType); }
@@ -556,7 +558,9 @@ public:
         // Validate global positionals
         for (const auto &pos : m_Positionals) {
             if (!pos.m_is_present) {
-                m_addError("Positional <" + pos.m_base_args.at(0) + "> not present");
+                if (pos.m_required) {
+                    m_addError("Positional <" + pos.m_base_args.at(0) + "> not present");
+                }
             } else if (pos.m_is_array) {
                 size_t count = pos.m_array_values.size();
                 if (count < pos.m_array_min_count) {
@@ -594,7 +598,7 @@ public:
         // Validate active command sub-arguments
         if (m_ActiveCommand != nullptr) {
             for (const auto &pos : m_ActiveCommand->m_subPositionals) {
-                if (!pos.m_is_present) {
+                if (!pos.m_is_present && pos.m_required) {
                     m_addError("Command '" + m_ActiveCommand->m_base_args.at(0) + "' requires <" + pos.m_base_args.at(0) + ">");
                 }
             }

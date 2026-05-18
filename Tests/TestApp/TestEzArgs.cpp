@@ -284,6 +284,75 @@ bool TestEzArgs_positional_missing() {
     return true;
 }
 
+// ========== Optional positionals (required(false)) ==========
+
+bool TestEzArgs_positional_optional_absent() {
+    // With required(false), an absent positional must NOT produce a parse error.
+    try {
+        std::vector<char*> arr{};
+        ez::Args args("Test");
+        args.addPositional("input").required(false);
+        CTEST_ASSERT(args.parse(static_cast<int32_t>(arr.size()), arr.data(), 0U));
+        CTEST_ASSERT(!args.hasErrors());
+        CTEST_ASSERT(!args.isPresent("input"));
+        CTEST_ASSERT(!args.hasValue("input"));
+    } catch (std::exception&) {
+        return false;
+    }
+    return true;
+}
+
+bool TestEzArgs_positional_optional_present() {
+    // With required(false), supplying a value still parses cleanly and the
+    // value is retrievable as for any other positional.
+    try {
+        std::vector<char*> arr{"input.txt"};
+        ez::Args args("Test");
+        args.addPositional("input").required(false);
+        CTEST_ASSERT(args.parse(static_cast<int32_t>(arr.size()), arr.data(), 0U));
+        CTEST_ASSERT(!args.hasErrors());
+        CTEST_ASSERT(args.isPresent("input"));
+        CTEST_ASSERT(args.getValue<std::string>("input") == "input.txt");
+    } catch (std::exception&) {
+        return false;
+    }
+    return true;
+}
+
+bool TestEzArgs_positional_required_explicit_missing() {
+    // Calling required(true) explicitly must keep the legacy behavior:
+    // an absent positional produces a parse error.
+    try {
+        std::vector<char*> arr{};
+        ez::Args args("Test");
+        args.addPositional("input").required(true);
+        CTEST_ASSERT(!args.parse(static_cast<int32_t>(arr.size()), arr.data(), 0U));
+        CTEST_ASSERT(args.hasErrors());
+    } catch (std::exception&) {
+        return false;
+    }
+    return true;
+}
+
+bool TestEzArgs_positional_mixed_required_and_optional() {
+    // First positional required, second optional. Supplying only the first
+    // must parse cleanly and leave the second absent.
+    try {
+        std::vector<char*> arr{"src.txt"};
+        ez::Args args("Test");
+        args.addPositional("src");
+        args.addPositional("dst").required(false);
+        CTEST_ASSERT(args.parse(static_cast<int32_t>(arr.size()), arr.data(), 0U));
+        CTEST_ASSERT(!args.hasErrors());
+        CTEST_ASSERT(args.isPresent("src"));
+        CTEST_ASSERT(args.getValue<std::string>("src") == "src.txt");
+        CTEST_ASSERT(!args.isPresent("dst"));
+    } catch (std::exception&) {
+        return false;
+    }
+    return true;
+}
+
 // ========== Positional array ==========
 
 bool TestEzArgs_positional_array_fixed() {
@@ -599,6 +668,24 @@ bool TestEzArgs_command_missing_required_sub_positional() {
         cmd.addPositional("target");
         CTEST_ASSERT(!args.parse(static_cast<int32_t>(arr.size()), arr.data(), 0U));
         CTEST_ASSERT(args.hasErrors());
+    } catch (std::exception&) {
+        return false;
+    }
+    return true;
+}
+
+bool TestEzArgs_command_sub_positional_optional() {
+    // A sub-positional marked required(false) must not error when absent
+    // even if the command was activated.
+    try {
+        std::vector<char*> arr{"deploy"};
+        ez::Args args("Test");
+        auto& cmd = args.addCommand("deploy");
+        cmd.addPositional("target").required(false);
+        CTEST_ASSERT(args.parse(static_cast<int32_t>(arr.size()), arr.data(), 0U));
+        CTEST_ASSERT(!args.hasErrors());
+        CTEST_ASSERT(args.isCommand("deploy"));
+        CTEST_ASSERT(!args.isPresent("target"));
     } catch (std::exception&) {
         return false;
     }
@@ -1157,6 +1244,10 @@ bool TestEzArgs(const std::string& vTest) {
     else IfTestExist(TestEzArgs_positional_single);
     else IfTestExist(TestEzArgs_positional_multiple);
     else IfTestExist(TestEzArgs_positional_missing);
+    else IfTestExist(TestEzArgs_positional_optional_absent);
+    else IfTestExist(TestEzArgs_positional_optional_present);
+    else IfTestExist(TestEzArgs_positional_required_explicit_missing);
+    else IfTestExist(TestEzArgs_positional_mixed_required_and_optional);
     else IfTestExist(TestEzArgs_positional_array_fixed);
     else IfTestExist(TestEzArgs_positional_array_range);
     else IfTestExist(TestEzArgs_positional_array_too_few);
@@ -1178,6 +1269,7 @@ bool TestEzArgs(const std::string& vTest) {
     else IfTestExist(TestEzArgs_command_with_sub_positional);
     else IfTestExist(TestEzArgs_command_with_sub_optional);
     else IfTestExist(TestEzArgs_command_missing_required_sub_positional);
+    else IfTestExist(TestEzArgs_command_sub_positional_optional);
     else IfTestExist(TestEzArgs_command_missing_required_sub_optional);
     else IfTestExist(TestEzArgs_command_with_sub_optional_value);
     else IfTestExist(TestEzArgs_mixed_positional_and_optional);
