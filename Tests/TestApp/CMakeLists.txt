@@ -126,6 +126,7 @@ AddTest("TestEzArgs_ff_when_only_f_defined")
 ##########################################################
 
 AddTest("TestEzBuildInc_base")
+AddTest("TestEzBuildInc_underscoreProject")
 
 ##########################################################
 ##### EzApp ###############################################

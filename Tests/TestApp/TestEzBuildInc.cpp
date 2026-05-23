@@ -145,12 +145,57 @@ __   __| | | |     __) |     __) | / /_    __) || | | |
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
+bool TestEzBuildInc_underscoreProject() {
+    /* Regression: a project name that itself contains underscores (e.g.
+     * "cdv_lib", "cdv_gui") must be recognised by m_parseDefine so that
+     * the BuildNumber is read back across rebuilds and incBuildNumber
+     * actually accumulates. Previously the parser split on the FIRST
+     * underscore, producing project="cdv" + key="lib_Label" which never
+     * matched the known-key list — BuildNumber was perpetually re-read
+     * as 0 and the on-disk version stayed at 0.0.1 forever. */
+    const std::string file = "build_underscore.h";
+    const std::string baseContent = u8R"(#pragma once
+
+#define cdv_lib_Label "cdv-lib"
+#define cdv_lib_BuildNumber 42
+#define cdv_lib_MinorNumber 1
+#define cdv_lib_MajorNumber 0
+#define cdv_lib_BuildId "0.1.42"
+#define cdv_lib_BuildIdNum 00010042
+)";
+    if (!ez::file::saveStringToFile(baseContent, file)) {
+        return false;
+    }
+    auto builder = ez::BuildInc(file);
+    CTEST_ASSERT(builder.getProject()      == "cdv_lib");
+    CTEST_ASSERT(builder.getLabel()        == "cdv-lib");
+    CTEST_ASSERT(builder.getMajor()        == 0);
+    CTEST_ASSERT(builder.getMinor()        == 1);
+    CTEST_ASSERT(builder.getBuildNumber()  == 42);
+
+    builder.incBuildNumber().write();
+    CTEST_ASSERT(builder.getBuildNumber()  == 43);
+
+    /* Re-read the file from scratch — the on-disk content must now have
+     * BuildNumber 43, not be reset to 1. */
+    auto reread = ez::BuildInc(file);
+    CTEST_ASSERT(reread.getProject()      == "cdv_lib");
+    CTEST_ASSERT(reread.getLabel()        == "cdv-lib");
+    CTEST_ASSERT(reread.getBuildNumber()  == 43);
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
 #define IfTestExist(v)            \
     if (vTest == std::string(#v)) \
     return v()
 
 bool TestEzBuildInc(const std::string& vTest) {
     IfTestExist(TestEzBuildInc_base);
+    IfTestExist(TestEzBuildInc_underscoreProject);
     return false;
 }
 

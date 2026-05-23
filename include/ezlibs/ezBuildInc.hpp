@@ -254,25 +254,33 @@ private:
     // will parse a line '#define [PROJECT]_[KEY] [VALUE]'
     // return true is succeed, false if the format is not recognized
     bool m_parseDefine(const std::string& vRowContent, std::string& vOutProject, std::string& vOutKey, std::string& vOutValue) {
-        if (!vRowContent.empty()) {
-            size_t def_pos = vRowContent.find("#define ");
-            if (def_pos != std::string::npos) {
-                def_pos += 8;  // offset for '#define '
-                size_t underScore_pos = vRowContent.find('_', def_pos);
-                if (underScore_pos != std::string::npos) {
-                    vOutProject = vRowContent.substr(def_pos, underScore_pos - def_pos);
-                    ++underScore_pos;  // offset for '_'
-                    size_t space_pos = vRowContent.find(' ', underScore_pos);
-                    if (space_pos != std::string::npos) {
-                        vOutKey = vRowContent.substr(underScore_pos, space_pos - underScore_pos);
-                        ++space_pos;  // offset for ' '
-                        vOutValue = m_trim(vRowContent.substr(space_pos));
-                        return true;
-                    }
-                }
-            }
+        if (vRowContent.empty()) {
+            return false;
         }
-        return false;
+        size_t def_pos = vRowContent.find("#define ");
+        if (def_pos == std::string::npos) {
+            return false;
+        }
+        def_pos += 8;  // offset for '#define '
+        // Find the space that delimits the macro name from the value.
+        size_t space_pos = vRowContent.find(' ', def_pos);
+        if (space_pos == std::string::npos) {
+            return false;
+        }
+        // Find the LAST '_' before the space — that's the project / key
+        // separator. Using the FIRST '_' here mis-splits project names that
+        // themselves contain underscores: e.g. "cdv_lib_Label" would yield
+        // project="cdv" + key="lib_Label", which then fails to match any
+        // known key (Label, BuildNumber, MajorNumber, MinorNumber) and
+        // leaves BuildNumber permanently stuck at 0 across rebuilds.
+        size_t underScore_pos = vRowContent.rfind('_', space_pos - 1);
+        if (underScore_pos == std::string::npos || underScore_pos < def_pos) {
+            return false;
+        }
+        vOutProject = vRowContent.substr(def_pos, underScore_pos - def_pos);
+        vOutKey    = vRowContent.substr(underScore_pos + 1, space_pos - underScore_pos - 1);
+        vOutValue  = m_trim(vRowContent.substr(space_pos + 1));
+        return true;
     }
     int32_t m_toNumber(const std::string& vNum) {
         int32_t ret = 0;  // 0 is the default value
