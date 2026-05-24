@@ -26,40 +26,118 @@ SOFTWARE.
 
 // ezSingleton is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
-/* its a singleton desing who not cause memeory leak in your leak checker
+/* a singleton design who does not cause memory leak in your leak checker
 
-macro to add just after your class definition
-ex :
-class Toto {
-    IMPLEMENT_SINGLETON(Toto)
+macro to add just after your class definition.
+
+==========================================================================
+USAGE 1 - type with a default constructor (no argument needed)
+==========================================================================
+
+class Foo {
+    IMPLEMENT_SINGLETON(Foo)
+public:
+    Foo() = default;
+    void doStuff();
 };
 
-then you need to init via : Toto::initSingleton()
-then you call singleton via Toto::ref().any_methods
-then you need to unit via : Toto::unitSingleton()
+// at program start
+Foo::initSingleton();
 
-IMPLEMENT_SINGLETON is using unique_ptr
-IMPLEMENT_SHARED_SINGLETON is using shared_ptr
+// anywhere
+Foo::ref().doStuff();
+
+// at program end
+Foo::unitSingleton();
+
+==========================================================================
+USAGE 2 - type whose constructor needs argument(s)
+==========================================================================
+
+class Bar {
+    IMPLEMENT_SINGLETON(Bar)
+public:
+    explicit Bar(IApp& aApp);  // no default ctor required
+    void doStuff();
+private:
+    IApp& mr_app;
+};
+
+// at program start - pass the arguments forwarded to Bar's constructor
+Bar::initSingleton(myApp);
+
+// anywhere - Bar::ref() does NOT need the arguments anymore
+Bar::ref().doStuff();
+
+// at program end
+Bar::unitSingleton();
+
+==========================================================================
+KEY POINTS
+==========================================================================
+
+ - initSingleton(args...) builds the instance ONLY on the first call,
+   when the internal pointer is null. Subsequent calls IGNORE their
+   arguments and just return the already-built instance:
+
+       Bar::initSingleton(appA);   // builds Bar(appA)
+       Bar::initSingleton(appB);   // does nothing, returns the same Bar(appA)
+
+ - To re-construct with different arguments, you must explicitly destroy
+   the instance first:
+
+       Bar::unitSingleton();       // destroys the current instance
+       Bar::initSingleton(appB);   // builds a fresh Bar(appB)
+
+ - The default constructor is NEVER instantiated implicitly by ref() /
+   unitSingleton() / a no-arg initSingleton(). Types with a reference
+   member or any non-default-constructible member are therefore fine.
+
+ - IMPLEMENT_SINGLETON uses std::unique_ptr ; ref() returns T& (unique
+   ownership stays internal).
+
+ - IMPLEMENT_SHARED_SINGLETON uses std::shared_ptr ; ref() and
+   initSingleton() return std::shared_ptr<T> BY VALUE, so a caller
+   keeping its own copy survives a later unitSingleton() call:
+
+       auto sp = Bar::ref();       // copy of the internal shared_ptr
+       Bar::unitSingleton();       // internal slot is reset
+       sp->doStuff();              // OK - sp still holds the instance
+
+ - getSingletonPtr() is the internal accessor (private); it ensures a
+   single static instance pointer is shared across all template
+   instantiations of initSingleton.
 
 */
 
 #include <memory>
 
-#define IMPLEMENT_SINGLETON(TTYPE)                                                         \
-public:                                                                                    \
-    template <class... _Types>                                                             \
-    static std::unique_ptr<TTYPE>& initSingleton(_Types&&... aArgs) {                      \
-        static auto mp_instance = std::make_unique<TTYPE>(std::forward<_Types>(aArgs)...); \
-        return mp_instance;                                                                \
-    }                                                                                      \
-    static TTYPE& ref() { return *initSingleton().get(); }                                 \
-    static void unitSingleton() { initSingleton().reset(); }
+#define IMPLEMENT_SINGLETON(TTYPE)                                          \
+private:                                                                    \
+    static std::unique_ptr<TTYPE>& getSingletonPtr() {                      \
+        static std::unique_ptr<TTYPE> mp_instance;                          \
+        return mp_instance;                                                 \
+    }                                                                       \
+                                                                            \
+public:                                                                     \
+    template <class... _Types>                                              \
+    static void initSingleton(_Types&&... aArgs) {                          \
+        getSingletonPtr().reset(new TTYPE(std::forward<_Types>(aArgs)...)); \
+    }                                                                       \
+    static TTYPE& ref() { return *getSingletonPtr().get(); }                \
+    static void unitSingleton() { getSingletonPtr().reset(); }
 
-#define IMPLEMENT_SHARED_SINGLETON(TTYPE)                            \
-public:                                                              \
-    static std::shared_ptr<TTYPE>& initSingleton() {                 \
-        static auto mp_instance = std::make_shared<TTYPE>();         \
-        return mp_instance;                                          \
-    }                                                                \
-    static std::shared_ptr<TTYPE>& ref() { return initSingleton(); } \
-    static void unitSingleton() { initSingleton().reset(); }
+#define IMPLEMENT_SHARED_SINGLETON(TTYPE)                                   \
+private:                                                                    \
+    static std::shared_ptr<TTYPE>& getSingletonPtr() {                      \
+        static std::shared_ptr<TTYPE> mp_instance;                          \
+        return mp_instance;                                                 \
+    }                                                                       \
+                                                                            \
+public:                                                                     \
+    template <class... _Types>                                              \
+    static void initSingleton(_Types&&... aArgs) {                          \
+        getSingletonPtr().reset(new TTYPE(std::forward<_Types>(aArgs)...)); \
+    }                                                                       \
+    static std::shared_ptr<TTYPE> ref() { return getSingletonPtr(); }       \
+    static void unitSingleton() { getSingletonPtr().reset(); }

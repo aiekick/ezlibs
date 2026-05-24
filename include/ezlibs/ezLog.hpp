@@ -492,12 +492,20 @@ public:
         return instance_ptr.get();
     }
 #else  // LEGACY_SINGLETON
-    static std::unique_ptr<Log>& initSingleton() {
-        static auto mp_instance = std::unique_ptr<Log>(new Log());
+private:
+    static std::unique_ptr<Log>& getSingletonPtr() {
+        static std::unique_ptr<Log> mp_instance;
         return mp_instance;
     }
-    static Log& ref() { return *initSingleton().get(); }
-    static void unitSingleton() { initSingleton().reset(); }
+
+public:
+    static void initSingleton() {
+        auto& mp_instance = getSingletonPtr();
+        mp_instance.reset(new Log());
+    }
+    static Log& ref() { return *getSingletonPtr().get(); }
+    static void unitSingleton() { getSingletonPtr().reset(); }
+
 #endif  // LEGACY_SINGLETON
 };
 

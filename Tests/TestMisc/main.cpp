@@ -7,6 +7,7 @@
 #include <TestEzFigFont.h>
 #include <TestEzSha.h>
 #include <TestEzLog.h>
+#include <TestEzSingleton.h>
 #include <TestEzSqlite.h>
 #include <TestEzScreen.h>
 #include <TestEzTemplater.h>
@@ -28,6 +29,7 @@ bool TestMisc(const std::string& vTest) {
     else IfTestCollectionExist(TestEzFigFont);
     else IfTestCollectionExist(TestEzSha);
     else IfTestCollectionExist(TestEzLog);
+    else IfTestCollectionExist(TestEzSingleton);
     else IfTestCollectionExist(TestEzSqlite);
     else IfTestCollectionExist(TestEzScreen);
     else IfTestCollectionExist(TestEzTemplater);

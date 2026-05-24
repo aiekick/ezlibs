@@ -27,6 +27,7 @@ file(GLOB EZ_LIBS_SOURCE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezXml.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezLog.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSha.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSingleton.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezTemplater.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezFigFont.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/wip/derived/ezQrCode.hpp)
@@ -169,6 +170,19 @@ AddTest("TestEzLog_LogLightMacros")
 AddTest("TestEzLog_LogDebugMacros")
 AddTest("TestEzLog_CustomLogFunctor")
 AddTest("TestEzLog_CloseAndReopen")
+
+##########################################################
+##### TESTS EzSingleton ##################################
+##########################################################
+
+AddTest("TestEzSingleton_InitDefault")
+AddTest("TestEzSingleton_InitWithArg")
+AddTest("TestEzSingleton_NoDefaultCtorRequired")
+AddTest("TestEzSingleton_SecondInitKeepsFirstInstance")
+AddTest("TestEzSingleton_UnitThenReInit")
+AddTest("TestEzSingleton_RefIsSameInstanceAsInit")
+AddTest("TestEzSingleton_SharedInitAndRef")
+AddTest("TestEzSingleton_SharedRefSurvivesUnit")
 
 ##########################################################
 ##### TESTS EzSqlite #####################################
