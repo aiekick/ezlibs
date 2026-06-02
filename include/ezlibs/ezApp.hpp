@@ -130,7 +130,7 @@ public:
             sprintf(szTmp, "/proc/%d/exe", getpid());
             const int max_len = MAX_PATH - 1;
             int bytes = readlink(szTmp, buffer, MAX_PATH);
-            if (bytes > max_len) { bytes = max_len }
+            if (bytes > max_len) { bytes = max_len; }
             if (bytes >= 0) { buffer[bytes] = '\0'; }
 #elif defined(APPLE_OS)
             auto path = m_getMacOsAppPath();
