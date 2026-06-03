@@ -112,32 +112,40 @@ KEY POINTS
 
 #include <memory>
 
-#define IMPLEMENT_SINGLETON(TTYPE)                                          \
-private:                                                                    \
-    static std::unique_ptr<TTYPE>& getSingletonPtr() {                      \
-        static std::unique_ptr<TTYPE> mp_instance;                          \
-        return mp_instance;                                                 \
-    }                                                                       \
-                                                                            \
-public:                                                                     \
-    template <class... _Types>                                              \
-    static void initSingleton(_Types&&... aArgs) {                          \
-        getSingletonPtr().reset(new TTYPE(std::forward<_Types>(aArgs)...)); \
-    }                                                                       \
-    static TTYPE& ref() { return *getSingletonPtr().get(); }                \
+#define IMPLEMENT_SINGLETON(TTYPE)                                                     \
+private:                                                                               \
+    static std::unique_ptr<TTYPE>& getSingletonPtr() {                                 \
+        static std::unique_ptr<TTYPE> mp_instance;                                     \
+        return mp_instance;                                                            \
+    }                                                                                  \
+                                                                                       \
+public:                                                                                \
+    template <class... _Types>                                                         \
+    static void initSingleton(_Types&&... aArgs) {                                     \
+        getSingletonPtr().reset(new TTYPE(std::forward<_Types>(aArgs)...));            \
+    }                                                                                  \
+    static TTYPE& ref() {                                                              \
+        auto* const ptr = getSingletonPtr().get();                                     \
+        assert(ptr != nullptr && "You must call initSingleton() before use of ref()"); \
+        return *ptr;                                                                   \
+    }                                                                                  \
     static void unitSingleton() { getSingletonPtr().reset(); }
 
-#define IMPLEMENT_SHARED_SINGLETON(TTYPE)                                   \
-private:                                                                    \
-    static std::shared_ptr<TTYPE>& getSingletonPtr() {                      \
-        static std::shared_ptr<TTYPE> mp_instance;                          \
-        return mp_instance;                                                 \
-    }                                                                       \
-                                                                            \
-public:                                                                     \
-    template <class... _Types>                                              \
-    static void initSingleton(_Types&&... aArgs) {                          \
-        getSingletonPtr().reset(new TTYPE(std::forward<_Types>(aArgs)...)); \
-    }                                                                       \
-    static std::shared_ptr<TTYPE> ref() { return getSingletonPtr(); }       \
+#define IMPLEMENT_SHARED_SINGLETON(TTYPE)                                                    \
+private:                                                                                     \
+    static std::shared_ptr<TTYPE>& getSingletonPtr() {                                       \
+        static std::shared_ptr<TTYPE> mp_instance;                                           \
+        return mp_instance;                                                                  \
+    }                                                                                        \
+                                                                                             \
+public:                                                                                      \
+    template <class... _Types>                                                               \
+    static void initSingleton(_Types&&... aArgs) {                                           \
+        getSingletonPtr().reset(new TTYPE(std::forward<_Types>(aArgs)...));                  \
+    }                                                                                        \
+    static std::shared_ptr<TTYPE> ref() {                                                    \
+        auto& ptr = getSingletonPtr();                                                       \
+        assert(ptr.get() != nullptr && "You must call initSingleton() before use of ref()"); \
+        return ptr;                                                                          \
+    }                                                                                        \
     static void unitSingleton() { getSingletonPtr().reset(); }
