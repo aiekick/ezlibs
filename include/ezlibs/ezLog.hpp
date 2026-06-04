@@ -497,14 +497,37 @@ private:
         static std::unique_ptr<Log> mp_instance;
         return mp_instance;
     }
+    // borrowed pointer to an externally-owned Log (host instance, when called
+    // from a DLL). raw on purpose — we MUST NOT delete it on shutdown.
+    static Log*& getBorrowedPtr() {
+        static Log* mp_borrowed = nullptr;
+        return mp_borrowed;
+    }
 
 public:
-    static void initSingleton() {
-        auto& mp_instance = getSingletonPtr();
-        mp_instance.reset(new Log());
+    // initSingleton(nullptr) → create and own a fresh instance (default)
+    // initSingleton(hostPtr) → reuse the host's instance without taking ownership.
+    //   useful when the consumer is a plugin DLL that wants all its logs to
+    //   land in the host's standardLogFunctor (and thus the host's console pane)
+    static void initSingleton(Log* vBorrowedHostInstance = nullptr) {
+        if (vBorrowedHostInstance != nullptr) {
+            getBorrowedPtr() = vBorrowedHostInstance;
+            getSingletonPtr().reset();  // make sure we don't keep a stale owned instance
+        } else {
+            getBorrowedPtr() = nullptr;
+            getSingletonPtr().reset(new Log());
+        }
     }
-    static Log& ref() { return *getSingletonPtr().get(); }
-    static void unitSingleton() { getSingletonPtr().reset(); }
+    static Log& ref() {
+        if (auto* borrowed = getBorrowedPtr()) {
+            return *borrowed;
+        }
+        return *getSingletonPtr().get();
+    }
+    static void unitSingleton() {
+        getBorrowedPtr() = nullptr;   // release the borrow, never delete
+        getSingletonPtr().reset();    // destroy our own owned instance (if any)
+    }
 
 #endif  // LEGACY_SINGLETON
 };
