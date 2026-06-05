@@ -111,6 +111,7 @@ KEY POINTS
 */
 
 #include <memory>
+#include <cassert>
 
 #define IMPLEMENT_SINGLETON(TTYPE)                                                     \
 private:                                                                               \
