@@ -36,14 +36,7 @@ SOFTWARE.
 #include "link.hpp"
 
 class Editor {
-    ICanvas& mr_canvas;
-    ISolver& mr_solver;
-
-    // node dragging
-    int32_t m_draggingNode{-1};
-    ImVec2 m_dragginfOffset;
-
-    bool m_realTime{false};
+public:
     struct Gizmos {
         bool drawCentroid{true};
         bool drawNodes{true};
@@ -52,7 +45,7 @@ class Editor {
         bool useOrtho{true};
         bool useSpline{false};
         bool drawSnapGrid{false};
-    } m_gizmos;
+    };
 
     struct Datas {
         bool enableEnergyThreshold{false};
@@ -61,6 +54,17 @@ class Editor {
         float relationLineThickness{2.0f};
         float relationCornerRadius{8.0f};
     };
+
+private:
+    ICanvas& mr_canvas;
+    ISolver& mr_solver;
+
+    // node dragging
+    int32_t m_draggingNode{-1};
+    ImVec2 m_dragginfOffset;
+
+    bool m_realTime{false};
+    Gizmos m_gizmos;
     Datas m_datas;
 
     const float m_control_pane_width = 450.0f;
@@ -74,6 +78,26 @@ class Editor {
 
 public:
     Editor(ISolver& arSolver, ICanvas& arCanvas) : mr_solver(arSolver), mr_canvas(arCanvas) {
+    }
+
+    // settings accessors (used for persistence)
+    Datas& rDatas() {
+        return m_datas;
+    }
+    const Datas& getDatas() const {
+        return m_datas;
+    }
+    Gizmos& rGizmos() {
+        return m_gizmos;
+    }
+    const Gizmos& getGizmos() const {
+        return m_gizmos;
+    }
+    bool isRealTime() const {
+        return m_realTime;
+    }
+    void setRealTime(bool aFlag) {
+        m_realTime = aFlag;
     }
     void clear() {
         m_operations.clear();
@@ -322,7 +346,7 @@ public:
                 change |= m_inputFloat(w, wcol, "node to link repulse", &system_datas.nodeToLinkRepulsion, 0.1f, 1.0f, 0.0f, 100.0f, system_defs.nodeToLinkRepulsion);
                 change |= m_inputFloat(w, wcol, "anchor strength", &system_datas.anchorStrength, 0.05f, 0.1f, 0.0f, 1.0f, system_defs.anchorStrength);
                 m_displayAlignedWidget(w, "slots on sides", wcol, [&system_datas, &change]() { change |= ImGui::Checkbox("##slots on sides", &system_datas.sideSlots); });
-                const char* help10 = "Espacement de la grille magnétique";
+                const char* help10 = "Espacement de la grille magnï¿½tique";
                 change |= m_inputFloat(w, wcol, "grid spacing", &system_datas.snapGridSpacing, 5.0f, 50.0f, 10.0f, 1000.0f, system_defs.snapGridSpacing, help10);
                 const char* help11 = "Force d'attraction vers la grille";
                 change |= m_inputFloat(w, wcol, "grid strength", &system_datas.snapGridStrength, 0.01f, 0.1f, 0.0f, 5.0f, system_defs.snapGridStrength, help11);
@@ -583,7 +607,7 @@ private:
         if (spacing < 1.0f)
             return;
 
-        // Déterminer la zone visible en coordonnées monde
+        // Dï¿½terminer la zone visible en coordonnï¿½es monde
         ImVec2 topLeft = mr_canvas.localToWorld(ImVec2());
         ImVec2 bottomRight = mr_canvas.localToWorld(ImGui::GetContentRegionAvail());
 
@@ -593,7 +617,7 @@ private:
         float endX = std::ceil(bottomRight.x / spacing) * spacing;
         float endY = std::ceil(bottomRight.y / spacing) * spacing;
 
-        // Intensité visuelle proportionnelle à la force
+        // Intensitï¿½ visuelle proportionnelle ï¿½ la force
         uint8_t alpha = static_cast<uint8_t>(ImClamp(strength * 200.0f, 100.0f, 255.0f));
         ImU32 color = IM_COL32(100, 150, 255, alpha);
 
