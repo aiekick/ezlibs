@@ -37,12 +37,19 @@ namespace cnt {
 // and searched in like a dico
 template <typename TKey, typename TValue = TKey>
 class DicoVector {
+public:
+    using Set = std::set<TKey>;
+    using Dico = std::unordered_map<TKey, size_t>;
+    using Vector = std::vector<TValue>;
+
 protected:
-    std::unordered_map<TKey, size_t> m_dico;
-    std::vector<TValue> m_array;
+    Set m_set; // for have alpha ordering of keys
+    Dico m_dico;
+    Vector m_array;
 
 public:
     void clear() {
+        m_set.clear();
         m_dico.clear();
         m_array.clear();
     }
@@ -52,22 +59,24 @@ public:
     TValue& at(const size_t& vIdx) { return m_array.at(vIdx); }
     const TValue& operator[](const size_t& vIdx) const { return m_array[vIdx]; }
     const TValue& at(const size_t& vIdx) const { return m_array.at(vIdx); }
-    std::unordered_map<TKey, size_t>& getDico() { return m_dico; }
-    const std::unordered_map<TKey, size_t>& getDico() const { return m_dico; }
-    std::vector<TValue>& getArray() { return m_array; }
-    const std::vector<TValue>& getArray() const { return m_array; }
+    Set& getSet() { return m_set; }
+    const Set& getSet() const { return m_set; }
+    Dico& getDico() { return m_dico; }
+    const Dico& getDico() const { return m_dico; }
+    Vector& getArray() { return m_array; }
+    const Vector& getArray() const { return m_array; }
     TValue& front() { return m_array.front(); }
     const TValue& front() const { return m_array.front(); }
     TValue& back() { return m_array.back(); }
     const TValue& back() const { return m_array.back(); }
-    typename std::vector<TValue>::iterator begin() { return m_array.begin(); }
-    typename std::vector<TValue>::const_iterator begin() const { return m_array.begin(); }
-    typename std::vector<TValue>::iterator end() { return m_array.end(); }
-    typename std::vector<TValue>::const_iterator end() const { return m_array.end(); }
-    typename std::vector<TValue>::reverse_iterator rbegin() { return m_array.rbegin(); }
-    typename std::vector<TValue>::const_reverse_iterator rbegin() const { return m_array.rbegin(); }
-    typename std::vector<TValue>::reverse_iterator rend() { return m_array.rend(); }
-    typename std::vector<TValue>::const_reverse_iterator rend() const { return m_array.rend(); }
+    typename Vector::iterator begin() { return m_array.begin(); }
+    typename Vector::const_iterator begin() const { return m_array.begin(); }
+    typename Vector::iterator end() { return m_array.end(); }
+    typename Vector::const_iterator end() const { return m_array.end(); }
+    typename Vector::reverse_iterator rbegin() { return m_array.rbegin(); }
+    typename Vector::const_reverse_iterator rbegin() const { return m_array.rbegin(); }
+    typename Vector::reverse_iterator rend() { return m_array.rend(); }
+    typename Vector::const_reverse_iterator rend() const { return m_array.rend(); }
     bool exist(const TKey& vKey) const { return (m_dico.find(vKey) != m_dico.end()); }
     size_t index(const TKey& vKey) const { return m_dico.at(vKey); }
     TValue& value(const TKey& vKey) { return at(m_dico.at(vKey)); }
@@ -89,16 +98,18 @@ public:
             // now we can safely erase the item from both dico and vector
             m_array.erase(m_array.begin() + idx);
             m_dico.erase(vKey);
+            m_set.erase(vKey);
             return true;
         }
         return false;
     }
     // erase by iterator and returns the next iterator
-    typename std::vector<TValue>::iterator erase(typename std::vector<TValue>::iterator vIt) {
+    typename Vector::iterator erase(typename Vector::iterator vIt) {
         const auto idx = static_cast<size_t>(vIt - m_array.begin());
         // reverse lookup: remove the key mapped to this index
         for (auto dicoIt = m_dico.begin(); dicoIt != m_dico.end(); ++dicoIt) {
             if (dicoIt->second == idx) {
+                m_set.erase(dicoIt->first);
                 m_dico.erase(dicoIt);
                 break;
             }
@@ -113,6 +124,7 @@ public:
     bool tryAdd(const TKey& vKey, const TValue& vValue) {
         if (!exist(vKey)) {
             m_dico[vKey] = m_array.size();
+            m_set.emplace(vKey);
             m_array.push_back(vValue);
             return true;
         }
