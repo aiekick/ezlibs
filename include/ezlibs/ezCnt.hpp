@@ -93,6 +93,23 @@ public:
         }
         return false;
     }
+    // erase by iterator and returns the next iterator
+    typename std::vector<TValue>::iterator erase(typename std::vector<TValue>::iterator vIt) {
+        const auto idx = static_cast<size_t>(vIt - m_array.begin());
+        // reverse lookup: remove the key mapped to this index
+        for (auto dicoIt = m_dico.begin(); dicoIt != m_dico.end(); ++dicoIt) {
+            if (dicoIt->second == idx) {
+                m_dico.erase(dicoIt);
+                break;
+            }
+        }
+        // shift down every index greater than the erased one
+        for (auto& it : m_dico) {
+            if (it.second > idx) { --it.second; }
+        }
+        // erase from the vector and return the following iterator
+        return m_array.erase(vIt);
+    }
     bool tryAdd(const TKey& vKey, const TValue& vValue) {
         if (!exist(vKey)) {
             m_dico[vKey] = m_array.size();

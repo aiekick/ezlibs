@@ -25,7 +25,6 @@ SOFTWARE.
 */
 
 // ezXml is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
-// ezXml is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 #include <map>
 #include <stack>
