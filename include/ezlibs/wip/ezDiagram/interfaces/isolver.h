@@ -26,31 +26,34 @@ SOFTWARE.
 
 // ezDiagram is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
+#include <memory>
+#include <vector>
+#include <string>
 #include <cstdint>
 
 #include <ezlibs/ezCnt.hpp>
 
-struct Node ;
-struct Link ;
+#include "inode.h"
+#include "ilink.h"
 
 class ISolver {
 public:
     struct Datas {
         struct System {
-            float energy{1.0f};               // Énergie totale du système (pour convergence)
-            float damping{0.99f};             // Amortissement de la vélocité (0-1, plus bas = freine plus)
-            float nodeGap{40.0f};             // Distance minimale entre les bords des rectangles
-            float maxForce{50.0f};            // Force maximale applicable (évite l'explosion)
-            float nodeRepulsion{5000.0f};     // Intensité de la répulsion entre nodes
-            float linkAttraction{0.005f};     // Intensité de l'attraction des liens (ressort)
-            float gravity{0.002f};            // Force vers le centroïde (évite l'éparpillement)
-            float slotGapMultiplier{1.0f};    // Gap supplémentaire par slot (espacement proportionnel aux connexions)
-            float nodeToLinkRepulsion{5.0f};  // coef de repulstion entre node et link
-            ImVec2 anchorPoint{};             // Point d'ancrage du graph
-            float anchorStrength{1.0f};       // Force de rappel vers le point d'ancrage
-            bool sideSlots{};                 // Slots sur les côtés des nodes (sinon centrés)
-            float snapGridSpacing{30.0f};     // Espacement de la grille
-            float snapGridStrength{0.1f};     // Force d'attraction vers les méridiens (faible = doux)
+            float energy{1.0f};               // total energy of the system (convergence)
+            float damping{0.99f};             // velocity damping (0-1, lower = brakes more)
+            float nodeGap{40.0f};             // minimal distance between node edges
+            float maxForce{50.0f};            // max applicable force (avoids explosion)
+            float nodeRepulsion{5000.0f};     // node to node repulsion intensity
+            float linkAttraction{0.005f};     // link attraction intensity (spring)
+            float gravity{0.002f};            // force toward the centroid (avoids spreading)
+            float slotGapMultiplier{1.0f};    // extra gap per slot (proportional to connection count)
+            float nodeToLinkRepulsion{5.0f};  // node to link repulsion coef
+            ImVec2 anchorPoint{};             // graph anchor point
+            float anchorStrength{1.0f};       // pull strength toward the anchor point
+            bool sideSlots{};                 // slots on node sides (else centered)
+            float snapGridSpacing{30.0f};     // grid spacing
+            float snapGridStrength{0.1f};     // attraction strength toward grid lines (low = soft)
             bool enableRepulseNodes{true};
             bool enableRepulseNodesFromLinks{true};
             bool enableAttractLinks{true};
@@ -58,18 +61,19 @@ public:
             bool enableCentroidGravity{true};
         } system;
         struct Containers {
-            ez::cnt::DicoVector<std::string, Node> nodes;
-            std::vector<Link> links;
+            ez::cnt::DicoVector<std::string, std::shared_ptr<INode>> nodes;
+            std::vector<std::shared_ptr<ILink>> links;
         } containers;
         struct Computed {
             ImVec2 centroid;
         } computed;
     };
+    virtual ~ISolver() = default;
     virtual Datas& rDatas() = 0;
     virtual const Datas& getDatas() const = 0;
 
-    virtual int32_t addNode(const Node& aNode) = 0;
-    virtual int32_t addLink(const Link& aLink) = 0;
+    virtual int32_t addNode(const std::shared_ptr<INode>& aNode) = 0;
+    virtual int32_t addLink(const std::shared_ptr<ILink>& aLink) = 0;
 
     virtual void init() = 0;   // will init the system
     virtual void updateLinks() = 0;  // update links pos

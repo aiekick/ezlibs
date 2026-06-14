@@ -26,21 +26,24 @@ SOFTWARE.
 
 // ezDiagram is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
-#include <imguipack.h>
-
-#include "interfaces/icanvas.h"
-
+#include <cstdint>
+#include <vector>
+#include "../../../ezVec2.hpp"
+template<typename TColor = uint32_t, typename TVec2 = ez::math::fvec2, typename TID = uintptr_>
 class ILink {
 public:
     struct Datas {
-        int32_t srcNodeID{};
-        int32_t srcNodeSlotID{};
-        int32_t dstNodeID{};
-        int32_t dstNodeSlotID{};
-        ImU32 color{};
-        std::vector<ImVec2> corners;
+		TID linkId{};
+        TID srcNodeID{};
+        TID srcNodeSlotID{};
+        TID dstNodeID{};
+        TID dstNodeSlotID{};
+        TColor color{};
+        std::vector<TVec2> corners;
     };
+    virtual ~ILink() = default;
     virtual Datas& rDatas() = 0;
     virtual const Datas& getDatas() const = 0;
-    virtual void draw(const ICanvas& arCanvas) const = 0;
+    // Draw the link via ImNodal between the given editor-owned slot ids.
+    virtual void draw(TID aLinkId, TID aFromSlotId, TID aToSlotId) const = 0;
 };

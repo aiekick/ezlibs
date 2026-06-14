@@ -27,10 +27,9 @@ SOFTWARE.
 // ezDiagram is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 #include <vector>
+#include <string>
 
 #include <imguipack.h>
-
-#include "icanvas.h"
 
 class INode {
 public:
@@ -44,7 +43,10 @@ public:
         ImVec2 force;
         std::string name{};
     };
+    virtual ~INode() = default;
     virtual Datas& rDatas() = 0;
     virtual const Datas& getDatas() const = 0;
-    virtual void draw(const ICanvas& arCanvas) const = 0;
+    // Emit the node content (title + slots) between the editor's ImNodal BeginNode/EndNode.
+    // aSlotIds are the editor-owned ImNodal ids for this node's slots (size == slots_y.size()).
+    virtual void drawImNodalContent(const std::vector<ImNodal::Id>& aSlotIds) = 0;
 };

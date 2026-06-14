@@ -26,8 +26,10 @@ SOFTWARE.
 
 // ezDiagram is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
-#include "node.hpp"
-#include "link.hpp"
+#include <cmath>
+#include <memory>
+#include <algorithm>
+
 #include "interfaces/isolver.h"
 
 /*
@@ -42,13 +44,13 @@ public:
     void clear() {
         m_datas = {};
     }
-    int32_t addNode(const Node& aNode) override {
+    int32_t addNode(const std::shared_ptr<INode>& aNode) override {
         int32_t id = static_cast<int32_t>(m_datas.containers.nodes.size());
-        m_datas.containers.nodes.tryAdd(aNode.getDatas().name, aNode);
+        m_datas.containers.nodes.tryAdd(aNode->getDatas().name, aNode);
         return id;
     }
 
-    int32_t addLink(const Link& aLink) override {
+    int32_t addLink(const std::shared_ptr<ILink>& aLink) override {
         int32_t id = static_cast<int32_t>(m_datas.containers.links.size());
         m_datas.containers.links.push_back(aLink);
         return id;
@@ -67,7 +69,7 @@ public:
         // Scatter on circle
         float total_diag = 0;
         for (const auto& node : m_datas.containers.nodes) {
-            const auto& datas = node.getDatas();
+            const auto& datas = node->getDatas();
             const auto& node_size = datas.size;
             total_diag += ImSqrt(ImLengthSqr(node_size)) + 40.0f;
         }
@@ -76,13 +78,13 @@ public:
         float idx_f = 0.0f;
         const float count_nodes_inv_f = 6.2831853f / static_cast<float>(m_datas.containers.nodes.size());
         for (auto& rNode : m_datas.containers.nodes) {
-            if (rNode.getDatas().locked) {
+            if (rNode->getDatas().locked) {
                 continue;
             }
             const float angle = count_nodes_inv_f * idx_f++;
             const float cx = std::cos(angle) * radius;
             const float cy = std::sin(angle) * radius;
-            auto& rDatas{rNode.rDatas()};
+            auto& rDatas{rNode->rDatas()};
             const auto& node_size = rDatas.size;
             rDatas.pos = ImVec2(cx - node_size.x * 0.5f, cy - node_size.y * 0.5f);
         }
@@ -91,9 +93,9 @@ public:
     void updateLinks() override {
         auto& nodes = m_datas.containers.nodes;
         for (auto& link : m_datas.containers.links) {
-            const auto& ldatas = link.getDatas();
-            const auto& datas1 = nodes[link.getDatas().srcNodeID].getDatas();
-            const auto& datas2 = nodes[link.getDatas().dstNodeID].getDatas();
+            const auto& ldatas = link->getDatas();
+            const auto& datas1 = nodes[ldatas.srcNodeID]->getDatas();
+            const auto& datas2 = nodes[ldatas.dstNodeID]->getDatas();
 
             ImVec2 srcSlot, dstSLot;
             float sx = datas1.pos.x + datas1.size.x * 0.5f;
@@ -111,7 +113,7 @@ public:
                 dstSLot.x = ((sx >= dx) ? datas2.pos.x + datas2.size.x : datas2.pos.x);
             }
 
-            link.rDatas().corners = {srcSlot, dstSLot};
+            link->rDatas().corners = {srcSlot, dstSLot};
         }
     }
 
@@ -132,7 +134,7 @@ public:
 private:
     void m_resetForces() {
         for (auto& node : m_datas.containers.nodes) {
-            node.rDatas().force = {};
+            node->rDatas().force = {};
         }
     }
 
@@ -141,11 +143,11 @@ private:
             return;
         }
         for (size_t i = 0; i < m_datas.containers.nodes.size(); i++) {
-            auto& datas1 = m_datas.containers.nodes[i].rDatas();
+            auto& datas1 = m_datas.containers.nodes[i]->rDatas();
             ImVec2 center1 = datas1.pos + datas1.size * 0.5f;
 
             for (size_t j = i + 1; j < m_datas.containers.nodes.size(); j++) {
-                auto& datas2 = m_datas.containers.nodes[j].rDatas();
+                auto& datas2 = m_datas.containers.nodes[j]->rDatas();
                 ImVec2 center2 = datas2.pos + datas2.size * 0.5f;
 
                 ImVec2 delta = center2 - center1;
@@ -155,32 +157,32 @@ private:
                     continue;
                 }
 
-                // Distance réelle bord-à-bord
+                // bord-a-bord real distance
                 float half_w = (datas1.size.x + datas2.size.x) * 0.5f;
                 float half_h = (datas1.size.y + datas2.size.y) * 0.5f;
 
-                // Projection sur les axes pour avoir la vraie distance entre bords
+                // project on axes to get the real distance between edges
                 ImVec2 abs_delta = ImVec2(ImAbs(delta.x), ImAbs(delta.y));
                 float actual_gap = ImSqrt(
                     ImMax(abs_delta.x - half_w, 0.0f) * ImMax(abs_delta.x - half_w, 0.0f)    //
                     + ImMax(abs_delta.y - half_h, 0.0f) * ImMax(abs_delta.y - half_h, 0.0f)  //
                 );
 
-                // Gap adaptatif selon le nombre de slots
+                // adaptive gap depending on slot count
                 float slot_count = std::max(datas1.slots_y.size(), datas2.slots_y.size());
                 float effective_gap = m_datas.system.nodeGap * (1.0f + slot_count * m_datas.system.slotGapMultiplier);
 
-                // Distance manquante pour atteindre le gap minimal
+                // missing distance to reach the minimal gap
                 float gap_deficit = effective_gap - actual_gap;
 
                 ImVec2 direction = delta / center_dist;
                 ImVec2 force = {};
 
                 if (gap_deficit > 0.0f) {
-                    // Trop proches : repousser
+                    // too close : repulse
                     force = direction * gap_deficit * 10.0f;
                 } else {
-                    // Répulsion normale
+                    // normal repulsion
                     force = direction * (m_datas.system.nodeRepulsion / (center_dist * center_dist));
                 }
 
@@ -194,8 +196,9 @@ private:
         if (!m_datas.system.enableRepulseNodesFromLinks) {
             return;
         }
-        for (auto& node : m_datas.containers.nodes) {
-            auto& nodeDatas = node.rDatas();
+        auto& nodes = m_datas.containers.nodes;
+        for (auto& node : nodes) {
+            auto& nodeDatas = node->rDatas();
             if (nodeDatas.locked) {
                 continue;
             }
@@ -203,15 +206,15 @@ private:
             ImVec2 nodeCenter = nodeDatas.pos + nodeDatas.size * 0.5f;
 
             for (auto& link : m_datas.containers.links) {
-                const auto& linkDatas = link.getDatas();
+                const auto& linkDatas = link->getDatas();
 
-                // Ne pas repousser un nœud des liens auxquels il appartient
-                if ((linkDatas.srcNodeID == &node - &m_datas.containers.nodes[0])  //
-                    || (linkDatas.dstNodeID == &node - &m_datas.containers.nodes[0])) {
+                // do not repulse a node from the links it belongs to
+                if ((linkDatas.srcNodeID == &node - &nodes[0])  //
+                    || (linkDatas.dstNodeID == &node - &nodes[0])) {
                     continue;
                 }
 
-                // Récupérer les extrémités du segment
+                // get the segment extremities
                 const auto& corners = linkDatas.corners;
                 if (corners.size() < 2) {
                     continue;
@@ -220,7 +223,7 @@ private:
                 ImVec2 segmentStart = corners[0];
                 ImVec2 segmentEnd = corners[corners.size() - 1];
 
-                // Distance du point au segment
+                // distance from point to segment
                 ImVec2 segmentVec = segmentEnd - segmentStart;
                 float segmentLength = ImSqrt(ImLengthSqr(segmentVec));
 
@@ -228,10 +231,10 @@ private:
                     continue;
                 }
 
-                // Projection du centre du nœud sur le segment
+                // project the node center on the segment
                 ImVec2 toNode = nodeCenter - segmentStart;
                 float t = ImDot(toNode, segmentVec) / (segmentLength * segmentLength);
-                t = ImClamp(t, 0.0f, 1.0f);  // Clamper sur le segment
+                t = ImClamp(t, 0.0f, 1.0f);  // clamp on the segment
 
                 ImVec2 closestPoint = segmentStart + segmentVec * t;
                 ImVec2 delta = nodeCenter - closestPoint;
@@ -241,16 +244,16 @@ private:
                     continue;
                 }
 
-                // Rayon effectif du nœud (approximation)
+                // effective node radius (approximation)
                 float nodeRadius = (nodeDatas.size.x + nodeDatas.size.y) * 0.25f;
                 float desired_distance = nodeRadius + m_datas.system.nodeGap * 0.5f;
 
                 float penetration = desired_distance - distance;
 
                 if (penetration > 0.0f) {
-                    // Repousser le nœud loin du segment
+                    // repulse the node away from the segment
                     ImVec2 direction = delta / distance;
-                    ImVec2 force = direction * penetration * 5.0f;  // Coefficient de répulsion
+                    ImVec2 force = direction * penetration * 5.0f;  // repulsion coef
                     nodeDatas.force += force;
                 }
             }
@@ -262,9 +265,9 @@ private:
             return;
         }
         for (auto& link : m_datas.containers.links) {
-            auto& datas = link.rDatas();
-            auto& datas1 = m_datas.containers.nodes.at(datas.srcNodeID).rDatas();
-            auto& datas2 = m_datas.containers.nodes.at(datas.dstNodeID).rDatas();
+            auto& datas = link->rDatas();
+            auto& datas1 = m_datas.containers.nodes.at(datas.srcNodeID)->rDatas();
+            auto& datas2 = m_datas.containers.nodes.at(datas.dstNodeID)->rDatas();
 
             ImVec2 delta = datas2.pos - datas1.pos;
             float distance = ImSqrt(ImLengthSqr(delta));
@@ -292,7 +295,7 @@ private:
         size_t count = 0;
 
         for (auto& node : m_datas.containers.nodes) {
-            auto& datas = node.rDatas();
+            auto& datas = node->rDatas();
             m_datas.computed.centroid += (datas.pos + datas.size * 0.5f);
             count++;
         }
@@ -303,17 +306,17 @@ private:
 
         m_datas.computed.centroid /= static_cast<float>(count);
 
-        // Ancrage du centroïde vers le centre du canvas
+        // anchor the centroid toward the canvas center
         ImVec2 toCenter = m_datas.system.anchorPoint - m_datas.computed.centroid;
 
         for (auto& node : m_datas.containers.nodes) {
-            auto& datas = node.rDatas();
+            auto& datas = node->rDatas();
             if (!datas.locked) {
-                // Gravité locale vers le centroïde
+                // local gravity toward the centroid
                 ImVec2 nodeCenter = datas.pos + datas.size * 0.5f;
                 datas.force += (m_datas.computed.centroid - nodeCenter) * m_datas.system.gravity;
 
-                // Ancrage global vers le centre du canvas
+                // global anchor toward the canvas center
                 datas.force += toCenter * m_datas.system.anchorStrength;
             }
         }
@@ -324,23 +327,23 @@ private:
             return;
         }
         for (auto& node : m_datas.containers.nodes) {
-            auto& datas = node.rDatas();
+            auto& datas = node->rDatas();
             if (datas.locked) {
                 continue;
             }
 
             const ImVec2 center = datas.pos + datas.size * 0.5f;
 
-            // Position la plus proche sur la grille
+            // nearest position on the grid
             const float nearestX = std::round(center.x / m_datas.system.snapGridSpacing) * m_datas.system.snapGridSpacing;
             const float nearestY = std::round(center.y / m_datas.system.snapGridSpacing) * m_datas.system.snapGridSpacing;
 
-            // Distance au méridien le plus proche
+            // distance to the nearest grid line
             const float dx = nearestX - center.x;
             const float dy = nearestY - center.y;
 
-            // Force proportionnelle à la distance, mais qui décroît au-delà d'un seuil
-            // pour ne pas tirer des nœuds lointains
+            // force proportional to distance, but decaying beyond a threshold
+            // so as not to pull far nodes
             const float halfGrid = m_datas.system.snapGridSpacing * 0.5f;
             const float fx = (std::abs(dx) < halfGrid) ? dx * m_datas.system.snapGridStrength : 0.0f;
             const float fy = (std::abs(dy) < halfGrid) ? dy * m_datas.system.snapGridStrength : 0.0f;
@@ -351,7 +354,7 @@ private:
 
     void m_clampForces() {
         for (auto& node : m_datas.containers.nodes) {
-            auto& datas = node.rDatas();
+            auto& datas = node->rDatas();
             if (!datas.locked) {
                 datas.force.x = ImClamp(datas.force.x, -m_datas.system.maxForce, m_datas.system.maxForce);
                 datas.force.y = ImClamp(datas.force.y, -m_datas.system.maxForce, m_datas.system.maxForce);
@@ -363,7 +366,7 @@ private:
         m_datas.system.energy = 0.0f;
 
         for (auto& node : m_datas.containers.nodes) {
-            auto& datas = node.rDatas();
+            auto& datas = node->rDatas();
             if (datas.locked) {
                 continue;
             }
