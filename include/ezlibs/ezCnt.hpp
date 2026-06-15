@@ -26,6 +26,7 @@ SOFTWARE.
 
 // ezCnt is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
+#include <set>
 #include <string>
 #include <vector>
 #include <unordered_map>

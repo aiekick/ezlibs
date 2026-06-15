@@ -35,7 +35,8 @@ SOFTWARE.
 
 #include "inode.h"
 #include "ilink.h"
-
+#include "../../../ezMath/ezMath.hpp"
+template<typename TColor = uint32_t, typename TVec2 = ez::math::fvec2, typename TID = uintptr_t>
 class ISolver {
 public:
     struct Datas {
@@ -49,7 +50,7 @@ public:
             float gravity{0.002f};            // force toward the centroid (avoids spreading)
             float slotGapMultiplier{1.0f};    // extra gap per slot (proportional to connection count)
             float nodeToLinkRepulsion{5.0f};  // node to link repulsion coef
-            ImVec2 anchorPoint{};             // graph anchor point
+            TVec2 anchorPoint{};             // graph anchor point
             float anchorStrength{1.0f};       // pull strength toward the anchor point
             bool sideSlots{};                 // slots on node sides (else centered)
             float snapGridSpacing{30.0f};     // grid spacing
@@ -61,19 +62,19 @@ public:
             bool enableCentroidGravity{true};
         } system;
         struct Containers {
-            ez::cnt::DicoVector<std::string, std::shared_ptr<INode>> nodes;
-            std::vector<std::shared_ptr<ILink>> links;
+            ez::cnt::DicoVector<std::string, std::shared_ptr<INode<TColor, TVec2, TID>>> nodes;
+            std::vector<std::shared_ptr<ILink<TColor, TVec2, TID>>> links;
         } containers;
         struct Computed {
-            ImVec2 centroid;
+            TVec2 centroid;
         } computed;
     };
     virtual ~ISolver() = default;
     virtual Datas& rDatas() = 0;
     virtual const Datas& getDatas() const = 0;
 
-    virtual int32_t addNode(const std::shared_ptr<INode>& aNode) = 0;
-    virtual int32_t addLink(const std::shared_ptr<ILink>& aLink) = 0;
+    virtual int32_t addNode(const std::shared_ptr<INode<TColor, TVec2, TID>>& aNode) = 0;
+    virtual int32_t addLink(const std::shared_ptr<ILink<TColor, TVec2, TID>>& aLink) = 0;
 
     virtual void init() = 0;   // will init the system
     virtual void updateLinks() = 0;  // update links pos

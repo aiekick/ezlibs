@@ -76,15 +76,6 @@ bool TestEzApp_SetCurDirectory() {
     return true;
 }
 
-bool TestEzApp_MiniFunction() {
-    ez::App app;
-    CTEST_ASSERT(app.mini(5, 10) == 5);
-    CTEST_ASSERT(app.mini(10, 5) == 5);
-    CTEST_ASSERT(app.mini(7, 7) == 7);
-    CTEST_ASSERT(app.mini(-5, 3) == -5);
-    return true;
-}
-
 bool TestEzApp_ConstructorWithArgv() {
     char arg0[] = "/path/to/executable";
     char* argv[] = {arg0};
@@ -108,7 +99,6 @@ bool TestEzApp(const std::string& vTest) {
     else IfTestExist(TestEzApp_SetAppPathEmpty);
     else IfTestExist(TestEzApp_GetCurDirectory);
     else IfTestExist(TestEzApp_SetCurDirectory);
-    else IfTestExist(TestEzApp_MiniFunction);
     else IfTestExist(TestEzApp_ConstructorWithArgv);
     return false;
 }

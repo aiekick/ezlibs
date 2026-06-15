@@ -58,27 +58,25 @@ public:
 ////////////////////////////////////////////////////////////////////////////
 
 bool TestEzSingleton_InitDefault() {
-    auto& sp = FixtureNoArg::initSingleton();
-    CTEST_ASSERT(sp != nullptr);
-    CTEST_ASSERT(sp->m_value == 42);
-    CTEST_ASSERT(&FixtureNoArg::ref() == sp.get());
+    FixtureNoArg::initSingleton();
+    CTEST_ASSERT(FixtureNoArg::ref().m_value == 42);
+    // ref() returns a stable reference to the unique instance
+    CTEST_ASSERT(&FixtureNoArg::ref() == &FixtureNoArg::ref());
     FixtureNoArg::unitSingleton();
     return true;
 }
 
 bool TestEzSingleton_InitWithArg() {
-    auto& sp = FixtureWithArg::initSingleton(123);
-    CTEST_ASSERT(sp != nullptr);
-    CTEST_ASSERT(sp->m_value == 123);
+    FixtureWithArg::initSingleton(123);
+    CTEST_ASSERT(FixtureWithArg::ref().m_value == 123);
     FixtureWithArg::unitSingleton();
     return true;
 }
 
 bool TestEzSingleton_NoDefaultCtorRequired() {
     int32_t target = 7;
-    auto& sp = FixtureRefMember::initSingleton(target);
-    CTEST_ASSERT(sp != nullptr);
-    CTEST_ASSERT(&sp->mr_ref == &target);
+    FixtureRefMember::initSingleton(target);
+    CTEST_ASSERT(&FixtureRefMember::ref().mr_ref == &target);
     // ref() must NOT instantiate a default constructor of FixtureRefMember
     auto& sameRef = FixtureRefMember::ref();
     CTEST_ASSERT(&sameRef.mr_ref == &target);
@@ -86,36 +84,40 @@ bool TestEzSingleton_NoDefaultCtorRequired() {
     return true;
 }
 
-bool TestEzSingleton_SecondInitKeepsFirstInstance() {
-    auto& sp1 = FixtureWithArg::initSingleton(111);
-    auto* firstPtr = sp1.get();
-    auto& sp2 = FixtureWithArg::initSingleton(222);
-    CTEST_ASSERT(sp2.get() == firstPtr);
-    CTEST_ASSERT(sp2->m_value == 111);
+bool TestEzSingleton_SecondInitRebuildsInstance() {
+    FixtureWithArg::initSingleton(111);
+    CTEST_ASSERT(FixtureWithArg::ref().m_value == 111);
+    // initSingleton performs an unconditional reset(new T(...)), so a second
+    // init rebuilds the instance and replaces it with a fresh value
+    FixtureWithArg::initSingleton(222);
+    CTEST_ASSERT(FixtureWithArg::ref().m_value == 222);
     FixtureWithArg::unitSingleton();
     return true;
 }
 
 bool TestEzSingleton_UnitThenReInit() {
-    auto& sp1 = FixtureWithArg::initSingleton(111);
-    CTEST_ASSERT(sp1->m_value == 111);
+    FixtureWithArg::initSingleton(111);
+    CTEST_ASSERT(FixtureWithArg::ref().m_value == 111);
     FixtureWithArg::unitSingleton();
-    auto& sp2 = FixtureWithArg::initSingleton(222);
-    CTEST_ASSERT(sp2 != nullptr);
-    CTEST_ASSERT(sp2->m_value == 222);
+    FixtureWithArg::initSingleton(222);
+    CTEST_ASSERT(FixtureWithArg::ref().m_value == 222);
     FixtureWithArg::unitSingleton();
     return true;
 }
 
 bool TestEzSingleton_RefIsSameInstanceAsInit() {
-    auto& sp = FixtureWithArg::initSingleton(99);
-    CTEST_ASSERT(&FixtureWithArg::ref() == sp.get());
+    FixtureWithArg::initSingleton(99);
+    auto& firstRef = FixtureWithArg::ref();
+    auto& secondRef = FixtureWithArg::ref();
+    CTEST_ASSERT(&firstRef == &secondRef);
+    CTEST_ASSERT(firstRef.m_value == 99);
     FixtureWithArg::unitSingleton();
     return true;
 }
 
 bool TestEzSingleton_SharedInitAndRef() {
-    auto sp1 = FixtureSharedWithArg::initSingleton(55);
+    FixtureSharedWithArg::initSingleton(55);
+    auto sp1 = FixtureSharedWithArg::ref();
     CTEST_ASSERT(sp1 != nullptr);
     CTEST_ASSERT(sp1->m_value == 55);
     auto sp2 = FixtureSharedWithArg::ref();
@@ -125,11 +127,13 @@ bool TestEzSingleton_SharedInitAndRef() {
 }
 
 bool TestEzSingleton_SharedRefSurvivesUnit() {
-    auto refCopy = FixtureSharedWithArg::initSingleton(77);
+    FixtureSharedWithArg::initSingleton(77);
+    // ref() on a shared singleton returns the shared_ptr by value
+    auto refCopy = FixtureSharedWithArg::ref();
     CTEST_ASSERT(refCopy != nullptr);
     auto* rawPtr = refCopy.get();
     FixtureSharedWithArg::unitSingleton();
-    // shared_ptr returned by value -> caller still owns the instance
+    // the caller-held shared_ptr still owns the instance
     CTEST_ASSERT(refCopy != nullptr);
     CTEST_ASSERT(refCopy.get() == rawPtr);
     CTEST_ASSERT(refCopy->m_value == 77);
@@ -144,7 +148,7 @@ bool TestEzSingleton(const std::string& vTest) {
     IfTestExist(TestEzSingleton_InitDefault);
     else IfTestExist(TestEzSingleton_InitWithArg);
     else IfTestExist(TestEzSingleton_NoDefaultCtorRequired);
-    else IfTestExist(TestEzSingleton_SecondInitKeepsFirstInstance);
+    else IfTestExist(TestEzSingleton_SecondInitRebuildsInstance);
     else IfTestExist(TestEzSingleton_UnitThenReInit);
     else IfTestExist(TestEzSingleton_RefIsSameInstanceAsInit);
     else IfTestExist(TestEzSingleton_SharedInitAndRef);

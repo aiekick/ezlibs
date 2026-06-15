@@ -37,28 +37,29 @@ The solver will solve the graph to be in a stable state
 No drawing here, just simulation
 */
 
-class Solver : public ISolver {
-    ISolver::Datas m_datas;
+template<typename TColor = uint32_t, typename TVec2 = ez::math::fvec2, typename TID = uintptr_t>
+class Solver : public ISolver<TColor, TVec2, TID> {
+    ISolver<TColor, TVec2, TID>::Datas m_datas;
 
 public:
     void clear() {
         m_datas = {};
     }
-    int32_t addNode(const std::shared_ptr<INode>& aNode) override {
+    int32_t addNode(const std::shared_ptr<INode<TColor, TVec2, TID>>& aNode) override {
         int32_t id = static_cast<int32_t>(m_datas.containers.nodes.size());
         m_datas.containers.nodes.tryAdd(aNode->getDatas().name, aNode);
         return id;
     }
 
-    int32_t addLink(const std::shared_ptr<ILink>& aLink) override {
+    int32_t addLink(const std::shared_ptr<ILink<TColor, TVec2, TID>>& aLink) override {
         int32_t id = static_cast<int32_t>(m_datas.containers.links.size());
         m_datas.containers.links.push_back(aLink);
         return id;
     }
-    Datas& rDatas() override {
+    ISolver<TColor, TVec2, TID>::Datas& rDatas() override {
         return m_datas;
     }
-    const Datas& getDatas() const override {
+    const ISolver<TColor, TVec2, TID>::Datas& getDatas() const override {
         return m_datas;
     }
     void init() override {
@@ -71,7 +72,7 @@ public:
         for (const auto& node : m_datas.containers.nodes) {
             const auto& datas = node->getDatas();
             const auto& node_size = datas.size;
-            total_diag += ImSqrt(ImLengthSqr(node_size)) + 40.0f;
+            total_diag += m_LengthSqrt(node_size) + 40.0f;
         }
         const float radius = std::max(total_diag / 6.2831853f, 150.0f);
 
@@ -84,9 +85,9 @@ public:
             const float angle = count_nodes_inv_f * idx_f++;
             const float cx = std::cos(angle) * radius;
             const float cy = std::sin(angle) * radius;
-            auto& rDatas{rNode->rDatas()};
+            auto& rDatas{ rNode->rDatas() };
             const auto& node_size = rDatas.size;
-            rDatas.pos = ImVec2(cx - node_size.x * 0.5f, cy - node_size.y * 0.5f);
+            rDatas.pos = TVec2(cx - node_size.x * 0.5f, cy - node_size.y * 0.5f);
         }
     }
 
@@ -97,7 +98,7 @@ public:
             const auto& datas1 = nodes[ldatas.srcNodeID]->getDatas();
             const auto& datas2 = nodes[ldatas.dstNodeID]->getDatas();
 
-            ImVec2 srcSlot, dstSLot;
+            TVec2 srcSlot, dstSLot;
             float sx = datas1.pos.x + datas1.size.x * 0.5f;
             srcSlot.y = datas1.pos.y + datas1.slots_y[ldatas.srcNodeSlotID];
             float dx = datas2.pos.x + datas2.size.x * 0.5f;
@@ -113,7 +114,7 @@ public:
                 dstSLot.x = ((sx >= dx) ? datas2.pos.x + datas2.size.x : datas2.pos.x);
             }
 
-            link->rDatas().corners = {srcSlot, dstSLot};
+            link->rDatas().corners = { srcSlot, dstSLot };
         }
     }
 
@@ -132,6 +133,14 @@ public:
     }
 
 private:
+    float m_LengthSqrt(const TVec2 aVec2) {
+        return std::sqrt((aVec2.x * aVec2.x) + (aVec2.y * aVec2.y));
+    }
+
+    float m_max(const float a, const float b) {
+        return    a >= b ? a : b;
+    }
+
     void m_resetForces() {
         for (auto& node : m_datas.containers.nodes) {
             node->rDatas().force = {};
@@ -144,14 +153,14 @@ private:
         }
         for (size_t i = 0; i < m_datas.containers.nodes.size(); i++) {
             auto& datas1 = m_datas.containers.nodes[i]->rDatas();
-            ImVec2 center1 = datas1.pos + datas1.size * 0.5f;
+            TVec2 center1 = datas1.pos + datas1.size * 0.5f;
 
             for (size_t j = i + 1; j < m_datas.containers.nodes.size(); j++) {
                 auto& datas2 = m_datas.containers.nodes[j]->rDatas();
-                ImVec2 center2 = datas2.pos + datas2.size * 0.5f;
+                TVec2 center2 = datas2.pos + datas2.size * 0.5f;
 
-                ImVec2 delta = center2 - center1;
-                float center_dist = ImSqrt(ImLengthSqr(delta));
+                TVec2 delta = center2 - center1;
+                float center_dist = m_LengthSqrt(delta);
 
                 if (center_dist < 1.0f) {
                     continue;
@@ -162,10 +171,10 @@ private:
                 float half_h = (datas1.size.y + datas2.size.y) * 0.5f;
 
                 // project on axes to get the real distance between edges
-                ImVec2 abs_delta = ImVec2(ImAbs(delta.x), ImAbs(delta.y));
-                float actual_gap = ImSqrt(
-                    ImMax(abs_delta.x - half_w, 0.0f) * ImMax(abs_delta.x - half_w, 0.0f)    //
-                    + ImMax(abs_delta.y - half_h, 0.0f) * ImMax(abs_delta.y - half_h, 0.0f)  //
+                TVec2 abs_delta = TVec2(std::abs(delta.x), std::abs(delta.y));
+                float actual_gap = std::sqrt(
+                    m_max(abs_delta.x - half_w, 0.0f) * m_max(abs_delta.x - half_w, 0.0f)    //
+                    + m_max(abs_delta.y - half_h, 0.0f) * m_max(abs_delta.y - half_h, 0.0f)  //
                 );
 
                 // adaptive gap depending on slot count
@@ -175,8 +184,8 @@ private:
                 // missing distance to reach the minimal gap
                 float gap_deficit = effective_gap - actual_gap;
 
-                ImVec2 direction = delta / center_dist;
-                ImVec2 force = {};
+                TVec2 direction = delta / center_dist;
+                TVec2 force = {};
 
                 if (gap_deficit > 0.0f) {
                     // too close : repulse
@@ -203,7 +212,7 @@ private:
                 continue;
             }
 
-            ImVec2 nodeCenter = nodeDatas.pos + nodeDatas.size * 0.5f;
+            TVec2 nodeCenter = nodeDatas.pos + nodeDatas.size * 0.5f;
 
             for (auto& link : m_datas.containers.links) {
                 const auto& linkDatas = link->getDatas();
@@ -220,25 +229,25 @@ private:
                     continue;
                 }
 
-                ImVec2 segmentStart = corners[0];
-                ImVec2 segmentEnd = corners[corners.size() - 1];
+                TVec2 segmentStart = corners[0];
+                TVec2 segmentEnd = corners[corners.size() - 1];
 
                 // distance from point to segment
-                ImVec2 segmentVec = segmentEnd - segmentStart;
-                float segmentLength = ImSqrt(ImLengthSqr(segmentVec));
+                TVec2 segmentVec = segmentEnd - segmentStart;
+                float segmentLength = m_LengthSqrt(segmentVec);
 
                 if (segmentLength < 1.0f) {
                     continue;
                 }
 
                 // project the node center on the segment
-                ImVec2 toNode = nodeCenter - segmentStart;
+                TVec2 toNode = nodeCenter - segmentStart;
                 float t = ImDot(toNode, segmentVec) / (segmentLength * segmentLength);
-                t = ImClamp(t, 0.0f, 1.0f);  // clamp on the segment
+                t = m_clamp(t, 0.0f, 1.0f);  // clamp on the segment
 
-                ImVec2 closestPoint = segmentStart + segmentVec * t;
-                ImVec2 delta = nodeCenter - closestPoint;
-                float distance = ImSqrt(ImLengthSqr(delta));
+                TVec2 closestPoint = segmentStart + segmentVec * t;
+                TVec2 delta = nodeCenter - closestPoint;
+                float distance = m_LengthSqrt(delta);
 
                 if (distance < 1.0f) {
                     continue;
@@ -252,8 +261,8 @@ private:
 
                 if (penetration > 0.0f) {
                     // repulse the node away from the segment
-                    ImVec2 direction = delta / distance;
-                    ImVec2 force = direction * penetration * 5.0f;  // repulsion coef
+                    TVec2 direction = delta / distance;
+                    TVec2 force = direction * penetration * 5.0f;  // repulsion coef
                     nodeDatas.force += force;
                 }
             }
@@ -269,14 +278,14 @@ private:
             auto& datas1 = m_datas.containers.nodes.at(datas.srcNodeID)->rDatas();
             auto& datas2 = m_datas.containers.nodes.at(datas.dstNodeID)->rDatas();
 
-            ImVec2 delta = datas2.pos - datas1.pos;
-            float distance = ImSqrt(ImLengthSqr(delta));
+            TVec2 delta = datas2.pos - datas1.pos;
+            float distance = m_LengthSqrt(delta);
 
             if (distance < 1.0f) {
                 continue;
             }
             float attraction = distance * m_datas.system.linkAttraction;
-            ImVec2 direction = delta / distance;
+            TVec2 direction = delta / distance;
 
             datas1.force += direction * attraction;
             datas2.force -= direction * attraction;
@@ -307,13 +316,13 @@ private:
         m_datas.computed.centroid /= static_cast<float>(count);
 
         // anchor the centroid toward the canvas center
-        ImVec2 toCenter = m_datas.system.anchorPoint - m_datas.computed.centroid;
+        TVec2 toCenter = m_datas.system.anchorPoint - m_datas.computed.centroid;
 
         for (auto& node : m_datas.containers.nodes) {
             auto& datas = node->rDatas();
             if (!datas.locked) {
                 // local gravity toward the centroid
-                ImVec2 nodeCenter = datas.pos + datas.size * 0.5f;
+                TVec2 nodeCenter = datas.pos + datas.size * 0.5f;
                 datas.force += (m_datas.computed.centroid - nodeCenter) * m_datas.system.gravity;
 
                 // global anchor toward the canvas center
@@ -332,7 +341,7 @@ private:
                 continue;
             }
 
-            const ImVec2 center = datas.pos + datas.size * 0.5f;
+            const TVec2 center = datas.pos + datas.size * 0.5f;
 
             // nearest position on the grid
             const float nearestX = std::round(center.x / m_datas.system.snapGridSpacing) * m_datas.system.snapGridSpacing;
@@ -348,16 +357,20 @@ private:
             const float fx = (std::abs(dx) < halfGrid) ? dx * m_datas.system.snapGridStrength : 0.0f;
             const float fy = (std::abs(dy) < halfGrid) ? dy * m_datas.system.snapGridStrength : 0.0f;
 
-            datas.force += ImVec2(fx, fy);
+            datas.force += TVec2(fx, fy);
         }
+    }
+
+    float m_clamp(const float aValue, const float aInf, const float aSup) {
+       return (aValue < aInf) ? aInf : (aValue > aSup) ? aSup : aValue;
     }
 
     void m_clampForces() {
         for (auto& node : m_datas.containers.nodes) {
             auto& datas = node->rDatas();
             if (!datas.locked) {
-                datas.force.x = ImClamp(datas.force.x, -m_datas.system.maxForce, m_datas.system.maxForce);
-                datas.force.y = ImClamp(datas.force.y, -m_datas.system.maxForce, m_datas.system.maxForce);
+                datas.force.x = m_clamp(datas.force.x, -m_datas.system.maxForce, m_datas.system.maxForce);
+                datas.force.y = m_clamp(datas.force.y, -m_datas.system.maxForce, m_datas.system.maxForce);
             }
         }
     }
@@ -375,7 +388,7 @@ private:
             datas.velocity *= m_datas.system.damping;
             datas.pos += datas.velocity * aDt;
 
-            m_datas.system.energy += ImAbs(datas.force.x) + ImAbs(datas.force.y);
+            m_datas.system.energy += std::abs(datas.force.x) + std::abs(datas.force.y);
         }
 
         return m_datas.system.energy;

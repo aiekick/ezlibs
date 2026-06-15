@@ -20,6 +20,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX Src FILES ${PROJECT_TEST_SR
 file(GLOB EZ_LIBS_SOURCE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezCmdProcessor.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezGraph.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezFdGraph.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezStr.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSqlite.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezStackString.hpp
@@ -63,6 +64,20 @@ AddTest("TestEzCmdProcessor_Basis")
 
 AddTest("TestEzGraph_Building")
 AddTest("TestEzGraph_Evaluation")
+
+##########################################################
+##### TESTS EzFdGraph ####################################
+##########################################################
+
+AddTest("TestEzFdGraph_AddNodesAndLinks")
+AddTest("TestEzFdGraph_InitScatter")
+AddTest("TestEzFdGraph_EnergyDecreases")
+AddTest("TestEzFdGraph_LinkAttractionPullsTogether")
+AddTest("TestEzFdGraph_UpdateLinksCorners")
+AddTest("TestEzFdGraph_LockedNodeStaysPut")
+AddTest("TestEzFdGraph_DisabledForcesNoMotion")
+AddTest("TestEzFdGraph_ClampForces")
+AddTest("TestEzFdGraph_DerivedDatasAndOverride")
 
 ##########################################################
 ##### TESTS EzStr ########################################
@@ -178,7 +193,7 @@ AddTest("TestEzLog_CloseAndReopen")
 AddTest("TestEzSingleton_InitDefault")
 AddTest("TestEzSingleton_InitWithArg")
 AddTest("TestEzSingleton_NoDefaultCtorRequired")
-AddTest("TestEzSingleton_SecondInitKeepsFirstInstance")
+AddTest("TestEzSingleton_SecondInitRebuildsInstance")
 AddTest("TestEzSingleton_UnitThenReInit")
 AddTest("TestEzSingleton_RefIsSameInstanceAsInit")
 AddTest("TestEzSingleton_SharedInitAndRef")

@@ -28,8 +28,8 @@ SOFTWARE.
 
 #include <cstdint>
 #include <vector>
-#include "../../../ezVec2.hpp"
-template<typename TColor = uint32_t, typename TVec2 = ez::math::fvec2, typename TID = uintptr_>
+#include "../../../ezMath/ezMath.hpp"
+template<typename TColor = uint32_t, typename TVec2 = ez::math::fvec2, typename TID = uintptr_t>
 class ILink {
 public:
     struct Datas {
@@ -44,6 +44,4 @@ public:
     virtual ~ILink() = default;
     virtual Datas& rDatas() = 0;
     virtual const Datas& getDatas() const = 0;
-    // Draw the link via ImNodal between the given editor-owned slot ids.
-    virtual void draw(TID aLinkId, TID aFromSlotId, TID aToSlotId) const = 0;
 };

@@ -28,25 +28,21 @@ SOFTWARE.
 
 #include <vector>
 #include <string>
-
-#include <imguipack.h>
-
+#include "../../../ezMath/ezMath.hpp"
+template<typename TColor = uint32_t, typename TVec2 = ez::math::fvec2, typename TID = uintptr_t>
 class INode {
 public:
     struct Datas {
-        ImVec2 pos;
-        ImVec2 size;
-        ImU32 color{};
+        TVec2 pos;
+        TVec2 size;
+        TColor color{};
         std::vector<float> slots_y;
         bool locked{};
-        ImVec2 velocity;
-        ImVec2 force;
+        TVec2 velocity;
+        TVec2 force;
         std::string name{};
     };
     virtual ~INode() = default;
     virtual Datas& rDatas() = 0;
     virtual const Datas& getDatas() const = 0;
-    // Emit the node content (title + slots) between the editor's ImNodal BeginNode/EndNode.
-    // aSlotIds are the editor-owned ImNodal ids for this node's slots (size == slots_y.size()).
-    virtual void drawImNodalContent(const std::vector<ImNodal::Id>& aSlotIds) = 0;
 };
