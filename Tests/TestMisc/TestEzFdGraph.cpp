@@ -355,6 +355,75 @@ bool TestEzFdGraph_DisabledNodeIsInert() {
     return true;
 }
 
+bool TestEzFdGraph_FlowLayoutOrdersByDirection() {
+    ez::FdGraph graph;
+    auto& cfg = graph.getConfigRef();
+    // isolate the flow layout : every other force off
+    cfg.enableRepulseNodes = false;
+    cfg.enableRepulseNodesFromLinks = false;
+    cfg.enableAttractLinks = false;
+    cfg.enableSnapToGrid = false;
+    cfg.enableCentroidGravity = false;
+    cfg.enableFlowLayout = true;
+
+    ez::FdGraph::NodeDatas datas;
+    datas.size = ez::math::fvec2(40.0f, 40.0f);
+    datas.slots_y = {0.0f};
+    datas.slots_output = {true};                // node 0 is wired through an OUTPUT slot
+    datas.pos = ez::math::fvec2(100.0f, 0.0f);  // starts on the RIGHT (reversed)
+    auto outputNode = graph.addNode(datas);
+    datas.slots_output = {false};               // node 1 is wired through an INPUT slot
+    datas.pos = ez::math::fvec2(0.0f, 0.0f);
+    auto inputNode = graph.addNode(datas);
+
+    ez::FdGraph::LinkDatas ld;
+    ld.srcSlot = 0U;
+    ld.dstSlot = 0U;
+    graph.addLink(outputNode, inputNode, ld);
+
+    for (int32_t i = 0; i < 300; ++i) {
+        graph.step(0.1f);
+    }
+    // the OUTPUT-side node ends up left of the INPUT-side node
+    CTEST_ASSERT(outputNode.lock()->getDatas().pos.x < inputNode.lock()->getDatas().pos.x);
+    return true;
+}
+
+bool TestEzFdGraph_FlowLayoutFollowsSlotNotLinkOrder() {
+    ez::FdGraph graph;
+    auto& cfg = graph.getConfigRef();
+    cfg.enableRepulseNodes = false;
+    cfg.enableRepulseNodesFromLinks = false;
+    cfg.enableAttractLinks = false;
+    cfg.enableSnapToGrid = false;
+    cfg.enableCentroidGravity = false;
+    cfg.enableFlowLayout = true;
+
+    ez::FdGraph::NodeDatas datas;
+    datas.size = ez::math::fvec2(40.0f, 40.0f);
+    datas.slots_y = {0.0f};
+    // the link is created INPUT-node -> OUTPUT-node (reversed link order) : the flow must
+    // still put the OUTPUT node on the left, driven only by the slot direction.
+    datas.slots_output = {false};               // node 0 : INPUT side, used as the link 'from'
+    datas.pos = ez::math::fvec2(0.0f, 0.0f);    // starts on the LEFT
+    auto inputNode = graph.addNode(datas);
+    datas.slots_output = {true};                // node 1 : OUTPUT side, used as the link 'to'
+    datas.pos = ez::math::fvec2(100.0f, 0.0f);  // starts on the RIGHT
+    auto outputNode = graph.addNode(datas);
+
+    ez::FdGraph::LinkDatas ld;
+    ld.srcSlot = 0U;  // from-node (inputNode) slot 0 -> an input
+    ld.dstSlot = 0U;
+    graph.addLink(inputNode, outputNode, ld);
+
+    for (int32_t i = 0; i < 300; ++i) {
+        graph.step(0.1f);
+    }
+    // despite the link going inputNode -> outputNode, the OUTPUT node ends up on the left
+    CTEST_ASSERT(outputNode.lock()->getDatas().pos.x < inputNode.lock()->getDatas().pos.x);
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 //// DISPATCH ///////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -370,5 +439,7 @@ bool TestEzFdGraph(const std::string& vTest) {
     else IfTestExist(TestEzFdGraph_ClampForces);
     else IfTestExist(TestEzFdGraph_DerivedDatasAndOverride);
     else IfTestExist(TestEzFdGraph_DisabledNodeIsInert);
+    else IfTestExist(TestEzFdGraph_FlowLayoutOrdersByDirection);
+    else IfTestExist(TestEzFdGraph_FlowLayoutFollowsSlotNotLinkOrder);
     return false;
 }

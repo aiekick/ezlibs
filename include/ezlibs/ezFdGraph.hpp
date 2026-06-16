@@ -56,7 +56,8 @@ public:
         ez::math::fvec2 velocity{};
         ez::math::fvec2 force{};
         ez::math::fvec2 size{};
-        std::vector<float> slots_y{};  // vertical offsets of the slots inside the node, used by updateLinks
+        std::vector<float> slots_y{};       // vertical offsets of the slots inside the node, used by updateLinks
+        std::vector<bool> slots_output{};   // per-slot direction (parallel to slots_y) : true=output, false=input ; drives m_applyFlowLayout
         float mass{1.0f};
         uint32_t connCount{0};
         bool locked{false};   // a locked node is never moved by the solver (e.g. dragged by the user)
@@ -171,6 +172,8 @@ public:
         bool enableAttractLinks{true};
         bool enableSnapToGrid{true};
         bool enableCentroidGravity{true};
+        bool enableFlowLayout{false};      // arrange nodes left->right along link direction (from=left, to=right)
+        float flowStrength{0.1f};          // horizontal flow bias intensity when enableFlowLayout is on
     };
 
 private:
@@ -301,6 +304,7 @@ public:
         m_repulseNodes();
         m_repulseNodesFromLinks();
         m_attractLinks();
+        m_applyFlowLayout();
         m_snapToGrid();
         m_applyCentroidGravity();
         m_clampForces();
@@ -431,6 +435,43 @@ private:
             const ez::math::fvec2 direction = delta / distance;
             datas1.force += direction * attraction;
             datas2.force -= direction * attraction;
+        }
+    }
+
+    // Optional left->right flow layout : bias each directed link so the 'from' node
+    // (host convention : the output/provider side) sits to the left of the 'to' node
+    // (the input/consumer side). Acts only when that ordering is not satisfied, so it
+    // stays stable and self-limiting. X axis only ; Y is left to the other forces.
+    void m_applyFlowLayout() {
+        if (!m_config.enableFlowLayout) {
+            return;
+        }
+        for (auto& linkPtr : m_links) {
+            auto fromPtr = linkPtr->getFromNode().lock();
+            auto toPtr = linkPtr->getToNode().lock();
+            if ((fromPtr == nullptr) || (toPtr == nullptr)) {
+                continue;
+            }
+            auto& fromDatas = fromPtr->getDatasRef();
+            auto& toDatas = toPtr->getDatasRef();
+            if (!fromDatas.enabled || !toDatas.enabled) {
+                continue;
+            }
+            // Direction comes from the SLOTS, not from the link order : the node attached by
+            // an output slot sits on the left, the one attached by an input slot on the right.
+            // Read the from-node source slot direction (default to output when unknown).
+            const size_t srcSlot = linkPtr->getDatas().srcSlot;
+            const bool fromIsOutput = (srcSlot < fromDatas.slots_output.size()) ? static_cast<bool>(fromDatas.slots_output[srcSlot]) : true;
+            NodeDatas& leftDatas = fromIsOutput ? fromDatas : toDatas;
+            NodeDatas& rightDatas = fromIsOutput ? toDatas : fromDatas;
+            const float desiredGap = (leftDatas.size.x + rightDatas.size.x) * 0.5f + m_config.nodeGap;
+            const float currentDx = rightDatas.pos.x - leftDatas.pos.x;
+            const float deficit = desiredGap - currentDx;
+            if (deficit > 0.0f) {
+                const float push = deficit * m_config.flowStrength;
+                leftDatas.force.x -= push;   // output side pulled left
+                rightDatas.force.x += push;  // input side pushed right
+            }
         }
     }
 
