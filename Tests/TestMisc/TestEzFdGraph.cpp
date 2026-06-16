@@ -318,6 +318,43 @@ bool TestEzFdGraph_DerivedDatasAndOverride() {
     return true;
 }
 
+bool TestEzFdGraph_DisabledNodeIsInert() {
+    ez::FdGraph graph;
+    auto& cfg = graph.getConfigRef();
+    cfg.enableRepulseNodesFromLinks = false;
+    cfg.enableAttractLinks = false;
+    cfg.enableSnapToGrid = false;
+    cfg.enableCentroidGravity = false;  // isolate node/node repulsion
+
+    ez::FdGraph::NodeDatas datas;
+    datas.size = ez::math::fvec2(40.0f, 40.0f);
+    datas.pos = ez::math::fvec2(0.0f, 0.0f);
+    auto n0 = graph.addNode(datas);  // enabled
+    datas.pos = ez::math::fvec2(5.0f, 0.0f);
+    datas.enabled = false;           // disabled, very close : would repel n0 if active
+    auto n1 = graph.addNode(datas);
+
+    for (int32_t i = 0; i < 50; ++i) {
+        graph.step(0.1f);
+    }
+    // the disabled node never moves, and being the only neighbour it must exert
+    // no force on the enabled node (which therefore does not move either)
+    CTEST_ASSERT(nearF(n1.lock()->getDatas().pos.x, 5.0f, 1e-4f));
+    CTEST_ASSERT(nearF(n1.lock()->getDatas().pos.y, 0.0f, 1e-4f));
+    CTEST_ASSERT(nearF(n0.lock()->getDatas().pos.x, 0.0f, 1e-4f));
+    CTEST_ASSERT(nearF(n0.lock()->getDatas().pos.y, 0.0f, 1e-4f));
+
+    // re-enable the second node : the pair now repels and they move apart
+    n1.lock()->getDatasRef().enabled = true;
+    const float beforeDist = (n1.lock()->getDatas().pos - n0.lock()->getDatas().pos).length();
+    for (int32_t i = 0; i < 50; ++i) {
+        graph.step(0.1f);
+    }
+    const float afterDist = (n1.lock()->getDatas().pos - n0.lock()->getDatas().pos).length();
+    CTEST_ASSERT(afterDist > beforeDist);
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 //// DISPATCH ///////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -332,5 +369,6 @@ bool TestEzFdGraph(const std::string& vTest) {
     else IfTestExist(TestEzFdGraph_DisabledForcesNoMotion);
     else IfTestExist(TestEzFdGraph_ClampForces);
     else IfTestExist(TestEzFdGraph_DerivedDatasAndOverride);
+    else IfTestExist(TestEzFdGraph_DisabledNodeIsInert);
     return false;
 }

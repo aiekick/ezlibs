@@ -59,7 +59,8 @@ public:
         std::vector<float> slots_y{};  // vertical offsets of the slots inside the node, used by updateLinks
         float mass{1.0f};
         uint32_t connCount{0};
-        bool locked{false};  // a locked node is never moved by the solver (e.g. dragged by the user)
+        bool locked{false};   // a locked node is never moved by the solver (e.g. dragged by the user)
+        bool enabled{true};   // a disabled node is fully ignored by the solver (no force, no link, not drawn)
         UserDatas userDatas{nullptr};
         NodeDatas() = default;
         NodeDatas(const ez::math::fvec2& aPos, const ez::math::fvec2& aForce, float aMass) : pos(aPos), force(aForce), mass(aMass) {}
@@ -228,15 +229,23 @@ public:
             return;
         }
         float totalDiag = 0.0f;
+        size_t enabledCount = 0;
         for (const auto& nodePtr : m_nodes) {
+            if (!nodePtr->getDatas().enabled) {
+                continue;
+            }
             totalDiag += nodePtr->getDatas().size.length() + 40.0f;
+            ++enabledCount;
+        }
+        if (enabledCount < 2U) {
+            return;
         }
         const float radius = std::max(totalDiag / 6.2831853f, 150.0f);
         float idx = 0.0f;
-        const float angleStep = 6.2831853f / static_cast<float>(m_nodes.size());
+        const float angleStep = 6.2831853f / static_cast<float>(enabledCount);
         for (auto& nodePtr : m_nodes) {
             auto& datas = nodePtr->getDatasRef();
-            if (datas.locked) {
+            if (!datas.enabled || datas.locked) {
                 continue;
             }
             const float angle = angleStep * idx++;
@@ -257,6 +266,10 @@ public:
             auto& linkDatas = linkPtr->getDatasRef();
             const auto& srcDatas = fromPtr->getDatas();
             const auto& dstDatas = toPtr->getDatas();
+            if (!srcDatas.enabled || !dstDatas.enabled) {
+                linkDatas.corners.clear();  // a hidden endpoint -> the link is not routed nor drawn
+                continue;
+            }
             if ((linkDatas.srcSlot >= srcDatas.slots_y.size()) || (linkDatas.dstSlot >= dstDatas.slots_y.size())) {
                 continue;
             }
@@ -307,9 +320,15 @@ private:
         }
         for (size_t i = 0; i < m_nodes.size(); ++i) {
             auto& datas1 = m_nodes[i]->getDatasRef();
+            if (!datas1.enabled) {
+                continue;
+            }
             const ez::math::fvec2 center1 = datas1.pos + datas1.size * 0.5f;
             for (size_t j = i + 1; j < m_nodes.size(); ++j) {
                 auto& datas2 = m_nodes[j]->getDatasRef();
+                if (!datas2.enabled) {
+                    continue;
+                }
                 const ez::math::fvec2 center2 = datas2.pos + datas2.size * 0.5f;
                 const ez::math::fvec2 delta = center2 - center1;
                 const float centerDist = delta.length();
@@ -347,7 +366,7 @@ private:
         }
         for (auto& nodePtr : m_nodes) {
             auto& nodeDatas = nodePtr->getDatasRef();
-            if (nodeDatas.locked) {
+            if (nodeDatas.locked || !nodeDatas.enabled) {
                 continue;
             }
             const ez::math::fvec2 nodeCenter = nodeDatas.pos + nodeDatas.size * 0.5f;
@@ -400,6 +419,9 @@ private:
             }
             auto& datas1 = fromPtr->getDatasRef();
             auto& datas2 = toPtr->getDatasRef();
+            if (!datas1.enabled || !datas2.enabled) {
+                continue;
+            }
             const ez::math::fvec2 delta = datas2.pos - datas1.pos;
             const float distance = delta.length();
             if (distance < 1.0f) {
@@ -416,20 +438,25 @@ private:
         if (!m_config.enableCentroidGravity) {
             return;
         }
-        if (m_nodes.empty()) {
-            return;
-        }
         m_centroid = {};
+        size_t enabledCount = 0;
         for (auto& nodePtr : m_nodes) {
             const auto& datas = nodePtr->getDatas();
+            if (!datas.enabled) {
+                continue;
+            }
             m_centroid += (datas.pos + datas.size * 0.5f);
+            ++enabledCount;
         }
-        m_centroid /= static_cast<float>(m_nodes.size());
+        if (enabledCount == 0) {
+            return;
+        }
+        m_centroid /= static_cast<float>(enabledCount);
         // anchor the whole centroid toward the configured anchor point
         const ez::math::fvec2 toAnchor = m_config.anchorPoint - m_centroid;
         for (auto& nodePtr : m_nodes) {
             auto& datas = nodePtr->getDatasRef();
-            if (!datas.locked) {
+            if (datas.enabled && !datas.locked) {
                 // local gravity toward the centroid
                 const ez::math::fvec2 nodeCenter = datas.pos + datas.size * 0.5f;
                 datas.force += (m_centroid - nodeCenter) * m_config.gravity;
@@ -448,7 +475,7 @@ private:
         }
         for (auto& nodePtr : m_nodes) {
             auto& datas = nodePtr->getDatasRef();
-            if (datas.locked) {
+            if (datas.locked || !datas.enabled) {
                 continue;
             }
             const ez::math::fvec2 center = datas.pos + datas.size * 0.5f;
@@ -468,7 +495,7 @@ private:
     void m_clampForces() {
         for (auto& nodePtr : m_nodes) {
             auto& datas = nodePtr->getDatasRef();
-            if (!datas.locked) {
+            if (datas.enabled && !datas.locked) {
                 datas.force.x = ez::math::clamp(datas.force.x, -m_config.maxForce, m_config.maxForce);
                 datas.force.y = ez::math::clamp(datas.force.y, -m_config.maxForce, m_config.maxForce);
             }
@@ -479,7 +506,7 @@ private:
         m_energy = 0.0f;
         for (auto& nodePtr : m_nodes) {
             auto& datas = nodePtr->getDatasRef();
-            if (datas.locked) {
+            if (!datas.enabled || datas.locked) {
                 continue;
             }
             nodePtr->update(aDeltaTime, m_config.damping);

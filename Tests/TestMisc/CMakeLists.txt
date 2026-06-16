@@ -78,6 +78,7 @@ AddTest("TestEzFdGraph_LockedNodeStaysPut")
 AddTest("TestEzFdGraph_DisabledForcesNoMotion")
 AddTest("TestEzFdGraph_ClampForces")
 AddTest("TestEzFdGraph_DerivedDatasAndOverride")
+AddTest("TestEzFdGraph_DisabledNodeIsInert")
 
 ##########################################################
 ##### TESTS EzStr ########################################
