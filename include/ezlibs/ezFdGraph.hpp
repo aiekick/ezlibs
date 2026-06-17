@@ -173,7 +173,7 @@ public:
         bool enableSnapToGrid{true};
         bool enableCentroidGravity{true};
         bool enableFlowLayout{false};      // arrange nodes left->right along link direction (from=left, to=right)
-        float flowStrength{0.1f};          // horizontal flow bias intensity when enableFlowLayout is on
+        ez::math::fvec2 flowStrength{0.1f};  // horizontal flow bias intensity when enableFlowLayout is on
     };
 
 private:
@@ -464,13 +464,13 @@ private:
             const bool fromIsOutput = (srcSlot < fromDatas.slots_output.size()) ? static_cast<bool>(fromDatas.slots_output[srcSlot]) : true;
             NodeDatas& leftDatas = fromIsOutput ? fromDatas : toDatas;
             NodeDatas& rightDatas = fromIsOutput ? toDatas : fromDatas;
-            const float desiredGap = (leftDatas.size.x + rightDatas.size.x) * 0.5f + m_config.nodeGap;
-            const float currentDx = rightDatas.pos.x - leftDatas.pos.x;
-            const float deficit = desiredGap - currentDx;
+            const auto desiredGap = (leftDatas.size + rightDatas.size) * 0.5f + m_config.nodeGap;
+            const auto currentDxy = rightDatas.pos - leftDatas.pos;
+            const auto deficit = desiredGap - currentDxy;
             if (deficit > 0.0f) {
-                const float push = deficit * m_config.flowStrength;
-                leftDatas.force.x -= push;   // output side pulled left
-                rightDatas.force.x += push;  // input side pushed right
+                const auto push = deficit * m_config.flowStrength;
+                leftDatas.force -= push;   // output side pulled left
+                rightDatas.force += push;  // input side pushed right
             }
         }
     }
