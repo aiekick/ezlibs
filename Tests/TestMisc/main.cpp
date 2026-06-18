@@ -16,6 +16,8 @@
 #include <TestEzQrCode.h>
 #endif
 
+#include <ezlibs/ezLog.hpp>
+
 #define IfTestCollectionExist(v)             \
     if (vTest.find(#v) != std::string::npos) \
     return v(vTest)
@@ -46,10 +48,11 @@ bool TestMisc(const std::string& vTest) {
 ////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv) {
+    ez::Log::initSingleton();
     if (argc > 1) {
         printf("Exec test : %s\n", argv[1]);
         return TestMisc(argv[1]) ? 0 : 1;
     }
     // User testing
-    return TestMisc("TestEzStr_StrContainsEdgeCases") ? 0 : 1;
+    return TestMisc("TestEzCmdProcessor_Basis") ? 0 : 1;
 }

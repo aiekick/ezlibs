@@ -81,6 +81,7 @@ AddTest("TestEzFdGraph_DerivedDatasAndOverride")
 AddTest("TestEzFdGraph_DisabledNodeIsInert")
 AddTest("TestEzFdGraph_FlowLayoutOrdersByDirection")
 AddTest("TestEzFdGraph_FlowLayoutFollowsSlotNotLinkOrder")
+AddTest("TestEzFdGraph_CustomFunctorRegisterAndTune")
 
 ##########################################################
 ##### TESTS EzStr ########################################

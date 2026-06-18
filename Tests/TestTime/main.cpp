@@ -2,6 +2,8 @@
 #include <TestEzDate.h>
 #include <TestEzTime.h>
 
+#include <ezlibs/ezLog.hpp>
+
 #define IfTestCollectionExist(v)             \
     if (vTest.find(#v) != std::string::npos) \
     return v(vTest)
@@ -18,6 +20,7 @@ bool TestTime(const std::string& vTest) {
 ////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv) {
+    ez::Log::initSingleton();
     if (argc > 1) {
         printf("Exec test : %s\n", argv[1]);
         return TestTime(argv[1]) ? 0 : 1;
