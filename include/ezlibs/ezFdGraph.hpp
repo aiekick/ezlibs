@@ -207,18 +207,6 @@ public:
         ez::math::fvec2 centroid{};       // recomputed each step ; read back by the host to display
     };
 
-    // Handles to the built-in forces registered by initDefaultComputeFunctors(), so
-    // the host can tune them and read back computed values (e.g. the centroid). All
-    // null until that call ; reset by clearFunctors(). They survive clearDatas()
-    // (functors are not dropped there) but NOT clearFunctors().
-    struct DefaultFunctors {
-        RepulseNodesDatas* repulseNodes{nullptr};
-        RepulseNodesFromLinksDatas* repulseNodesFromLinks{nullptr};
-        AttractLinksDatas* attractLinks{nullptr};
-        FlowLayoutDatas* flowLayout{nullptr};
-        SnapToGridDatas* snapToGrid{nullptr};
-        CentroidGravityDatas* centroidGravity{nullptr};
-    };
 
 private:
     template <typename TTYPE>
@@ -238,7 +226,6 @@ private:
     SmartContainer<Link> m_links;
     SmartContainer<IComputeDatas> m_computeDatas;
     std::vector<ComputeFunctor> m_computeFunctors;
-    DefaultFunctors m_defaultFunctors{};
     Config m_config;
     ez::math::fvec2 m_centroid{};
     float m_energy{0.0f};
@@ -254,7 +241,6 @@ public:
     void clearFunctors() {
         m_computeDatas.clear();
         m_computeFunctors.clear();
-        m_defaultFunctors = {};
     }
 
     template <typename T = Node, typename U = NodeDatas>
@@ -304,14 +290,6 @@ public:
     const IComputeDatasContainer& getComputeDatas() const { return m_computeDatas.weaks; }
     IComputeDatasContainer& getComputeDatas() { return m_computeDatas.weaks; }
 
-    // Typed handles to the default forces (valid only after initDefaultComputeFunctors).
-    const DefaultFunctors& getDefaultFunctors() const { return m_defaultFunctors; }
-
-    // Centroid computed by the default centroid-gravity force (falls back to origin
-    // when that force is not registered).
-    const ez::math::fvec2& getCentroid() const {
-        return (m_defaultFunctors.centroidGravity != nullptr) ? m_defaultFunctors.centroidGravity->centroid : m_centroid;
-    }
     float getEnergy() const { return m_energy; }
 
 
@@ -350,15 +328,14 @@ public:
     // Register the built-in forces, each with its own default datas block, and keep
     // typed handles to them (returned and reachable via getDefaultFunctors()). The
     // host can skip this, call clearFunctors() to drop them, or add its own after.
-    const DefaultFunctors& initDefaultComputeFunctors() {
+    void initDefaultComputeFunctors() {
         clearFunctors();
-        m_defaultFunctors.repulseNodes = &registerFunctor<RepulseNodesDatas>(&FdGraph::computeRepulseNodes);
-        m_defaultFunctors.repulseNodesFromLinks = &registerFunctor<RepulseNodesFromLinksDatas>(&FdGraph::computeRepulseNodesFromLinks);
-        m_defaultFunctors.attractLinks = &registerFunctor<AttractLinksDatas>(&FdGraph::computeAttractLinks);
-        m_defaultFunctors.flowLayout = &registerFunctor<FlowLayoutDatas>(&FdGraph::computeFlowLayout);
-        m_defaultFunctors.snapToGrid = &registerFunctor<SnapToGridDatas>(&FdGraph::computeSnapToGrid);
-        m_defaultFunctors.centroidGravity = &registerFunctor<CentroidGravityDatas>(&FdGraph::computeCentroidGravity);
-        return m_defaultFunctors;
+        registerFunctor<RepulseNodesDatas>(&FdGraph::computeRepulseNodes);
+        registerFunctor<RepulseNodesFromLinksDatas>(&FdGraph::computeRepulseNodesFromLinks);
+        registerFunctor<AttractLinksDatas>(&FdGraph::computeAttractLinks);
+        registerFunctor<FlowLayoutDatas>(&FdGraph::computeFlowLayout);
+        registerFunctor<SnapToGridDatas>(&FdGraph::computeSnapToGrid);
+        registerFunctor<CentroidGravityDatas>(&FdGraph::computeCentroidGravity);
     }
 
     // Recompute the per-link routing corners (world position of each connected slot).
