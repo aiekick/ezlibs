@@ -58,8 +58,6 @@ public:
         ez::math::fvec2 velocity{};
         ez::math::fvec2 force{};
         ez::math::fvec2 size{};
-        std::vector<float> slots_y{};       // vertical offsets of the slots inside the node, used by updateLinks
-        std::vector<bool> slots_output{};   // per-slot direction (parallel to slots_y) : true=output, false=input ; drives computeFlowLayout
         float mass{1.0f};
         uint32_t connCount{0};
         bool locked{false};   // a locked node is never moved by the solver (e.g. dragged by the user)
@@ -118,6 +116,7 @@ public:
         size_t srcSlot{0};  // index into the source node slots_y
         size_t dstSlot{0};  // index into the destination node slots_y
         uint32_t color{0};
+        bool enabled{ true };   // a disabled link is not used by the solver
         std::vector<ez::math::fvec2> corners{};  // routing points, recomputed by updateLinks
     };
 
@@ -159,54 +158,55 @@ public:
     struct Config {
         float damping{0.99f};   // velocity damping (0-1, lower = brakes more) ; used by the integration
         float maxForce{50.0f};  // max applicable force per axis (avoids explosion) ; used by the clamp
-        bool sideSlots{false};  // slots on node sides (else centered) ; used by updateLinks
     };
 
-    struct IComputeDatas {};
+    class IComputeDatas {
+    public:
+        virtual ~IComputeDatas() = default; // for have polymorphic class
+    };
     using IComputeDatasPtr = std::shared_ptr<IComputeDatas>;
     using IComputeDatasWeak = std::weak_ptr<IComputeDatas>;
     using NodeContainer = std::vector<NodeWeak>;
     using LinkContainer = std::vector<LinkWeak>;
     using IComputeDatasContainer = std::vector<IComputeDatasWeak>;
     using ComputeFunctor = std::function<void(const NodeContainer&, const LinkContainer&, const IComputeDatasWeak&)>;
+    using ComputeDatasFunctor = std::function<bool(const IComputeDatasWeak&)>;
 
     // Per-force tunable datas. Each default compute functor downcasts the erased
     // IComputeDatas back to its own block (same idiom as Node::getDatas<T>()), so
     // every parameter a force needs lives here. The host tunes a force by keeping
     // the reference returned by registerFunctor (or reads back e.g. the centroid).
-    struct RepulseNodesDatas : public IComputeDatas {
+    class RepulseNodesDatas : public IComputeDatas {
+    public:
         bool enabled{true};
         float nodeGap{40.0f};             // minimal distance between node edges
         float nodeRepulsion{5000.0f};     // node to node repulsion intensity
-        float slotGapMultiplier{1.0f};    // extra gap per slot (proportional to connection count)
     };
-    struct RepulseNodesFromLinksDatas : public IComputeDatas {
+    class RepulseNodesFromLinksDatas : public IComputeDatas {
+    public:
         bool enabled{true};
         float nodeGap{40.0f};             // minimal distance between node edges
         float nodeToLinkRepulsion{5.0f};  // node to link repulsion coef
     };
-    struct AttractLinksDatas : public IComputeDatas {
+    class AttractLinksDatas : public IComputeDatas {
+    public:
         bool enabled{true};
         float linkAttraction{0.005f};     // link attraction intensity (spring)
     };
-    struct FlowLayoutDatas : public IComputeDatas {
-        bool enabled{false};              // off by default (matches the legacy Config)
-        float nodeGap{40.0f};             // minimal distance between node edges
-        ez::math::fvec2 flowStrength{0.1f};  // horizontal flow bias intensity
-    };
-    struct SnapToGridDatas : public IComputeDatas {
+    class SnapToGridDatas : public IComputeDatas {
+    public:
         bool enabled{true};
         float snapGridSpacing{30.0f};     // grid spacing
         float snapGridStrength{0.1f};     // attraction strength toward grid lines (low = soft)
     };
-    struct CentroidGravityDatas : public IComputeDatas {
+    class CentroidGravityDatas : public IComputeDatas {
+    public:
         bool enabled{true};
         float gravity{0.002f};            // force toward the centroid (avoids spreading)
         ez::math::fvec2 anchorPoint{};    // graph anchor point
         float anchorStrength{1.0f};       // pull strength toward the anchor point
         ez::math::fvec2 centroid{};       // recomputed each step ; read back by the host to display
     };
-
 
 private:
     template <typename TTYPE>
@@ -226,6 +226,7 @@ private:
     SmartContainer<Link> m_links;
     SmartContainer<IComputeDatas> m_computeDatas;
     std::vector<ComputeFunctor> m_computeFunctors;
+    std::vector<ComputeDatasFunctor> m_computeDatasFunctors;
     Config m_config;
     ez::math::fvec2 m_centroid{};
     float m_energy{0.0f};
@@ -241,6 +242,7 @@ public:
     void clearFunctors() {
         m_computeDatas.clear();
         m_computeFunctors.clear();
+        m_computeDatasFunctors.clear();
     }
 
     template <typename T = Node, typename U = NodeDatas>
@@ -270,11 +272,12 @@ public:
     // is owned by the graph (kept parallel to the functor) and a typed reference is
     // returned so the host can tune it at runtime, or read values it computes back.
     template <typename TTYPE>
-    TTYPE& registerFunctor(const ComputeFunctor& aFunctor) {
+    TTYPE& registerFunctor(const ComputeFunctor& aFunctor, const ComputeDatasFunctor& aComputeDatasFunctor) {
         static_assert(std::is_base_of<IComputeDatas, TTYPE>::value, "TTYPE must derive of IComputeDatas");
         auto pDatas = std::make_shared<TTYPE>();
         m_computeDatas.push_back(pDatas);
         m_computeFunctors.push_back(aFunctor);
+        m_computeDatasFunctors.push_back(aComputeDatasFunctor);
         return *pDatas;
     }
 
@@ -291,7 +294,6 @@ public:
     IComputeDatasContainer& getComputeDatas() { return m_computeDatas.weaks; }
 
     float getEnergy() const { return m_energy; }
-
 
     // Scatter the unlocked nodes on a circle sized after the total node footprint.
     void initSimulation() {
@@ -330,47 +332,11 @@ public:
     // host can skip this, call clearFunctors() to drop them, or add its own after.
     void initDefaultComputeFunctors() {
         clearFunctors();
-        registerFunctor<RepulseNodesDatas>(&FdGraph::computeRepulseNodes);
-        registerFunctor<RepulseNodesFromLinksDatas>(&FdGraph::computeRepulseNodesFromLinks);
-        registerFunctor<AttractLinksDatas>(&FdGraph::computeAttractLinks);
-        registerFunctor<FlowLayoutDatas>(&FdGraph::computeFlowLayout);
-        registerFunctor<SnapToGridDatas>(&FdGraph::computeSnapToGrid);
-        registerFunctor<CentroidGravityDatas>(&FdGraph::computeCentroidGravity);
-    }
-
-    // Recompute the per-link routing corners (world position of each connected slot).
-    void updateLinks() {
-        for (auto& linkPtr : m_links.ptrs) {
-            auto fromPtr = linkPtr->getFromNode().lock();
-            auto toPtr = linkPtr->getToNode().lock();
-            if ((fromPtr == nullptr) || (toPtr == nullptr)) {
-                continue;
-            }
-            auto& linkDatas = linkPtr->getDatasRef();
-            const auto& srcDatas = fromPtr->getDatas();
-            const auto& dstDatas = toPtr->getDatas();
-            if (!srcDatas.enabled || !dstDatas.enabled) {
-                linkDatas.corners.clear();  // a hidden endpoint -> the link is not routed nor drawn
-                continue;
-            }
-            if ((linkDatas.srcSlot >= srcDatas.slots_y.size()) || (linkDatas.dstSlot >= dstDatas.slots_y.size())) {
-                continue;
-            }
-            const float srcCenterX = srcDatas.pos.x + srcDatas.size.x * 0.5f;
-            const float dstCenterX = dstDatas.pos.x + dstDatas.size.x * 0.5f;
-            ez::math::fvec2 srcSlot, dstSlot;
-            srcSlot.x = srcCenterX;
-            srcSlot.y = srcDatas.pos.y + srcDatas.slots_y[linkDatas.srcSlot];
-            dstSlot.x = dstCenterX;
-            dstSlot.y = dstDatas.pos.y + dstDatas.slots_y[linkDatas.dstSlot];
-            if (m_config.sideSlots) {
-                // source side : if the target is to the right -> exit right, else left
-                srcSlot.x = (dstCenterX >= srcCenterX) ? (srcDatas.pos.x + srcDatas.size.x) : srcDatas.pos.x;
-                // target side : if the source is to the right -> enter right, else left
-                dstSlot.x = (srcCenterX >= dstCenterX) ? (dstDatas.pos.x + dstDatas.size.x) : dstDatas.pos.x;
-            }
-            linkDatas.corners = {srcSlot, dstSlot};
-        }
+        registerFunctor<RepulseNodesDatas>(&FdGraph::computeRepulseNodes, {});
+        registerFunctor<RepulseNodesFromLinksDatas>(&FdGraph::computeRepulseNodesFromLinks, {});
+        registerFunctor<AttractLinksDatas>(&FdGraph::computeAttractLinks, {});
+        registerFunctor<SnapToGridDatas>(&FdGraph::computeSnapToGrid, {});
+        registerFunctor<CentroidGravityDatas>(&FdGraph::computeCentroidGravity, {});
     }
 
     // Run one simulation step and return the total energy of the system.
@@ -389,6 +355,19 @@ public:
         }
         m_clampForces();
         return m_integrate(aDeltaTime);
+    }
+
+    bool execComputeDatas() {
+        bool change = false;
+        assert(computeDatasFunctor.size() == m_computeDatas.weaks.size());
+        for (size_t idx = 0U; idx < m_computeDatasFunctors.size(); ++idx) {
+            const auto& datas = m_computeDatas.weaks.at(idx);
+            const auto& pFunctor = m_computeDatasFunctors.at(idx);
+            if (pFunctor != nullptr) {  //
+                change |= pFunctor(datas);
+            }
+        }
+        return change;
     }
 
     // === Built-in compute functors (static, self-contained) =============
@@ -433,19 +412,10 @@ public:
                 const float gapX = std::max(std::abs(delta.x) - halfWidth, 0.0f);
                 const float gapY = std::max(std::abs(delta.y) - halfHeight, 0.0f);
                 const float actualGap = std::sqrt(gapX * gapX + gapY * gapY);
-                // adaptive gap depending on the slot count
-                const float slotCount = static_cast<float>(std::max(datas1.slots_y.size(), datas2.slots_y.size()));
-                const float effectiveGap = datas.nodeGap * (1.0f + slotCount * datas.slotGapMultiplier);
-                const float gapDeficit = effectiveGap - actualGap;
                 const ez::math::fvec2 direction = delta / centerDist;
                 ez::math::fvec2 force;
-                if (gapDeficit > 0.0f) {
-                    // too close : strong corrective repulsion
-                    force = direction * gapDeficit * 10.0f;
-                } else {
-                    // normal inverse-square repulsion
-                    force = direction * (datas.nodeRepulsion / (centerDist * centerDist));
-                }
+                // normal inverse-square repulsion
+                force = direction * (datas.nodeRepulsion / (centerDist * centerDist));
                 datas1.force -= force;
                 datas2.force += force;
             }
@@ -476,37 +446,39 @@ public:
                 if (linkPtr == nullptr) {
                     continue;
                 }
-                // do not repulse a node from a link it belongs to
-                if ((linkPtr->getFromNode().lock().get() == nodePtr.get()) || (linkPtr->getToNode().lock().get() == nodePtr.get())) {
-                    continue;
-                }
-                const auto& corners = linkPtr->getDatas().corners;
-                if (corners.size() < 2U) {
-                    continue;
-                }
-                const ez::math::fvec2 segmentStart = corners.front();
-                const ez::math::fvec2 segmentEnd = corners.back();
-                const ez::math::fvec2 segmentVec = segmentEnd - segmentStart;
-                const float segmentLength = segmentVec.length();
-                if (segmentLength < 1.0f) {
-                    continue;
-                }
-                // project the node center on the segment, clamped to its extremities
-                const ez::math::fvec2 toNode = nodeCenter - segmentStart;
-                float ratio = ez::math::dot(toNode, segmentVec) / (segmentLength * segmentLength);
-                ratio = ez::math::clamp(ratio, 0.0f, 1.0f);
-                const ez::math::fvec2 closestPoint = segmentStart + segmentVec * ratio;
-                const ez::math::fvec2 delta = nodeCenter - closestPoint;
-                const float distance = delta.length();
-                if (distance < 1.0f) {
-                    continue;
-                }
-                const float nodeRadius = (nodeDatas.size.x + nodeDatas.size.y) * 0.25f;
-                const float desiredDistance = nodeRadius + datas.nodeGap * 0.5f;
-                const float penetration = desiredDistance - distance;
-                if (penetration > 0.0f) {
-                    const ez::math::fvec2 direction = delta / distance;
-                    nodeDatas.force += direction * penetration * datas.nodeToLinkRepulsion;
+                if (linkPtr->getDatas().enabled) {
+                    // do not repulse a node from a link it belongs to
+                    if ((linkPtr->getFromNode().lock().get() == nodePtr.get()) || (linkPtr->getToNode().lock().get() == nodePtr.get())) {
+                        continue;
+                    }
+                    const auto& corners = linkPtr->getDatas().corners;
+                    if (corners.size() < 2U) {
+                        continue;
+                    }
+                    const ez::math::fvec2 segmentStart = corners.front();
+                    const ez::math::fvec2 segmentEnd = corners.back();
+                    const ez::math::fvec2 segmentVec = segmentEnd - segmentStart;
+                    const float segmentLength = segmentVec.length();
+                    if (segmentLength < 1.0f) {
+                        continue;
+                    }
+                    // project the node center on the segment, clamped to its extremities
+                    const ez::math::fvec2 toNode = nodeCenter - segmentStart;
+                    float ratio = ez::math::dot(toNode, segmentVec) / (segmentLength * segmentLength);
+                    ratio = ez::math::clamp(ratio, 0.0f, 1.0f);
+                    const ez::math::fvec2 closestPoint = segmentStart + segmentVec * ratio;
+                    const ez::math::fvec2 delta = nodeCenter - closestPoint;
+                    const float distance = delta.length();
+                    if (distance < 1.0f) {
+                        continue;
+                    }
+                    const float nodeRadius = (nodeDatas.size.x + nodeDatas.size.y) * 0.25f;
+                    const float desiredDistance = nodeRadius + datas.nodeGap * 0.5f;
+                    const float penetration = desiredDistance - distance;
+                    if (penetration > 0.0f) {
+                        const ez::math::fvec2 direction = delta / distance;
+                        nodeDatas.force += direction * penetration * datas.nodeToLinkRepulsion;
+                    }
                 }
             }
         }
@@ -527,71 +499,26 @@ public:
             if (linkPtr == nullptr) {
                 continue;
             }
-            auto fromPtr = linkPtr->getFromNode().lock();
-            auto toPtr = linkPtr->getToNode().lock();
-            if ((fromPtr == nullptr) || (toPtr == nullptr)) {
-                continue;
-            }
-            auto& datas1 = fromPtr->getDatasRef();
-            auto& datas2 = toPtr->getDatasRef();
-            if (!datas1.enabled || !datas2.enabled) {
-                continue;
-            }
-            const ez::math::fvec2 delta = datas2.pos - datas1.pos;
-            const float distance = delta.length();
-            if (distance < 1.0f) {
-                continue;
-            }
-            const float attraction = distance * datas.linkAttraction;
-            const ez::math::fvec2 direction = delta / distance;
-            datas1.force += direction * attraction;
-            datas2.force -= direction * attraction;
-        }
-    }
-
-    // Optional left->right flow layout : bias each directed link so the 'from' node
-    // (host convention : the output/provider side) sits to the left of the 'to' node
-    // (the input/consumer side). Acts only when that ordering is not satisfied, so it
-    // stays stable and self-limiting. X axis only ; Y is left to the other forces.
-    static void computeFlowLayout(const NodeContainer& aNodes, const LinkContainer& aLinks, const IComputeDatasWeak& aDatas) {
-        (void)aNodes;
-        auto pDatas = aDatas.lock();
-        if (pDatas == nullptr) {
-            return;
-        }
-        const auto& datas = static_cast<const FlowLayoutDatas&>(*pDatas);
-        if (!datas.enabled) {
-            return;
-        }
-        for (const auto& linkWeak : aLinks) {
-            auto linkPtr = linkWeak.lock();
-            if (linkPtr == nullptr) {
-                continue;
-            }
-            auto fromPtr = linkPtr->getFromNode().lock();
-            auto toPtr = linkPtr->getToNode().lock();
-            if ((fromPtr == nullptr) || (toPtr == nullptr)) {
-                continue;
-            }
-            auto& fromDatas = fromPtr->getDatasRef();
-            auto& toDatas = toPtr->getDatasRef();
-            if (!fromDatas.enabled || !toDatas.enabled) {
-                continue;
-            }
-            // Direction comes from the SLOTS, not from the link order : the node attached by
-            // an output slot sits on the left, the one attached by an input slot on the right.
-            // Read the from-node source slot direction (default to output when unknown).
-            const size_t srcSlot = linkPtr->getDatas().srcSlot;
-            const bool fromIsOutput = (srcSlot < fromDatas.slots_output.size()) ? static_cast<bool>(fromDatas.slots_output[srcSlot]) : true;
-            NodeDatas& leftDatas = fromIsOutput ? fromDatas : toDatas;
-            NodeDatas& rightDatas = fromIsOutput ? toDatas : fromDatas;
-            const auto desiredGap = (leftDatas.size + rightDatas.size) * 0.5f + datas.nodeGap;
-            const auto currentDxy = rightDatas.pos - leftDatas.pos;
-            const auto deficit = desiredGap - currentDxy;
-            if (deficit > 0.0f) {
-                const auto push = deficit * datas.flowStrength;
-                leftDatas.force -= push;   // output side pulled left
-                rightDatas.force += push;  // input side pushed right
+            if (linkPtr->getDatas().enabled) {
+                auto fromPtr = linkPtr->getFromNode().lock();
+                auto toPtr = linkPtr->getToNode().lock();
+                if ((fromPtr == nullptr) || (toPtr == nullptr)) {
+                    continue;
+                }
+                auto& datas1 = fromPtr->getDatasRef();
+                auto& datas2 = toPtr->getDatasRef();
+                if (!datas1.enabled || !datas2.enabled) {
+                    continue;
+                }
+                const ez::math::fvec2 delta = datas2.pos - datas1.pos;
+                const float distance = delta.length();
+                if (distance < 1.0f) {
+                    continue;
+                }
+                const float attraction = distance * datas.linkAttraction;
+                const ez::math::fvec2 direction = delta / distance;
+                datas1.force += direction * attraction;
+                datas2.force -= direction * attraction;
             }
         }
     }
