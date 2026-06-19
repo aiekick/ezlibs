@@ -113,11 +113,11 @@ public:
     // Physics datas owned by a link. The host extends this struct for its own
     // per-link payload. The connected nodes themselves are held by the Link.
     struct LinkDatas {
-        size_t srcSlot{0};  // index into the source node slots_y
-        size_t dstSlot{0};  // index into the destination node slots_y
-        uint32_t color{0};
         bool enabled{ true };   // a disabled link is not used by the solver
-        std::vector<ez::math::fvec2> corners{};  // routing points, recomputed by updateLinks
+        float weight{1.0f};            // attraction scaling : a heavier link pulls its two nodes closer (weighted edge)
+        ez::math::fvec2 fromOffset{};  // source endpoint offset, relative to the source node center (0 = center ; lets the host simulate a slot)
+        ez::math::fvec2 toOffset{};    // destination endpoint offset, relative to the destination node center
+        std::vector<ez::math::fvec2> corners{};  // routing points provided by the host ; consumed by node/link repulsion (empty -> link skipped)
     };
 
     class Link {
@@ -192,6 +192,13 @@ public:
     public:
         bool enabled{true};
         float linkAttraction{0.005f};     // link attraction intensity (spring)
+    };
+    class AlignLinksDatas : public IComputeDatas {
+    public:
+        bool enabled{false};            // opt-in : a fairly strong layout constraint
+        float strength{0.05f};          // how hard links snap toward the chosen axis
+        bool alignHorizontal{true};     // pull links toward the horizontal axis
+        bool alignVertical{true};       // pull links toward the vertical axis ; both on -> each link snaps to its nearest axis
     };
     class SnapToGridDatas : public IComputeDatas {
     public:
@@ -327,9 +334,9 @@ public:
         }
     }
 
-    // Register the built-in forces, each with its own default datas block, and keep
-    // typed handles to them (returned and reachable via getDefaultFunctors()). The
-    // host can skip this, call clearFunctors() to drop them, or add its own after.
+    // Register the built-in forces, each with its own default datas block. The host can
+    // skip this, call clearFunctors() to drop them, add its own after, or reach a force's
+    // datas block back through getComputeDatas().
     void initDefaultComputeFunctors() {
         clearFunctors();
         registerFunctor<RepulseNodesDatas>(&FdGraph::computeRepulseNodes, {});
@@ -340,8 +347,8 @@ public:
     }
 
     // Run one simulation step and return the total energy of the system.
-    // Links routing (updateLinks) is expected to be refreshed by the host each
-    // frame ; the node/link repulsion self-skips links with no routing yet.
+    // Link routing (the LinkDatas corners) is expected to be refreshed by the host each
+    // frame ; the node/link repulsion self-skips links whose corners are not set yet.
     float step(float aDeltaTime) {
         if (m_nodes.ptrs.size() < 2U) { return 0.0f; }
         m_resetForces();
@@ -355,6 +362,111 @@ public:
         }
         m_clampForces();
         return m_integrate(aDeltaTime);
+    }
+
+    // Hard minimum-gap constraint, applied to POSITIONS (not forces) so it cannot be overpowered
+    // by a strong link attraction the way the force-based floor can. Call it right after step() :
+    // any pair of nodes whose rectangles are closer than aMinGap (edge to edge) gets pushed apart.
+    void separateOverlaps(float aMinGap) {
+        if (aMinGap <= 0.0f || m_nodes.ptrs.size() < 2U) {
+            return;
+        }
+        for (int32_t pass = 0; pass < 4; ++pass) {  // a few relaxation passes so chains of overlaps converge
+            for (size_t i = 0U; i < m_nodes.ptrs.size(); ++i) {
+                auto& datas1 = m_nodes.ptrs[i]->getDatasRef();
+                if (!datas1.enabled) {
+                    continue;
+                }
+                const ez::math::fvec2 center1 = datas1.pos + datas1.size * 0.5f;
+                for (size_t j = i + 1U; j < m_nodes.ptrs.size(); ++j) {
+                    auto& datas2 = m_nodes.ptrs[j]->getDatasRef();
+                    if (!datas2.enabled) {
+                        continue;
+                    }
+                    const ez::math::fvec2 center2 = datas2.pos + datas2.size * 0.5f;
+                    const ez::math::fvec2 delta = center2 - center1;
+                    const float centerDist = delta.length();
+                    if (centerDist < 0.0001f) {
+                        continue;  // coincident centers : no sensible direction to push along
+                    }
+                    const float halfWidth = (datas1.size.x + datas2.size.x) * 0.5f;
+                    const float halfHeight = (datas1.size.y + datas2.size.y) * 0.5f;
+                    const float gapX = std::max(std::abs(delta.x) - halfWidth, 0.0f);
+                    const float gapY = std::max(std::abs(delta.y) - halfHeight, 0.0f);
+                    const float actualGap = std::sqrt(gapX * gapX + gapY * gapY);
+                    const float deficit = aMinGap - actualGap;
+                    if (deficit <= 0.0f) {
+                        continue;
+                    }
+                    const ez::math::fvec2 dir = delta / centerDist;
+                    // push apart (locked nodes stay put ; the free one then takes the whole shift)
+                    if (!datas1.locked && !datas2.locked) {
+                        datas1.pos -= dir * (deficit * 0.5f);
+                        datas2.pos += dir * (deficit * 0.5f);
+                    } else if (!datas1.locked) {
+                        datas1.pos -= dir * deficit;
+                    } else if (!datas2.locked) {
+                        datas2.pos += dir * deficit;
+                    }
+                }
+            }
+        }
+    }
+
+    // Axis alignment applied to POSITIONS (like separateOverlaps), so it is neither capped by
+    // maxForce nor cancelled out the way the force version is on multiply-connected nodes. Each link
+    // pulls its two endpoints onto the same row (horizontal) or column (vertical) ; a node shared by
+    // several links settles at the average over the passes -> "as horizontal/vertical as possible".
+    // aStrength is a 0..1 relaxation factor (1 = snap onto the axis in one frame).
+    void alignLinks(float aStrength, bool aHorizontal, bool aVertical) {
+        if ((!aHorizontal && !aVertical) || aStrength <= 0.0f || m_links.ptrs.empty()) {
+            return;
+        }
+        const float relax = ez::math::clamp(aStrength, 0.0f, 1.0f);
+        for (int32_t pass = 0; pass < 4; ++pass) {
+            for (auto& linkPtr : m_links.ptrs) {
+                if (!linkPtr->getDatas().enabled) {
+                    continue;
+                }
+                auto fromPtr = linkPtr->getFromNode().lock();
+                auto toPtr = linkPtr->getToNode().lock();
+                if (fromPtr == nullptr || toPtr == nullptr) {
+                    continue;
+                }
+                auto& datas1 = fromPtr->getDatasRef();
+                auto& datas2 = toPtr->getDatasRef();
+                if (!datas1.enabled || !datas2.enabled) {
+                    continue;
+                }
+                const auto& linkDatas = linkPtr->getDatas();
+                const ez::math::fvec2 attachFrom = datas1.pos + datas1.size * 0.5f + linkDatas.fromOffset;
+                const ez::math::fvec2 attachTo = datas2.pos + datas2.size * 0.5f + linkDatas.toOffset;
+                const float dx = attachTo.x - attachFrom.x;
+                const float dy = attachTo.y - attachFrom.y;
+                const bool makeHorizontal = (aHorizontal && aVertical) ? (std::abs(dx) >= std::abs(dy)) : aHorizontal;
+                if (makeHorizontal) {
+                    const float corr = dy * 0.5f * relax;  // bring both endpoints onto the same row
+                    if (!datas1.locked && !datas2.locked) {
+                        datas1.pos.y += corr;
+                        datas2.pos.y -= corr;
+                    } else if (!datas1.locked) {
+                        datas1.pos.y += dy * relax;
+                    } else if (!datas2.locked) {
+                        datas2.pos.y -= dy * relax;
+                    }
+                } else {
+                    const float corr = dx * 0.5f * relax;  // bring both endpoints onto the same column
+                    if (!datas1.locked && !datas2.locked) {
+                        datas1.pos.x += corr;
+                        datas2.pos.x -= corr;
+                    } else if (!datas1.locked) {
+                        datas1.pos.x += dx * relax;
+                    } else if (!datas2.locked) {
+                        datas2.pos.x -= dx * relax;
+                    }
+                }
+            }
+        }
     }
 
     bool execComputeDatas() {
@@ -402,15 +514,24 @@ public:
                 if (centerDist < 1.0f) {
                     continue;
                 }
-                // edge-to-edge real distance : project on axes then keep the positive part
+                // real edge-to-edge gap between the two rectangles (rect-aware, size-independent)
                 const float halfWidth = (datas1.size.x + datas2.size.x) * 0.5f;
                 const float halfHeight = (datas1.size.y + datas2.size.y) * 0.5f;
                 const float gapX = std::max(std::abs(delta.x) - halfWidth, 0.0f);
                 const float gapY = std::max(std::abs(delta.y) - halfHeight, 0.0f);
                 const float actualGap = std::sqrt(gapX * gapX + gapY * gapY);
                 const ez::math::fvec2 direction = delta / centerDist;
-                // normal inverse-square repulsion
-                auto force = direction * (pDatas->nodeRepulsion / (centerDist * centerDist));
+                ez::math::fvec2 force{};
+                const float gapDeficit = pDatas->nodeGap - actualGap;
+                if (gapDeficit > 0.0f) {
+                    // closer than the minimum nodeGap : strong linear push to restore it. The stiffness
+                    // is FIXED (independent of nodeRepulsion), so the minimum gap always holds whatever
+                    // the spread strength or the link attraction.
+                    force = direction * (gapDeficit * 10.0f);
+                } else {
+                    // far enough : plain inverse-square repulsion -> this is what nodeRepulsion spreads.
+                    force = direction * (pDatas->nodeRepulsion / (centerDist * centerDist));
+                }
                 datas1.force -= force;
                 datas2.force += force;
             }
@@ -486,7 +607,8 @@ public:
             if (linkPtr == nullptr) {
                 continue;
             }
-            if (linkPtr->getDatas().enabled) {
+            const auto& linkDatas = linkPtr->getDatas();
+            if (linkDatas.enabled) {
                 auto fromPtr = linkPtr->getFromNode().lock();
                 auto toPtr = linkPtr->getToNode().lock();
                 if ((fromPtr == nullptr) || (toPtr == nullptr)) {
@@ -497,15 +619,68 @@ public:
                 if (!datas1.enabled || !datas2.enabled) {
                     continue;
                 }
-                const ez::math::fvec2 delta = datas2.pos - datas1.pos;
+                // spring between the two endpoints : node center + per-endpoint offset (offset 0 = center).
+                // the offset lets the host anchor a link to a "slot" without the solver knowing about slots.
+                const ez::math::fvec2 attachFrom = datas1.pos + datas1.size * 0.5f + linkDatas.fromOffset;
+                const ez::math::fvec2 attachTo = datas2.pos + datas2.size * 0.5f + linkDatas.toOffset;
+                const ez::math::fvec2 delta = attachTo - attachFrom;
                 const float distance = delta.length();
                 if (distance < 1.0f) {
                     continue;
                 }
-                const float attraction = distance * pDatas->linkAttraction;
+                const float attraction = distance * pDatas->linkAttraction * linkDatas.weight;
                 const ez::math::fvec2 direction = delta / distance;
                 datas1.force += direction * attraction;
                 datas2.force -= direction * attraction;
+            }
+        }
+    }
+
+    static void computeAlignLinks(const NodeContainer& aNodes, const LinkContainer& aLinks, const IComputeDatasWeak& aDatas) {
+        (void)aNodes;
+        const auto& pDatas = std::dynamic_pointer_cast <AlignLinksDatas>(aDatas.lock());
+        if (pDatas == nullptr || !pDatas->enabled) {
+            return;
+        }
+        const bool alignH = pDatas->alignHorizontal;
+        const bool alignV = pDatas->alignVertical;
+        if (!alignH && !alignV) {
+            return;
+        }
+        for (const auto& linkWeak : aLinks) {
+            auto linkPtr = linkWeak.lock();
+            if (linkPtr == nullptr) {
+                continue;
+            }
+            const auto& linkDatas = linkPtr->getDatas();
+            if (linkDatas.enabled) {
+                auto fromPtr = linkPtr->getFromNode().lock();
+                auto toPtr = linkPtr->getToNode().lock();
+                if ((fromPtr == nullptr) || (toPtr == nullptr)) {
+                    continue;
+                }
+                auto& datas1 = fromPtr->getDatasRef();
+                auto& datas2 = toPtr->getDatasRef();
+                if (!datas1.enabled || !datas2.enabled) {
+                    continue;
+                }
+                // same endpoints as the attraction : node center + per-endpoint offset
+                const ez::math::fvec2 attachFrom = datas1.pos + datas1.size * 0.5f + linkDatas.fromOffset;
+                const ez::math::fvec2 attachTo = datas2.pos + datas2.size * 0.5f + linkDatas.toOffset;
+                const ez::math::fvec2 delta = attachTo - attachFrom;
+                // pick the target axis : a single enabled axis forces it, both enabled -> nearest axis
+                const bool makeHorizontal = (alignH && alignV) ? (std::abs(delta.x) >= std::abs(delta.y)) : alignH;
+                if (makeHorizontal) {
+                    // close the vertical gap -> the link becomes horizontal
+                    const float pull = delta.y * pDatas->strength;
+                    datas1.force.y += pull;
+                    datas2.force.y -= pull;
+                } else {
+                    // close the horizontal gap -> the link becomes vertical
+                    const float pull = delta.x * pDatas->strength;
+                    datas1.force.x += pull;
+                    datas2.force.x -= pull;
+                }
             }
         }
     }
