@@ -359,7 +359,7 @@ public:
 
     bool execComputeDatas() {
         bool change = false;
-        assert(computeDatasFunctor.size() == m_computeDatas.weaks.size());
+        assert(m_computeDatasFunctors.size() == m_computeDatas.weaks.size());
         for (size_t idx = 0U; idx < m_computeDatasFunctors.size(); ++idx) {
             const auto& datas = m_computeDatas.weaks.at(idx);
             const auto& pFunctor = m_computeDatasFunctors.at(idx);
@@ -377,12 +377,8 @@ public:
     // force can be copied, replaced or moved to another graph without dependencies.
     static void computeRepulseNodes(const NodeContainer& aNodes, const LinkContainer& aLinks, const IComputeDatasWeak& aDatas) {
         (void)aLinks;
-        auto pDatas = aDatas.lock();
-        if (pDatas == nullptr) {
-            return;
-        }
-        const auto& datas = static_cast<const RepulseNodesDatas&>(*pDatas);
-        if (!datas.enabled) {
+        const auto& pDatas = std::dynamic_pointer_cast <RepulseNodesDatas>(aDatas.lock());
+        if (pDatas == nullptr || !pDatas->enabled) {
             return;
         }
         // lock once : the graph keeps the nodes alive for the whole step, so the raw
@@ -413,9 +409,8 @@ public:
                 const float gapY = std::max(std::abs(delta.y) - halfHeight, 0.0f);
                 const float actualGap = std::sqrt(gapX * gapX + gapY * gapY);
                 const ez::math::fvec2 direction = delta / centerDist;
-                ez::math::fvec2 force;
                 // normal inverse-square repulsion
-                force = direction * (datas.nodeRepulsion / (centerDist * centerDist));
+                auto force = direction * (pDatas->nodeRepulsion / (centerDist * centerDist));
                 datas1.force -= force;
                 datas2.force += force;
             }
@@ -423,12 +418,8 @@ public:
     }
 
     static void computeRepulseNodesFromLinks(const NodeContainer& aNodes, const LinkContainer& aLinks, const IComputeDatasWeak& aDatas) {
-        auto pDatas = aDatas.lock();
-        if (pDatas == nullptr) {
-            return;
-        }
-        const auto& datas = static_cast<const RepulseNodesFromLinksDatas&>(*pDatas);
-        if (!datas.enabled) {
+        const auto& pDatas = std::dynamic_pointer_cast <RepulseNodesFromLinksDatas>(aDatas.lock());
+        if (pDatas == nullptr || !pDatas->enabled) {
             return;
         }
         for (const auto& nodeWeak : aNodes) {
@@ -473,11 +464,11 @@ public:
                         continue;
                     }
                     const float nodeRadius = (nodeDatas.size.x + nodeDatas.size.y) * 0.25f;
-                    const float desiredDistance = nodeRadius + datas.nodeGap * 0.5f;
+                    const float desiredDistance = nodeRadius + pDatas->nodeGap * 0.5f;
                     const float penetration = desiredDistance - distance;
                     if (penetration > 0.0f) {
                         const ez::math::fvec2 direction = delta / distance;
-                        nodeDatas.force += direction * penetration * datas.nodeToLinkRepulsion;
+                        nodeDatas.force += direction * penetration * pDatas->nodeToLinkRepulsion;
                     }
                 }
             }
@@ -486,12 +477,8 @@ public:
 
     static void computeAttractLinks(const NodeContainer& aNodes, const LinkContainer& aLinks, const IComputeDatasWeak& aDatas) {
         (void)aNodes;
-        auto pDatas = aDatas.lock();
-        if (pDatas == nullptr) {
-            return;
-        }
-        const auto& datas = static_cast<const AttractLinksDatas&>(*pDatas);
-        if (!datas.enabled) {
+        const auto& pDatas = std::dynamic_pointer_cast <AttractLinksDatas>(aDatas.lock());
+        if (pDatas == nullptr || !pDatas->enabled) {
             return;
         }
         for (const auto& linkWeak : aLinks) {
@@ -515,7 +502,7 @@ public:
                 if (distance < 1.0f) {
                     continue;
                 }
-                const float attraction = distance * datas.linkAttraction;
+                const float attraction = distance * pDatas->linkAttraction;
                 const ez::math::fvec2 direction = delta / distance;
                 datas1.force += direction * attraction;
                 datas2.force -= direction * attraction;
@@ -525,15 +512,8 @@ public:
 
     static void computeSnapToGrid(const NodeContainer& aNodes, const LinkContainer& aLinks, const IComputeDatasWeak& aDatas) {
         (void)aLinks;
-        auto pDatas = aDatas.lock();
-        if (pDatas == nullptr) {
-            return;
-        }
-        const auto& datas = static_cast<const SnapToGridDatas&>(*pDatas);
-        if (!datas.enabled) {
-            return;
-        }
-        if (datas.snapGridSpacing <= 0.0f) {
+        const auto& pDatas = std::dynamic_pointer_cast <SnapToGridDatas>(aDatas.lock());
+        if (pDatas == nullptr || !pDatas->enabled || pDatas->snapGridSpacing <= 0.0f) {
             return;
         }
         for (const auto& nodeWeak : aNodes) {
@@ -547,27 +527,22 @@ public:
             }
             const ez::math::fvec2 center = nodeDatas.pos + nodeDatas.size * 0.5f;
             // nearest position on the grid
-            const float nearestX = std::round(center.x / datas.snapGridSpacing) * datas.snapGridSpacing;
-            const float nearestY = std::round(center.y / datas.snapGridSpacing) * datas.snapGridSpacing;
+            const float nearestX = std::round(center.x / pDatas->snapGridSpacing) * pDatas->snapGridSpacing;
+            const float nearestY = std::round(center.y / pDatas->snapGridSpacing) * pDatas->snapGridSpacing;
             const float dx = nearestX - center.x;
             const float dy = nearestY - center.y;
             // force proportional to distance, but cut off beyond half a cell so far nodes are not pulled
-            const float halfGrid = datas.snapGridSpacing * 0.5f;
-            const float fx = (std::abs(dx) < halfGrid) ? dx * datas.snapGridStrength : 0.0f;
-            const float fy = (std::abs(dy) < halfGrid) ? dy * datas.snapGridStrength : 0.0f;
+            const float halfGrid = pDatas->snapGridSpacing * 0.5f;
+            const float fx = (std::abs(dx) < halfGrid) ? dx * pDatas->snapGridStrength : 0.0f;
+            const float fy = (std::abs(dy) < halfGrid) ? dy * pDatas->snapGridStrength : 0.0f;
             nodeDatas.force += ez::math::fvec2(fx, fy);
         }
     }
 
     static void computeCentroidGravity(const NodeContainer& aNodes, const LinkContainer& aLinks, const IComputeDatasWeak& aDatas) {
         (void)aLinks;
-        auto pDatas = aDatas.lock();
-        if (pDatas == nullptr) {
-            return;
-        }
-        // non-const : this force stores the computed centroid back into its datas
-        auto& datas = static_cast<CentroidGravityDatas&>(*pDatas);
-        if (!datas.enabled) {
+        const auto& pDatas = std::dynamic_pointer_cast <CentroidGravityDatas>(aDatas.lock());
+        if (pDatas == nullptr || !pDatas->enabled) {
             return;
         }
         ez::math::fvec2 centroid{};
@@ -588,9 +563,9 @@ public:
             return;
         }
         centroid /= static_cast<float>(enabledCount);
-        datas.centroid = centroid;  // exposed to the host through the registered datas
+        pDatas->centroid = centroid;  // exposed to the host through the registered datas
         // anchor the whole centroid toward the configured anchor point
-        const ez::math::fvec2 toAnchor = datas.anchorPoint - centroid;
+        const ez::math::fvec2 toAnchor = pDatas->anchorPoint - centroid;
         for (const auto& nodeWeak : aNodes) {
             auto nodePtr = nodeWeak.lock();
             if (nodePtr == nullptr) {
@@ -600,9 +575,9 @@ public:
             if (nodeDatas.enabled && !nodeDatas.locked) {
                 // local gravity toward the centroid
                 const ez::math::fvec2 nodeCenter = nodeDatas.pos + nodeDatas.size * 0.5f;
-                nodeDatas.force += (centroid - nodeCenter) * datas.gravity;
+                nodeDatas.force += (centroid - nodeCenter) * pDatas->gravity;
                 // global anchor toward the anchor point
-                nodeDatas.force += toAnchor * datas.anchorStrength;
+                nodeDatas.force += toAnchor * pDatas->anchorStrength;
             }
         }
     }
