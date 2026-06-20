@@ -36,6 +36,8 @@ file(GLOB SRC_RECURSE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezQuat.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezPlane.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezAABB.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezSdf.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezOrthoRoute.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezAABBCC.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVariant.hpp)
 source_group(TREE ${EZ_LIBS_INCLUDE_DIR}/ezlibs PREFIX Libs FILES ${SRC_RECURSE})
@@ -1052,3 +1054,61 @@ AddTest("TestEzAABB_MulScalar<float>")
 AddTest("TestEzAABB_MulScalar<double>")
 AddTest("TestEzAABB_DivScalar<float>")
 AddTest("TestEzAABB_DivScalar<double>")
+
+##########################################################
+##### TESTS EzSdf ########################################
+##########################################################
+
+AddTest("TestEzSdf_BoxCenterIsNegativeHalfMinExtent<float>")
+AddTest("TestEzSdf_BoxCenterIsNegativeHalfMinExtent<double>")
+AddTest("TestEzSdf_BoxOnBorderIsZero<float>")
+AddTest("TestEzSdf_BoxOnBorderIsZero<double>")
+AddTest("TestEzSdf_BoxFaceDistance<float>")
+AddTest("TestEzSdf_BoxFaceDistance<double>")
+AddTest("TestEzSdf_BoxCornerDistance<float>")
+AddTest("TestEzSdf_BoxCornerDistance<double>")
+AddTest("TestEzSdf_BoxesReturnNearest<float>")
+AddTest("TestEzSdf_BoxesReturnNearest<double>")
+AddTest("TestEzSdf_BoxesNegativeInside<float>")
+AddTest("TestEzSdf_BoxesNegativeInside<double>")
+AddTest("TestEzSdf_BoxesEmptyIsLargePositive<float>")
+AddTest("TestEzSdf_BoxesEmptyIsLargePositive<double>")
+AddTest("TestEzSdf_GradFaceOutsidePointsAway<float>")
+AddTest("TestEzSdf_GradFaceOutsidePointsAway<double>")
+AddTest("TestEzSdf_GradLeftOutsidePointsLeft<float>")
+AddTest("TestEzSdf_GradLeftOutsidePointsLeft<double>")
+AddTest("TestEzSdf_GradCornerOutsideIsDiagonal<float>")
+AddTest("TestEzSdf_GradCornerOutsideIsDiagonal<double>")
+AddTest("TestEzSdf_GradInsidePushesToNearestFace<float>")
+AddTest("TestEzSdf_GradInsidePushesToNearestFace<double>")
+AddTest("TestEzSdf_GradAtCenterIsZero<float>")
+AddTest("TestEzSdf_GradAtCenterIsZero<double>")
+AddTest("TestEzSdf_GradBoxesUsesNearest<float>")
+AddTest("TestEzSdf_GradBoxesUsesNearest<double>")
+AddTest("TestEzSdf_GradBoxesEmptyIsZero<float>")
+AddTest("TestEzSdf_GradBoxesEmptyIsZero<double>")
+AddTest("TestEzSdf_SegmentCrossesBoxIsTrue<float>")
+AddTest("TestEzSdf_SegmentCrossesBoxIsTrue<double>")
+AddTest("TestEzSdf_SegmentBesideBoxIsFalse<float>")
+AddTest("TestEzSdf_SegmentBesideBoxIsFalse<double>")
+AddTest("TestEzSdf_SegmentInsideBoxIsTrue<float>")
+AddTest("TestEzSdf_SegmentInsideBoxIsTrue<double>")
+AddTest("TestEzSdf_SegmentEndpointInsideIsTrue<float>")
+AddTest("TestEzSdf_SegmentEndpointInsideIsTrue<double>")
+AddTest("TestEzSdf_SegmentBoxesAnyHitIsTrue<float>")
+AddTest("TestEzSdf_SegmentBoxesAnyHitIsTrue<double>")
+AddTest("TestEzSdf_SegmentBoxesNoneHitIsFalse<float>")
+AddTest("TestEzSdf_SegmentBoxesNoneHitIsFalse<double>")
+
+##########################################################
+##### TESTS EzOrthoRoute #################################
+##########################################################
+
+AddTest("TestEzOrthoRoute_NoBoxesIsDirect<float>")
+AddTest("TestEzOrthoRoute_NoBoxesIsDirect<double>")
+AddTest("TestEzOrthoRoute_AroundBoxBendsAndStaysClear<float>")
+AddTest("TestEzOrthoRoute_AroundBoxBendsAndStaysClear<double>")
+AddTest("TestEzOrthoRoute_IsOrthogonal<float>")
+AddTest("TestEzOrthoRoute_IsOrthogonal<double>")
+AddTest("TestEzOrthoRoute_StartEqualsEndIsSinglePoint<float>")
+AddTest("TestEzOrthoRoute_StartEqualsEndIsSinglePoint<double>")
