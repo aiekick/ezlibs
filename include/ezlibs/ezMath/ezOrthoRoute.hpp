@@ -110,6 +110,19 @@ inline void routePushSimplified(std::vector<vec2<T>>& aoPath, const vec2<T>& aPo
     aoPath.push_back(aPoint);
 }
 
+// Orthogonal L between two points (horizontal leg first). Used as the routing fallback so a failed
+// route is still axis-aligned (vertical/horizontal only), never a diagonal.
+template <typename T>
+inline std::vector<vec2<T>> routeElbow(const vec2<T>& aStart, const vec2<T>& aEnd) {
+    std::vector<vec2<T>> elbow;
+    elbow.push_back(aStart);
+    if (routeAbsScalar(aEnd.x - aStart.x) > static_cast<T>(1e-6) && routeAbsScalar(aEnd.y - aStart.y) > static_cast<T>(1e-6)) {
+        elbow.push_back(vec2<T>(aEnd.x, aStart.y));
+    }
+    elbow.push_back(aEnd);
+    return elbow;
+}
+
 }  // namespace detail
 
 // Route an orthogonal polyline from aStart to aEnd through the channels between the boxes.
@@ -149,9 +162,7 @@ inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const
     const int32_t width = static_cast<int32_t>(xs.size());
     const int32_t height = static_cast<int32_t>(ys.size());
     if (width < 1 || height < 1 || width > aConfig.maxLines || height > aConfig.maxLines) {
-        result.push_back(aStart);
-        result.push_back(aEnd);
-        return result;
+        return detail::routeElbow(aStart, aEnd);
     }
 
     // boxes grown by `safe`, used to reject a lattice segment that would enter a box's clearance band.
@@ -266,9 +277,7 @@ inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const
         }
     }
     if (goalState < 0) {
-        result.push_back(aStart);
-        result.push_back(aEnd);
-        return result;
+        return detail::routeElbow(aStart, aEnd);
     }
 
     // 5) reconstruct (goal -> start), reverse, stitch the exact endpoints, simplify.
@@ -284,11 +293,162 @@ inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const
     }
     detail::routePushSimplified(result, aEnd, eps);
     if (result.size() < 2U) {
-        result.clear();
-        result.push_back(aStart);
-        result.push_back(aEnd);
+        return detail::routeElbow(aStart, aEnd);
     }
     return result;
+}
+
+namespace detail {
+
+// one route segment lying on a lattice line, tagged for lane ordering.
+template <typename T>
+struct RouteLineUse {
+    T line{static_cast<T>(0)};
+    T orderKey{static_cast<T>(0)};
+    size_t routeIndex{0};
+    bool operator<(const RouteLineUse<T>& aOther) const {
+        if (line < aOther.line) { return true; }
+        if (aOther.line < line) { return false; }
+        if (orderKey < aOther.orderKey) { return true; }
+        if (aOther.orderKey < orderKey) { return false; }
+        return routeIndex < aOther.routeIndex;
+    }
+};
+
+// offset stored for a route on a given line, looked up by the line coordinate.
+template <typename T>
+inline T routeLookupOffset(const std::vector<std::pair<T, T>>& aOffsets, T aLine, T aEps) {
+    for (size_t offsetIndex = 0U; offsetIndex < aOffsets.size(); ++offsetIndex) {
+        if (routeAbsScalar(aOffsets[offsetIndex].first - aLine) < aEps) {
+            return aOffsets[offsetIndex].second;
+        }
+    }
+    return static_cast<T>(0);
+}
+
+// group the uses by coincident line, order each group by orderKey, emit a centered perpendicular
+// offset per (route, line). Lines used by a single route are left at offset 0 (nothing to separate).
+template <typename T>
+inline void routeAssignLanes(std::vector<RouteLineUse<T>>& aoUses, T aLaneGap, T aEps, std::vector<std::vector<std::pair<T, T>>>& aoPerRouteOffsets) {
+    std::sort(aoUses.begin(), aoUses.end());
+    size_t groupStart = 0U;
+    while (groupStart < aoUses.size()) {
+        size_t groupEnd = groupStart;
+        while (groupEnd < aoUses.size() && (aoUses[groupEnd].line - aoUses[groupStart].line) < aEps) {
+            ++groupEnd;
+        }
+        std::vector<size_t> routesInOrder;
+        for (size_t useIndex = groupStart; useIndex < groupEnd; ++useIndex) {
+            bool already = false;
+            for (size_t orderIndex = 0U; orderIndex < routesInOrder.size(); ++orderIndex) {
+                if (routesInOrder[orderIndex] == aoUses[useIndex].routeIndex) {
+                    already = true;
+                    break;
+                }
+            }
+            if (!already) {
+                routesInOrder.push_back(aoUses[useIndex].routeIndex);
+            }
+        }
+        const size_t laneCount = routesInOrder.size();
+        if (laneCount > 1U) {
+            for (size_t lane = 0U; lane < laneCount; ++lane) {
+                const T offset = (static_cast<T>(lane) - static_cast<T>(laneCount - 1U) / static_cast<T>(2)) * aLaneGap;
+                aoPerRouteOffsets[routesInOrder[lane]].push_back(std::make_pair(aoUses[groupStart].line, offset));
+            }
+        }
+        groupStart = groupEnd;
+    }
+}
+
+}  // namespace detail
+
+// Separate links that share a channel into parallel lanes. Every group of route segments lying on
+// the same lattice line (same x for a vertical run, same y for a horizontal run) is spread by
+// aLaneGap, centered and ordered by source-slot Y. The per-line offset keeps corners connected and
+// segments orthogonal ; the first and last point of each route (the slots) are left untouched.
+template <typename T>
+inline void bundleRoutes(std::vector<std::vector<vec2<T>>>& aoRoutes, T aLaneGap) {
+    if (aLaneGap <= static_cast<T>(0)) {
+        return;
+    }
+    const T eps = aLaneGap * static_cast<T>(0.25);
+    // 1) simplify each route so its segments strictly alternate horizontal/vertical (merge collinear).
+    for (size_t routeIndex = 0U; routeIndex < aoRoutes.size(); ++routeIndex) {
+        std::vector<vec2<T>> simplified;
+        for (size_t pointIndex = 0U; pointIndex < aoRoutes[routeIndex].size(); ++pointIndex) {
+            detail::routePushSimplified(simplified, aoRoutes[routeIndex][pointIndex], eps);
+        }
+        aoRoutes[routeIndex].swap(simplified);
+    }
+    // 2) collect the interior trunk segments (skip the first and last segment : the slot legs, kept fixed).
+    std::vector<detail::RouteLineUse<T>> verticalUses;
+    std::vector<detail::RouteLineUse<T>> horizontalUses;
+    for (size_t routeIndex = 0U; routeIndex < aoRoutes.size(); ++routeIndex) {
+        const std::vector<vec2<T>>& route = aoRoutes[routeIndex];
+        if (route.size() < 4U) {
+            continue;
+        }
+        const T orderKey = route[0].y;  // stable lane order : the source-slot Y
+        const size_t segCount = route.size() - 1U;
+        for (size_t seg = 1U; seg + 1U < segCount; ++seg) {
+            const T dx = detail::routeAbsScalar(route[seg + 1U].x - route[seg].x);
+            const T dy = detail::routeAbsScalar(route[seg + 1U].y - route[seg].y);
+            detail::RouteLineUse<T> use;
+            use.orderKey = orderKey;
+            use.routeIndex = routeIndex;
+            if (dy < dx) {  // horizontal segment
+                use.line = route[seg].y;
+                horizontalUses.push_back(use);
+            } else {  // vertical segment
+                use.line = route[seg].x;
+                verticalUses.push_back(use);
+            }
+        }
+    }
+    std::vector<std::vector<std::pair<T, T>>> vertOffset(aoRoutes.size());
+    std::vector<std::vector<std::pair<T, T>>> horizOffset(aoRoutes.size());
+    detail::routeAssignLanes(verticalUses, aLaneGap, eps, vertOffset);
+    detail::routeAssignLanes(horizontalUses, aLaneGap, eps, horizOffset);
+    // 3) rebuild each route from its (offset) segment lines : every interior vertex is the intersection
+    //    of its two perpendicular segments -> the result is ALWAYS orthogonal, no diagonal possible.
+    for (size_t routeIndex = 0U; routeIndex < aoRoutes.size(); ++routeIndex) {
+        std::vector<vec2<T>>& route = aoRoutes[routeIndex];
+        if (route.size() < 4U) {
+            continue;
+        }
+        const size_t pointCount = route.size();
+        const size_t segCount = pointCount - 1U;
+        std::vector<T> segLine(segCount);
+        std::vector<char> segHorizontal(segCount);
+        for (size_t seg = 0U; seg < segCount; ++seg) {
+            const T dx = detail::routeAbsScalar(route[seg + 1U].x - route[seg].x);
+            const T dy = detail::routeAbsScalar(route[seg + 1U].y - route[seg].y);
+            const bool horizontal = (dy < dx);
+            segHorizontal[seg] = horizontal ? static_cast<char>(1) : static_cast<char>(0);
+            T line = horizontal ? route[seg].y : route[seg].x;
+            if (seg >= 1U && seg + 1U < segCount) {  // interior trunk segment : apply its lane offset
+                line += horizontal ? detail::routeLookupOffset(horizOffset[routeIndex], route[seg].y, eps)
+                                   : detail::routeLookupOffset(vertOffset[routeIndex], route[seg].x, eps);
+            }
+            segLine[seg] = line;
+        }
+        std::vector<vec2<T>> rebuilt(pointCount);
+        rebuilt[0] = route[0];
+        rebuilt[pointCount - 1U] = route[pointCount - 1U];
+        for (size_t pointIndex = 1U; pointIndex + 1U < pointCount; ++pointIndex) {
+            const size_t segPrev = pointIndex - 1U;
+            const size_t segNext = pointIndex;
+            if (segHorizontal[segPrev] == segHorizontal[segNext]) {
+                rebuilt[pointIndex] = route[pointIndex];  // non-alternating safety : keep the original vertex
+            } else if (segHorizontal[segPrev] != 0) {     // prev horizontal, next vertical
+                rebuilt[pointIndex] = vec2<T>(segLine[segNext], segLine[segPrev]);
+            } else {                                       // prev vertical, next horizontal
+                rebuilt[pointIndex] = vec2<T>(segLine[segPrev], segLine[segNext]);
+            }
+        }
+        route.swap(rebuilt);
+    }
 }
 
 }  // namespace math
