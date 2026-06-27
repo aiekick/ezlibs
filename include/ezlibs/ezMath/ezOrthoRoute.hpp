@@ -125,31 +125,47 @@ inline std::vector<vec2<T>> routeElbow(const vec2<T>& aStart, const vec2<T>& aEn
 
 }  // namespace detail
 
-// Route an orthogonal polyline from aStart to aEnd through the channels between the boxes.
-// The result starts at aStart, ends at aEnd, runs along lines offset by config.clearance from the
-// box edges, and stays clear of every box. Falls back to the straight [aStart, aEnd] when no path
-// exists or the lattice would be too large.
+// Precomputed routing field : the lattice (xs/ys), the per-node validity, and the channel edges
+// (right/down). It depends ONLY on the boxes + the set of endpoints fed to buildOrthoRouteField,
+// NOT on which specific (start,end) pair is routed. Build it ONCE for a whole batch of routes that
+// share the same obstacles, then call orthoRouteOnField() per route : the expensive part (the
+// sdfToBoxes / segmentHitsBoxes sweep over every lattice cell) is paid a single time instead of
+// once per route.
 template <typename T>
-inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const vec2<T>& aStart, const vec2<T>& aEnd, const OrthoRouteConfig<T>& aConfig) {
-    std::vector<vec2<T>> result;
-    if (detail::routeAbsScalar(aStart.x - aEnd.x) < static_cast<T>(1e-6) && detail::routeAbsScalar(aStart.y - aEnd.y) < static_cast<T>(1e-6)) {
-        result.push_back(aStart);
-        return result;
-    }
+struct OrthoRouteField {
+    std::vector<T> xs;            // sorted unique lattice lines (x)
+    std::vector<T> ys;            // sorted unique lattice lines (y)
+    std::vector<char> valid;      // width*height : 1 = lattice point clear of every box (>= safe)
+    std::vector<char> edgeRight;  // width*height : 1 = channel open to the +x neighbour
+    std::vector<char> edgeDown;   // width*height : 1 = channel open to the +y neighbour
+    int32_t width{0};
+    int32_t height{0};
+    T eps{static_cast<T>(0)};
+    bool usable{false};           // false = empty / lattice too large : route on it falls back to a straight elbow
+};
+
+// Build the routing field for a set of boxes and ALL the endpoints that will be routed on it. Each
+// endpoint contributes its x and y to the lattice and is force-marked valid (slots are always
+// usable), so any (start,end) pair taken from aEndpoints routes exactly as the per-route orthoRoute
+// would. This is the O(width*height*boxes) pass — call it once per batch.
+template <typename T>
+inline OrthoRouteField<T> buildOrthoRouteField(const std::vector<AABB<T>>& aBoxes, const std::vector<vec2<T>>& aEndpoints, const OrthoRouteConfig<T>& aConfig) {
+    OrthoRouteField<T> field;
     T clearance = aConfig.clearance;
     if (clearance < static_cast<T>(0)) {
         clearance = static_cast<T>(0);
     }
     const T eps = (clearance > static_cast<T>(0)) ? clearance * static_cast<T>(0.05) : static_cast<T>(0.5);
     const T safe = clearance - eps;  // effective min distance (lets a channel sitting exactly at clearance pass)
+    field.eps = eps;
 
-    // 1) candidate lattice lines : the two endpoints + every box edge offset by clearance.
+    // 1) candidate lattice lines : every endpoint coord + every box edge offset by clearance.
     std::vector<T> xs;
     std::vector<T> ys;
-    xs.push_back(aStart.x);
-    xs.push_back(aEnd.x);
-    ys.push_back(aStart.y);
-    ys.push_back(aEnd.y);
+    for (size_t pointIndex = 0U; pointIndex < aEndpoints.size(); ++pointIndex) {
+        xs.push_back(aEndpoints[pointIndex].x);
+        ys.push_back(aEndpoints[pointIndex].y);
+    }
     for (size_t boxIndex = 0U; boxIndex < aBoxes.size(); ++boxIndex) {
         const AABB<T>& box = aBoxes[boxIndex];
         xs.push_back(box.lowerBound.x - clearance);
@@ -162,8 +178,12 @@ inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const
     const int32_t width = static_cast<int32_t>(xs.size());
     const int32_t height = static_cast<int32_t>(ys.size());
     if (width < 1 || height < 1 || width > aConfig.maxLines || height > aConfig.maxLines) {
-        return detail::routeElbow(aStart, aEnd);
+        return field;  // usable stays false : callers fall back to a straight elbow
     }
+    field.width = width;
+    field.height = height;
+    field.xs.swap(xs);
+    field.ys.swap(ys);
 
     // boxes grown by `safe`, used to reject a lattice segment that would enter a box's clearance band.
     std::vector<AABB<T>> grown;
@@ -175,47 +195,74 @@ inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const
 
     // 2) node validity : a lattice point is usable if it sits at least `safe` from every box.
     const int32_t cellCount = width * height;
-    std::vector<char> valid(static_cast<size_t>(cellCount), 0);
+    field.valid.assign(static_cast<size_t>(cellCount), 0);
     for (int32_t iy = 0; iy < height; ++iy) {
         for (int32_t ix = 0; ix < width; ++ix) {
-            if (sdfToBoxes(vec2<T>(xs[ix], ys[iy]), aBoxes) >= safe) {
-                valid[static_cast<size_t>(iy * width + ix)] = 1;
+            if (sdfToBoxes(vec2<T>(field.xs[ix], field.ys[iy]), aBoxes) >= safe) {
+                field.valid[static_cast<size_t>(iy * width + ix)] = 1;
             }
         }
     }
-    const int32_t startIx = detail::routeNearestLine(xs, aStart.x);
-    const int32_t startIy = detail::routeNearestLine(ys, aStart.y);
-    const int32_t endIx = detail::routeNearestLine(xs, aEnd.x);
-    const int32_t endIy = detail::routeNearestLine(ys, aEnd.y);
-    valid[static_cast<size_t>(startIy * width + startIx)] = 1;  // endpoints are slots : always usable
-    valid[static_cast<size_t>(endIy * width + endIx)] = 1;
+    // endpoints are slots : always usable, even if they sit inside a box's clearance band.
+    for (size_t pointIndex = 0U; pointIndex < aEndpoints.size(); ++pointIndex) {
+        const int32_t ex = detail::routeNearestLine(field.xs, aEndpoints[pointIndex].x);
+        const int32_t ey = detail::routeNearestLine(field.ys, aEndpoints[pointIndex].y);
+        field.valid[static_cast<size_t>(ey * width + ex)] = 1;
+    }
 
     // 3) precompute the channel edges (right / down) between adjacent valid lattice points.
-    std::vector<char> edgeRight(static_cast<size_t>(cellCount), 0);
-    std::vector<char> edgeDown(static_cast<size_t>(cellCount), 0);
+    field.edgeRight.assign(static_cast<size_t>(cellCount), 0);
+    field.edgeDown.assign(static_cast<size_t>(cellCount), 0);
     for (int32_t iy = 0; iy < height; ++iy) {
         for (int32_t ix = 0; ix < width; ++ix) {
             const int32_t node = iy * width + ix;
-            if (valid[static_cast<size_t>(node)] == 0) {
+            if (field.valid[static_cast<size_t>(node)] == 0) {
                 continue;
             }
-            if (ix + 1 < width && valid[static_cast<size_t>(node + 1)] != 0) {
-                if (!segmentHitsBoxes(vec2<T>(xs[ix], ys[iy]), vec2<T>(xs[ix + 1], ys[iy]), grown)) {
-                    edgeRight[static_cast<size_t>(node)] = 1;
+            if (ix + 1 < width && field.valid[static_cast<size_t>(node + 1)] != 0) {
+                if (!segmentHitsBoxes(vec2<T>(field.xs[ix], field.ys[iy]), vec2<T>(field.xs[ix + 1], field.ys[iy]), grown)) {
+                    field.edgeRight[static_cast<size_t>(node)] = 1;
                 }
             }
-            if (iy + 1 < height && valid[static_cast<size_t>(node + width)] != 0) {
-                if (!segmentHitsBoxes(vec2<T>(xs[ix], ys[iy]), vec2<T>(xs[ix], ys[iy + 1]), grown)) {
-                    edgeDown[static_cast<size_t>(node)] = 1;
+            if (iy + 1 < height && field.valid[static_cast<size_t>(node + width)] != 0) {
+                if (!segmentHitsBoxes(vec2<T>(field.xs[ix], field.ys[iy]), vec2<T>(field.xs[ix], field.ys[iy + 1]), grown)) {
+                    field.edgeDown[static_cast<size_t>(node)] = 1;
                 }
             }
         }
     }
+    field.usable = true;
+    return field;
+}
 
-    // 4) Dijkstra. State = node * 3 + arrivalAxis (0 horizontal, 1 vertical, 2 none) so a change of
-    //    axis can be charged config.turnPenalty.
+// Route an orthogonal polyline from aStart to aEnd on a PREBUILT field (cf. buildOrthoRouteField).
+// Only the Dijkstra search runs here (no sdf / segment sweep), so routing N pairs that share the
+// same obstacles costs one field build + N cheap searches. aStart / aEnd should be among the
+// endpoints the field was built with (else they snap to the nearest lattice node). Falls back to a
+// straight elbow when the field is unusable or no path exists.
+template <typename T>
+inline std::vector<vec2<T>> orthoRouteOnField(const OrthoRouteField<T>& aField, const vec2<T>& aStart, const vec2<T>& aEnd, const OrthoRouteConfig<T>& aConfig) {
+    std::vector<vec2<T>> result;
+    if (detail::routeAbsScalar(aStart.x - aEnd.x) < static_cast<T>(1e-6) && detail::routeAbsScalar(aStart.y - aEnd.y) < static_cast<T>(1e-6)) {
+        result.push_back(aStart);
+        return result;
+    }
+    if (!aField.usable) {
+        return detail::routeElbow(aStart, aEnd);
+    }
+    const int32_t width = aField.width;
+    const int32_t height = aField.height;
+    const T eps = aField.eps;
+    const int32_t startIx = detail::routeNearestLine(aField.xs, aStart.x);
+    const int32_t startIy = detail::routeNearestLine(aField.ys, aStart.y);
+    const int32_t endIx = detail::routeNearestLine(aField.xs, aEnd.x);
+    const int32_t endIy = detail::routeNearestLine(aField.ys, aEnd.y);
+
+    // Dijkstra. State = node * 3 + arrivalAxis (0 horizontal, 1 vertical, 2 none) so a change of
+    // axis can be charged config.turnPenalty.
     const int32_t kNone = 2;
     const T kInf = std::numeric_limits<T>::max() / static_cast<T>(4);
+    const int32_t cellCount = width * height;
     std::vector<T> dist(static_cast<size_t>(cellCount) * 3U, kInf);
     std::vector<int32_t> cameFrom(static_cast<size_t>(cellCount) * 3U, -1);
     std::vector<char> closed(static_cast<size_t>(cellCount) * 3U, 0);
@@ -247,16 +294,16 @@ inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const
         for (int32_t dir = 0; dir < 4; ++dir) {
             int32_t nNode = -1;
             int32_t axis = 0;
-            if (dir == 0 && ix + 1 < width && edgeRight[static_cast<size_t>(node)] != 0) {
+            if (dir == 0 && ix + 1 < width && aField.edgeRight[static_cast<size_t>(node)] != 0) {
                 nNode = node + 1;
                 axis = 0;
-            } else if (dir == 1 && ix - 1 >= 0 && edgeRight[static_cast<size_t>(node - 1)] != 0) {
+            } else if (dir == 1 && ix - 1 >= 0 && aField.edgeRight[static_cast<size_t>(node - 1)] != 0) {
                 nNode = node - 1;
                 axis = 0;
-            } else if (dir == 2 && iy + 1 < height && edgeDown[static_cast<size_t>(node)] != 0) {
+            } else if (dir == 2 && iy + 1 < height && aField.edgeDown[static_cast<size_t>(node)] != 0) {
                 nNode = node + width;
                 axis = 1;
-            } else if (dir == 3 && iy - 1 >= 0 && edgeDown[static_cast<size_t>(node - width)] != 0) {
+            } else if (dir == 3 && iy - 1 >= 0 && aField.edgeDown[static_cast<size_t>(node - width)] != 0) {
                 nNode = node - width;
                 axis = 1;
             }
@@ -265,7 +312,7 @@ inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const
             }
             const int32_t nix = nNode % width;
             const int32_t niy = nNode / width;
-            const T moveCost = detail::routeAbsScalar(xs[nix] - xs[ix]) + detail::routeAbsScalar(ys[niy] - ys[iy]);
+            const T moveCost = detail::routeAbsScalar(aField.xs[nix] - aField.xs[ix]) + detail::routeAbsScalar(aField.ys[niy] - aField.ys[iy]);
             const T turnCost = (arrivalAxis != kNone && axis != arrivalAxis) ? aConfig.turnPenalty : static_cast<T>(0);
             const int32_t nState = nNode * 3 + axis;
             const T tentative = dist[static_cast<size_t>(state)] + moveCost + turnCost;
@@ -280,11 +327,11 @@ inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const
         return detail::routeElbow(aStart, aEnd);
     }
 
-    // 5) reconstruct (goal -> start), reverse, stitch the exact endpoints, simplify.
+    // reconstruct (goal -> start), reverse, stitch the exact endpoints, simplify.
     std::vector<vec2<T>> lattice;
     for (int32_t state = goalState; state >= 0; state = cameFrom[static_cast<size_t>(state)]) {
         const int32_t node = state / 3;
-        lattice.push_back(vec2<T>(xs[node % width], ys[node / width]));
+        lattice.push_back(vec2<T>(aField.xs[node % width], aField.ys[node / width]));
     }
     std::reverse(lattice.begin(), lattice.end());
     detail::routePushSimplified(result, aStart, eps);
@@ -296,6 +343,25 @@ inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const
         return detail::routeElbow(aStart, aEnd);
     }
     return result;
+}
+
+// Route an orthogonal polyline from aStart to aEnd through the channels between the boxes.
+// The result starts at aStart, ends at aEnd, runs along lines offset by config.clearance from the
+// box edges, and stays clear of every box. Falls back to the straight [aStart, aEnd] when no path
+// exists or the lattice would be too large. Convenience over buildOrthoRouteField +
+// orthoRouteOnField for a SINGLE route ; batch many routes sharing obstacles with those two.
+template <typename T>
+inline std::vector<vec2<T>> orthoRoute(const std::vector<AABB<T>>& aBoxes, const vec2<T>& aStart, const vec2<T>& aEnd, const OrthoRouteConfig<T>& aConfig) {
+    if (detail::routeAbsScalar(aStart.x - aEnd.x) < static_cast<T>(1e-6) && detail::routeAbsScalar(aStart.y - aEnd.y) < static_cast<T>(1e-6)) {
+        std::vector<vec2<T>> single;
+        single.push_back(aStart);
+        return single;
+    }
+    std::vector<vec2<T>> endpoints;
+    endpoints.push_back(aStart);
+    endpoints.push_back(aEnd);
+    const OrthoRouteField<T> field = buildOrthoRouteField(aBoxes, endpoints, aConfig);
+    return orthoRouteOnField(field, aStart, aEnd, aConfig);
 }
 
 namespace detail {

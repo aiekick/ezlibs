@@ -131,6 +131,69 @@ bool TestEzOrthoRoute_BundleLeavesDisjointRoutes() {
     return true;
 }
 
+// A field built with {start,end} + orthoRouteOnField reproduces the single-call orthoRoute :
+// same endpoints, orthogonal, clear of the box.
+template <typename T>
+bool TestEzOrthoRoute_FieldMatchesSingleCall() {
+    std::vector<ez::math::AABB<T>> boxes;
+    boxes.push_back(ez::math::AABB<T>(ez::math::vec2<T>(40, -24), ez::math::vec2<T>(56, 24)));
+    const ez::math::OrthoRouteConfig<T> cfg;
+    const ez::math::vec2<T> start(0, 0);
+    const ez::math::vec2<T> end(96, 0);
+    std::vector<ez::math::vec2<T>> endpoints;
+    endpoints.push_back(start);
+    endpoints.push_back(end);
+    const ez::math::OrthoRouteField<T> field = ez::math::buildOrthoRouteField(boxes, endpoints, cfg);
+    CTEST_ASSERT(field.usable);
+    const std::vector<ez::math::vec2<T>> viaField = ez::math::orthoRouteOnField(field, start, end, cfg);
+    const std::vector<ez::math::vec2<T>> viaSingle = ez::math::orthoRoute(boxes, start, end, cfg);
+    CTEST_ASSERT(viaField.size() == viaSingle.size());
+    for (size_t pointIndex = 0U; pointIndex < viaField.size(); ++pointIndex) {
+        CTEST_ASSERT(ez::math::isEqual(viaField[pointIndex].x, viaSingle[pointIndex].x, static_cast<T>(1e-3)));
+        CTEST_ASSERT(ez::math::isEqual(viaField[pointIndex].y, viaSingle[pointIndex].y, static_cast<T>(1e-3)));
+    }
+    return true;
+}
+
+// One field built for two routes (4 endpoints) routes both : each reaches its exact endpoints,
+// stays clear of the box, and is orthogonal — the whole point of the precompute-once batch path.
+template <typename T>
+bool TestEzOrthoRoute_FieldReusedForTwoRoutes() {
+    std::vector<ez::math::AABB<T>> boxes;
+    boxes.push_back(ez::math::AABB<T>(ez::math::vec2<T>(40, -24), ez::math::vec2<T>(56, 24)));
+    const ez::math::OrthoRouteConfig<T> cfg;
+    const ez::math::vec2<T> startA(0, 0);
+    const ez::math::vec2<T> endA(96, 0);
+    const ez::math::vec2<T> startB(0, 12);
+    const ez::math::vec2<T> endB(96, -12);
+    std::vector<ez::math::vec2<T>> endpoints;
+    endpoints.push_back(startA);
+    endpoints.push_back(endA);
+    endpoints.push_back(startB);
+    endpoints.push_back(endB);
+    const ez::math::OrthoRouteField<T> field = ez::math::buildOrthoRouteField(boxes, endpoints, cfg);
+    CTEST_ASSERT(field.usable);
+    const ez::math::vec2<T> startsArr[2] = {startA, startB};
+    const ez::math::vec2<T> endsArr[2] = {endA, endB};
+    for (int32_t routeIndex = 0; routeIndex < 2; ++routeIndex) {
+        const std::vector<ez::math::vec2<T>> path = ez::math::orthoRouteOnField(field, startsArr[routeIndex], endsArr[routeIndex], cfg);
+        CTEST_ASSERT(path.size() > 2U);  // had to detour around the box
+        CTEST_ASSERT(ez::math::isEqual(path.front().x, startsArr[routeIndex].x, static_cast<T>(1e-3)));
+        CTEST_ASSERT(ez::math::isEqual(path.front().y, startsArr[routeIndex].y, static_cast<T>(1e-3)));
+        CTEST_ASSERT(ez::math::isEqual(path.back().x, endsArr[routeIndex].x, static_cast<T>(1e-3)));
+        CTEST_ASSERT(ez::math::isEqual(path.back().y, endsArr[routeIndex].y, static_cast<T>(1e-3)));
+        for (size_t pointIndex = 1U; pointIndex + 1U < path.size(); ++pointIndex) {
+            CTEST_ASSERT(ez::math::sdfToBoxes(path[pointIndex], boxes) >= cfg.clearance - static_cast<T>(1e-3));
+        }
+        for (size_t pointIndex = 1U; pointIndex < path.size(); ++pointIndex) {
+            const bool sameX = ez::math::isEqual(path[pointIndex].x, path[pointIndex - 1U].x, static_cast<T>(1e-2));
+            const bool sameY = ez::math::isEqual(path[pointIndex].y, path[pointIndex - 1U].y, static_cast<T>(1e-2));
+            CTEST_ASSERT(sameX || sameY);
+        }
+    }
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 
 bool TestEzOrthoRoute(const std::string& vTest) {
@@ -146,6 +209,10 @@ bool TestEzOrthoRoute(const std::string& vTest) {
     else IfTestExist(TestEzOrthoRoute_BundleSeparatesSharedChannel<double>);
     else IfTestExist(TestEzOrthoRoute_BundleLeavesDisjointRoutes<float>);
     else IfTestExist(TestEzOrthoRoute_BundleLeavesDisjointRoutes<double>);
+    else IfTestExist(TestEzOrthoRoute_FieldMatchesSingleCall<float>);
+    else IfTestExist(TestEzOrthoRoute_FieldMatchesSingleCall<double>);
+    else IfTestExist(TestEzOrthoRoute_FieldReusedForTwoRoutes<float>);
+    else IfTestExist(TestEzOrthoRoute_FieldReusedForTwoRoutes<double>);
     return false;
 }
 

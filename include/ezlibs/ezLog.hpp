@@ -464,7 +464,9 @@ private:
                 }
             }
 
-            if (!m_debugLogFile.bad()) { m_debugLogFile << msg << "\n"; }
+            if (!m_debugLogFile.bad()) {  //
+                m_debugLogFile << msg << "\n";
+            }
         }
     }
     void m_LogString(const MessageType* vType, const std::string* vFunction, const int* vLine, const char* fmt, va_list vArgs) {
