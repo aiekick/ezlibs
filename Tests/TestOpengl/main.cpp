@@ -10,6 +10,7 @@
 #include <TestEzGLShader.h>
 #include <TestEzGLProgram.h>
 #include <TestEzGLCamera.h>
+#include <TestEzGLSdfMap.h>
 
 #include <ezlibs/ezLog.hpp>
 
@@ -34,6 +35,7 @@ bool TestOpengl(const std::string& vTest) {
     else IfTestCollectionExist(TestEzGL_Shader);
     else IfTestCollectionExist(TestEzGL_Program);
     else IfTestCollectionExist(TestEzGL_Camera);
+    else IfTestCollectionExist(TestEzGL_SdfMap);
     return false;
 }
 

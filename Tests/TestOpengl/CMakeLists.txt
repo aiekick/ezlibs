@@ -302,3 +302,13 @@ AddTest("TestEzGL_Camera_TurntableSetAngleIsAliasForSetYaw<float>")
 AddTest("TestEzGL_Camera_TurntableSetAngleIsAliasForSetYaw<double>")
 AddTest("TestEzGL_Camera_ComputeViewMatrixInstantiates<float>")
 AddTest("TestEzGL_Camera_ComputeViewMatrixInstantiates<double>")
+
+##########################################################
+#### SDF MAP #############################################
+##########################################################
+
+AddTest("TestEzGL_SdfMap_Create")
+AddTest("TestEzGL_SdfMap_BakeSingleBox")
+AddTest("TestEzGL_SdfMap_BakeMultipleBoxes")
+AddTest("TestEzGL_SdfMap_EmptyBoxes")
+AddTest("TestEzGL_SdfMap_DegenerateWindow")

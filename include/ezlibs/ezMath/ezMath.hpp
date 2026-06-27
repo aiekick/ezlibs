@@ -385,7 +385,6 @@ struct range {
 #include "ezMat4.hpp"
 #include "ezAABB.hpp"
 #include "ezSdf.hpp"
-#include "ezOrthoRoute.hpp"
 #include "ezQuat.hpp"
 #include "ezPlane.hpp"
 #include "ezAABBCC.hpp"

@@ -155,6 +155,7 @@ public:
         return res;
     }
     const char* getLabelName() { return m_ProgramName.c_str(); }
+    GLuint getProgramId() const { return m_ProgramId; }
     void setUniformPreUploadFunctor(UniformPreUploadFunctor vUniformPreUploadFunctor) { m_UniformPreUploadFunctor = vUniformPreUploadFunctor; }
     void setAdditionnalWidgetsFunctor(AdditionnalWidgetsFunctor vAdditionnalWidgetsFunctor) { m_AdditionnalWidgetsFunctor = vAdditionnalWidgetsFunctor; }
     void addBufferBlock(const GLenum vShaderType, const std::string& vBufferName, const int32_t vBinding, BufferBlock** vBufferPtr) {

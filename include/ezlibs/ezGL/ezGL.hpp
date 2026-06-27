@@ -87,3 +87,4 @@ SOFTWARE.
 #include "quadVfxauto.hpp"
 #include "canvas.hpp"
 #include "compVfx.hpp"
+#include "utils/sdfMap.hpp"

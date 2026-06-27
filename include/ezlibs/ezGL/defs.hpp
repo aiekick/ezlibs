@@ -81,6 +81,10 @@ class CompVfx;
 typedef std::shared_ptr<CompVfx> CompVfxPtr;
 typedef std::weak_ptr<CompVfx> CompVfxWeak;
 
+class SdfMap;
+typedef std::shared_ptr<SdfMap> SdfMapPtr;
+typedef std::weak_ptr<SdfMap> SdfMapWeak;
+
 class MeshVfx;
 typedef std::shared_ptr<MeshVfx> MeshVfxPtr;
 typedef std::weak_ptr<MeshVfx> MeshVfxWeak;

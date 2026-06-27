@@ -37,7 +37,6 @@ file(GLOB SRC_RECURSE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezPlane.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezAABB.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezSdf.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezOrthoRoute.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezAABBCC.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVariant.hpp)
 source_group(TREE ${EZ_LIBS_INCLUDE_DIR}/ezlibs PREFIX Libs FILES ${SRC_RECURSE})
@@ -1099,24 +1098,3 @@ AddTest("TestEzSdf_SegmentBoxesAnyHitIsTrue<float>")
 AddTest("TestEzSdf_SegmentBoxesAnyHitIsTrue<double>")
 AddTest("TestEzSdf_SegmentBoxesNoneHitIsFalse<float>")
 AddTest("TestEzSdf_SegmentBoxesNoneHitIsFalse<double>")
-
-##########################################################
-##### TESTS EzOrthoRoute #################################
-##########################################################
-
-AddTest("TestEzOrthoRoute_NoBoxesIsDirect<float>")
-AddTest("TestEzOrthoRoute_NoBoxesIsDirect<double>")
-AddTest("TestEzOrthoRoute_AroundBoxBendsAndStaysClear<float>")
-AddTest("TestEzOrthoRoute_AroundBoxBendsAndStaysClear<double>")
-AddTest("TestEzOrthoRoute_IsOrthogonal<float>")
-AddTest("TestEzOrthoRoute_IsOrthogonal<double>")
-AddTest("TestEzOrthoRoute_StartEqualsEndIsSinglePoint<float>")
-AddTest("TestEzOrthoRoute_StartEqualsEndIsSinglePoint<double>")
-AddTest("TestEzOrthoRoute_BundleSeparatesSharedChannel<float>")
-AddTest("TestEzOrthoRoute_BundleSeparatesSharedChannel<double>")
-AddTest("TestEzOrthoRoute_BundleLeavesDisjointRoutes<float>")
-AddTest("TestEzOrthoRoute_BundleLeavesDisjointRoutes<double>")
-AddTest("TestEzOrthoRoute_FieldMatchesSingleCall<float>")
-AddTest("TestEzOrthoRoute_FieldMatchesSingleCall<double>")
-AddTest("TestEzOrthoRoute_FieldReusedForTwoRoutes<float>")
-AddTest("TestEzOrthoRoute_FieldReusedForTwoRoutes<double>")

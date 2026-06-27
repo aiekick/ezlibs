@@ -14,7 +14,6 @@
 #include <TestEzQuat.h>
 #include <TestEzAABB.h>
 #include <TestEzSdf.h>
-#include <TestEzOrthoRoute.h>
 #include <TestEzExpr.h>
 
 #include <limits>
@@ -42,7 +41,6 @@ bool TestMisc(const std::string& vTest) {
     IfTestCollectionExist(TestEzRansac);
     IfTestCollectionExist(TestEzQuat);
     IfTestCollectionExist(TestEzAABB);
-    IfTestCollectionExist(TestEzOrthoRoute);
     IfTestCollectionExist(TestEzSdf);
     IfTestCollectionExist(TestEzExpr);
     return false;
