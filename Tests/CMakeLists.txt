@@ -17,6 +17,7 @@ option(TESTING_OPENGL "Enable testing of Opengl related libs" ${EZ_LIBS_LOCAL_DE
 option(TESTING_TIME "Enable testing of Time related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_GEO "Enable testing of Geo related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_VISION "Enable testing of Vision related libs" ${EZ_LIBS_LOCAL_DEV})
+option(TESTING_DIAGRAM "Enable testing of Diagram related libs" ${EZ_LIBS_LOCAL_DEV})
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -100,6 +101,10 @@ endif()
 
 if (TESTING_VISION)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestVision)
+endif()
+
+if (TESTING_DIAGRAM)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestDiagram)
 endif()
 
 if (USE_CODE_COVERAGE)

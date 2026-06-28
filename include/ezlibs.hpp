@@ -1,11 +1,11 @@
 #pragma once
 
 #define ezLibs_Label "ezLibs"
-#define ezLibs_BuildNumber 59
+#define ezLibs_BuildNumber 62
 #define ezLibs_MinorNumber 0
 #define ezLibs_MajorNumber 0
-#define ezLibs_BuildId "0.0.59"
-#define ezLibs_BuildIdNum 000059
+#define ezLibs_BuildId "0.0.62"
+#define ezLibs_BuildIdNum 000062
 #define ezLibs_FigFontLabel u8R"(            _       _  _                    ___       ___  
            | |     (_)| |                  / _ \     / _ \ 
   ___  ____| |      _ | |__   ___  __   __| | | |   | | | |
