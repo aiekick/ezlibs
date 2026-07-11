@@ -2,20 +2,6 @@ name: Code Coverage
 
 on:
   workflow_dispatch:
-  push:
-    branches: [master]
-    paths-ignore:
-      - 'doc/**'
-      - '.gitignore'
-      - 'README.md'
-      - 'LICENSE'
-  pull_request:
-    branches: [master]
-    paths-ignore:
-      - 'doc/**'
-      - '.gitignore'
-      - 'README.md'
-      - 'LICENSE'
 
 permissions:
   contents: read
