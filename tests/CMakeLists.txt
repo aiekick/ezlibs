@@ -51,7 +51,7 @@ function(StageBuildInc)
 	# ezBuildInc fail with "Positional <file> not present".
 	add_custom_command(
 		TARGET ${PROJECT} PRE_BUILD
-		COMMAND ezBuildInc ezLibs ${EZ_LIBS_INCLUDE_DIR}/ezlibs.hpp -ff ${EZ_LIBS_INCLUDE_DIR}/../Tests/res/big.flf
+		COMMAND ezBuildInc ezLibs ${EZ_LIBS_INCLUDE_DIR}/ezlibs.hpp -ff ${EZ_LIBS_INCLUDE_DIR}/../tests/res/big.flf
 	)
 endfunction(StageBuildInc)
 
@@ -64,47 +64,47 @@ if (TESTING_WIP)
 endif()
 
 if (TESTING_APP)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestApp)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_app)
 endif()
 
 if (TESTING_COMMUNICATION)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestCom)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_com)
 endif()
 
 if (TESTING_COMPRESSION)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestComp)
-endif()
-
-if (TESTING_FILE)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestFile)
-endif()
-
-if (TESTING_MATH)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestMath)
-endif()
-
-if (TESTING_MISC)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestMisc)
-endif()
-
-if (TESTING_OPENGL)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestOpengl)
-endif()
-
-if (TESTING_TIME)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestTime)
-endif()
-
-if (TESTING_GEO)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestGeo)
-endif()
-
-if (TESTING_VISION)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestVision)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_comp)
 endif()
 
 if (TESTING_DIAGRAM)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/TestDiagram)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_diagram)
+endif()
+
+if (TESTING_FILE)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_file)
+endif()
+
+if (TESTING_GEO)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_geo)
+endif()
+
+if (TESTING_MATH)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_math)
+endif()
+
+if (TESTING_MISC)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_misc)
+endif()
+
+if (TESTING_OPENGL)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_opengl)
+endif()
+
+if (TESTING_TIME)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_time)
+endif()
+
+if (TESTING_VISION)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_vision)
 endif()
 
 if (USE_CODE_COVERAGE)
