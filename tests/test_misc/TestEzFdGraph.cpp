@@ -3,6 +3,7 @@
 #include <ezlibs/ezCTest.hpp>
 
 #include <cmath>
+#include <memory>
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -15,8 +16,8 @@ static bool nearF(float aValue, float aRef, float aEpsilon) {
     return std::abs(aValue - aRef) < aEpsilon;
 }
 
-// Host-side payloads and a node subclass, mirroring how the cdpViewer will
-// derive its own CdpNode / CdpLink from ez::FdGraph::Node / Link.
+// Host-side payloads and a node subclass, mirroring how a viewer derives its
+// own nodes/links from ez::FdGraph::Node / Link.
 struct MyNodeDatas : public ez::FdGraph::NodeDatas {
     int32_t tag{0};
     MyNodeDatas() = default;
@@ -64,14 +65,56 @@ static void pushForce(const ez::FdGraph::NodeContainer& aNodes, const ez::FdGrap
     }
 }
 
+// The built-in forces are reachable back through getComputeDatas() (type-erased,
+// in registration order) : recover each one by downcast so the tests can toggle
+// them without depending on that order.
+struct BuiltinForces {
+    std::shared_ptr<ez::FdGraph::RepulseNodesDatas> repulseNodes;
+    std::shared_ptr<ez::FdGraph::RepulseNodesFromLinksDatas> repulseNodesFromLinks;
+    std::shared_ptr<ez::FdGraph::AttractLinksDatas> attractLinks;
+    std::shared_ptr<ez::FdGraph::SnapToGridDatas> snapToGrid;
+    std::shared_ptr<ez::FdGraph::CentroidGravityDatas> centroidGravity;
+};
+
+static BuiltinForces getBuiltinForces(ez::FdGraph& aGraph) {
+    BuiltinForces out;
+    for (const auto& datasWeak : aGraph.getComputeDatas()) {
+        auto pDatas = datasWeak.lock();
+        if (pDatas == nullptr) {
+            continue;
+        }
+        if (auto p = std::dynamic_pointer_cast<ez::FdGraph::RepulseNodesDatas>(pDatas)) {
+            out.repulseNodes = p;
+        } else if (auto p2 = std::dynamic_pointer_cast<ez::FdGraph::RepulseNodesFromLinksDatas>(pDatas)) {
+            out.repulseNodesFromLinks = p2;
+        } else if (auto p3 = std::dynamic_pointer_cast<ez::FdGraph::AttractLinksDatas>(pDatas)) {
+            out.attractLinks = p3;
+        } else if (auto p4 = std::dynamic_pointer_cast<ez::FdGraph::SnapToGridDatas>(pDatas)) {
+            out.snapToGrid = p4;
+        } else if (auto p5 = std::dynamic_pointer_cast<ez::FdGraph::CentroidGravityDatas>(pDatas)) {
+            out.centroidGravity = p5;
+        }
+    }
+    return out;
+}
+
 // Disable every built-in force except the ones the test wants to isolate.
-static void disableAllForcesExcept(const ez::FdGraph::DefaultFunctors& aDef, bool aRepulseNodes, bool aRepulseNodesFromLinks, bool aAttractLinks, bool aSnapToGrid, bool aCentroidGravity, bool aFlowLayout) {
-    aDef.repulseNodes->enabled = aRepulseNodes;
-    aDef.repulseNodesFromLinks->enabled = aRepulseNodesFromLinks;
-    aDef.attractLinks->enabled = aAttractLinks;
-    aDef.snapToGrid->enabled = aSnapToGrid;
-    aDef.centroidGravity->enabled = aCentroidGravity;
-    aDef.flowLayout->enabled = aFlowLayout;
+static void disableAllForcesExcept(const BuiltinForces& aForces, bool aRepulseNodes, bool aRepulseNodesFromLinks, bool aAttractLinks, bool aSnapToGrid, bool aCentroidGravity) {
+    if (aForces.repulseNodes) {
+        aForces.repulseNodes->enabled = aRepulseNodes;
+    }
+    if (aForces.repulseNodesFromLinks) {
+        aForces.repulseNodesFromLinks->enabled = aRepulseNodesFromLinks;
+    }
+    if (aForces.attractLinks) {
+        aForces.attractLinks->enabled = aAttractLinks;
+    }
+    if (aForces.snapToGrid) {
+        aForces.snapToGrid->enabled = aSnapToGrid;
+    }
+    if (aForces.centroidGravity) {
+        aForces.centroidGravity->enabled = aCentroidGravity;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -135,9 +178,9 @@ bool TestEzFdGraph_InitScatter() {
 
 bool TestEzFdGraph_EnergyDecreases() {
     ez::FdGraph graph;
-    const auto& def = graph.initDefaultComputeFunctors();
+    graph.initDefaultComputeFunctors();
     // isolate the node/node repulsion
-    disableAllForcesExcept(def, true, false, false, false, false, false);
+    disableAllForcesExcept(getBuiltinForces(graph), true, false, false, false, false);
 
     ez::FdGraph::NodeDatas datas;
     datas.size = ez::math::fvec2(40.0f, 40.0f);
@@ -167,9 +210,9 @@ bool TestEzFdGraph_EnergyDecreases() {
 
 bool TestEzFdGraph_LinkAttractionPullsTogether() {
     ez::FdGraph graph;
-    const auto& def = graph.initDefaultComputeFunctors();
+    graph.initDefaultComputeFunctors();
     // isolate the link attraction (spring)
-    disableAllForcesExcept(def, false, false, true, false, false, false);
+    disableAllForcesExcept(getBuiltinForces(graph), false, false, true, false, false);
 
     ez::FdGraph::NodeDatas datas;
     datas.size = ez::math::fvec2(20.0f, 20.0f);
@@ -188,40 +231,67 @@ bool TestEzFdGraph_LinkAttractionPullsTogether() {
     return true;
 }
 
-bool TestEzFdGraph_UpdateLinksCorners() {
+bool TestEzFdGraph_AlignLinksLevelsTheRow() {
+    // alignLinks is position-based (no force, no step) : with a full-strength horizontal
+    // alignment the two endpoints of a link end up on the same row.
     ez::FdGraph graph;
     ez::FdGraph::NodeDatas d0;
     d0.pos = ez::math::fvec2(0.0f, 0.0f);
-    d0.size = ez::math::fvec2(100.0f, 60.0f);
-    d0.slots_y = {10.0f, 30.0f, 50.0f};
+    d0.size = ez::math::fvec2(40.0f, 40.0f);
     auto n0 = graph.addNode(d0);
 
     ez::FdGraph::NodeDatas d1;
-    d1.pos = ez::math::fvec2(300.0f, 0.0f);
-    d1.size = ez::math::fvec2(100.0f, 60.0f);
-    d1.slots_y = {20.0f, 40.0f};
+    d1.pos = ez::math::fvec2(200.0f, 100.0f);
+    d1.size = ez::math::fvec2(40.0f, 40.0f);
     auto n1 = graph.addNode(d1);
+    graph.addLink(n0, n1);
 
-    ez::FdGraph::LinkDatas ld;
-    ld.srcSlot = 2U;  // y = 0 + 50
-    ld.dstSlot = 0U;  // y = 0 + 20
-    graph.addLink(n0, n1, ld);
+    graph.alignLinks(1.0f, true, false);
 
-    graph.updateLinks();
-    const auto& corners = graph.getLinks()[0].lock()->getDatas().corners;
-    CTEST_ASSERT(corners.size() == 2U);
-    // centered slots : x sits at the node center
-    CTEST_ASSERT(nearF(corners[0].x, 50.0f, 1e-3f));
-    CTEST_ASSERT(nearF(corners[0].y, 50.0f, 1e-3f));
-    CTEST_ASSERT(nearF(corners[1].x, 350.0f, 1e-3f));
-    CTEST_ASSERT(nearF(corners[1].y, 20.0f, 1e-3f));
+    const auto& p0 = n0.lock()->getDatas().pos;
+    const auto& p1 = n1.lock()->getDatas().pos;
+    // same row (same center y, sizes are equal), x untouched
+    CTEST_ASSERT(nearF(p0.y, p1.y, 1e-3f));
+    CTEST_ASSERT(nearF(p0.x, 0.0f, 1e-4f));
+    CTEST_ASSERT(nearF(p1.x, 200.0f, 1e-4f));
+    // a locked endpoint takes none of the correction : the free one takes it all
+    ez::FdGraph graph2;
+    d0.locked = true;
+    auto locked = graph2.addNode(d0);
+    d1.pos = ez::math::fvec2(200.0f, 100.0f);
+    auto free = graph2.addNode(d1);
+    graph2.addLink(locked, free);
+    graph2.alignLinks(1.0f, true, false);
+    CTEST_ASSERT(nearF(locked.lock()->getDatas().pos.y, 0.0f, 1e-4f));
+    CTEST_ASSERT(nearF(free.lock()->getDatas().pos.y, 0.0f, 1e-3f));
+    return true;
+}
 
-    // sideSlots : target is to the right -> src exits its right edge, dst enters its left edge
-    graph.getConfigRef().sideSlots = true;
-    graph.updateLinks();
-    const auto& sideCorners = graph.getLinks()[0].lock()->getDatas().corners;
-    CTEST_ASSERT(nearF(sideCorners[0].x, 100.0f, 1e-3f));
-    CTEST_ASSERT(nearF(sideCorners[1].x, 300.0f, 1e-3f));
+bool TestEzFdGraph_SeparateOverlapsEnforcesMinGap() {
+    // separateOverlaps is position-based too : overlapping rectangles get pushed apart
+    // until their edge-to-edge gap reaches the requested minimum.
+    ez::FdGraph graph;
+    ez::FdGraph::NodeDatas datas;
+    datas.size = ez::math::fvec2(40.0f, 40.0f);
+    datas.pos = ez::math::fvec2(0.0f, 0.0f);
+    auto n0 = graph.addNode(datas);
+    datas.pos = ez::math::fvec2(10.0f, 0.0f);  // heavy overlap
+    auto n1 = graph.addNode(datas);
+
+    const float minGap = 20.0f;
+    graph.separateOverlaps(minGap);
+
+    const auto& datas0 = n0.lock()->getDatas();
+    const auto& datas1 = n1.lock()->getDatas();
+    const ez::math::fvec2 center0 = datas0.pos + datas0.size * 0.5f;
+    const ez::math::fvec2 center1 = datas1.pos + datas1.size * 0.5f;
+    const ez::math::fvec2 delta = center1 - center0;
+    const float halfWidth = (datas0.size.x + datas1.size.x) * 0.5f;
+    const float halfHeight = (datas0.size.y + datas1.size.y) * 0.5f;
+    const float gapX = std::max(std::abs(delta.x) - halfWidth, 0.0f);
+    const float gapY = std::max(std::abs(delta.y) - halfHeight, 0.0f);
+    const float actualGap = std::sqrt(gapX * gapX + gapY * gapY);
+    CTEST_ASSERT(actualGap >= minGap - 1e-3f);
     return true;
 }
 
@@ -255,9 +325,9 @@ bool TestEzFdGraph_LockedNodeStaysPut() {
 
 bool TestEzFdGraph_DisabledForcesNoMotion() {
     ez::FdGraph graph;
-    const auto& def = graph.initDefaultComputeFunctors();
+    graph.initDefaultComputeFunctors();
     // every force off -> the solver must be inert
-    disableAllForcesExcept(def, false, false, false, false, false, false);
+    disableAllForcesExcept(getBuiltinForces(graph), false, false, false, false, false);
 
     ez::FdGraph::NodeDatas d0;
     d0.pos = ez::math::fvec2(10.0f, 20.0f);
@@ -285,9 +355,12 @@ bool TestEzFdGraph_DisabledForcesNoMotion() {
 
 bool TestEzFdGraph_ClampForces() {
     ez::FdGraph graph;
-    const auto& def = graph.initDefaultComputeFunctors();
-    disableAllForcesExcept(def, true, false, false, false, false, false);
-    def.repulseNodes->nodeRepulsion = 1.0e9f;  // make the repulsion explode
+    graph.initDefaultComputeFunctors();
+    const auto forces = getBuiltinForces(graph);
+    disableAllForcesExcept(forces, true, false, false, false, false);
+    CTEST_ASSERT(forces.repulseNodes != nullptr);
+    forces.repulseNodes->nodeGap = 0.0f;         // keep the fixed-stiffness floor out of the way
+    forces.repulseNodes->nodeRepulsion = 1.0e9f;  // make the repulsion explode
     const float maxForce = 7.5f;
     graph.getConfigRef().maxForce = maxForce;  // then clamp it hard
 
@@ -295,7 +368,7 @@ bool TestEzFdGraph_ClampForces() {
     datas.size = ez::math::fvec2(10.0f, 10.0f);
     datas.pos = ez::math::fvec2(0.0f, 0.0f);
     graph.addNode(datas);
-    datas.pos = ez::math::fvec2(3.0f, 4.0f);  // close -> huge repulsion
+    datas.pos = ez::math::fvec2(30.0f, 40.0f);  // close -> huge repulsion
     graph.addNode(datas);
 
     graph.step(0.1f);
@@ -344,8 +417,8 @@ bool TestEzFdGraph_DerivedDatasAndOverride() {
 
 bool TestEzFdGraph_DisabledNodeIsInert() {
     ez::FdGraph graph;
-    const auto& def = graph.initDefaultComputeFunctors();
-    disableAllForcesExcept(def, true, false, false, false, false, false);  // isolate node/node repulsion
+    graph.initDefaultComputeFunctors();
+    disableAllForcesExcept(getBuiltinForces(graph), true, false, false, false, false);  // isolate node/node repulsion
 
     ez::FdGraph::NodeDatas datas;
     datas.size = ez::math::fvec2(40.0f, 40.0f);
@@ -376,65 +449,6 @@ bool TestEzFdGraph_DisabledNodeIsInert() {
     return true;
 }
 
-bool TestEzFdGraph_FlowLayoutOrdersByDirection() {
-    ez::FdGraph graph;
-    const auto& def = graph.initDefaultComputeFunctors();
-    // isolate the flow layout : every other force off
-    disableAllForcesExcept(def, false, false, false, false, false, true);
-
-    ez::FdGraph::NodeDatas datas;
-    datas.size = ez::math::fvec2(40.0f, 40.0f);
-    datas.slots_y = {0.0f};
-    datas.slots_output = {true};                // node 0 is wired through an OUTPUT slot
-    datas.pos = ez::math::fvec2(100.0f, 0.0f);  // starts on the RIGHT (reversed)
-    auto outputNode = graph.addNode(datas);
-    datas.slots_output = {false};               // node 1 is wired through an INPUT slot
-    datas.pos = ez::math::fvec2(0.0f, 0.0f);
-    auto inputNode = graph.addNode(datas);
-
-    ez::FdGraph::LinkDatas ld;
-    ld.srcSlot = 0U;
-    ld.dstSlot = 0U;
-    graph.addLink(outputNode, inputNode, ld);
-
-    for (int32_t i = 0; i < 300; ++i) {
-        graph.step(0.1f);
-    }
-    // the OUTPUT-side node ends up left of the INPUT-side node
-    CTEST_ASSERT(outputNode.lock()->getDatas().pos.x < inputNode.lock()->getDatas().pos.x);
-    return true;
-}
-
-bool TestEzFdGraph_FlowLayoutFollowsSlotNotLinkOrder() {
-    ez::FdGraph graph;
-    const auto& def = graph.initDefaultComputeFunctors();
-    disableAllForcesExcept(def, false, false, false, false, false, true);
-
-    ez::FdGraph::NodeDatas datas;
-    datas.size = ez::math::fvec2(40.0f, 40.0f);
-    datas.slots_y = {0.0f};
-    // the link is created INPUT-node -> OUTPUT-node (reversed link order) : the flow must
-    // still put the OUTPUT node on the left, driven only by the slot direction.
-    datas.slots_output = {false};               // node 0 : INPUT side, used as the link 'from'
-    datas.pos = ez::math::fvec2(0.0f, 0.0f);    // starts on the LEFT
-    auto inputNode = graph.addNode(datas);
-    datas.slots_output = {true};                // node 1 : OUTPUT side, used as the link 'to'
-    datas.pos = ez::math::fvec2(100.0f, 0.0f);  // starts on the RIGHT
-    auto outputNode = graph.addNode(datas);
-
-    ez::FdGraph::LinkDatas ld;
-    ld.srcSlot = 0U;  // from-node (inputNode) slot 0 -> an input
-    ld.dstSlot = 0U;
-    graph.addLink(inputNode, outputNode, ld);
-
-    for (int32_t i = 0; i < 300; ++i) {
-        graph.step(0.1f);
-    }
-    // despite the link going inputNode -> outputNode, the OUTPUT node ends up on the left
-    CTEST_ASSERT(outputNode.lock()->getDatas().pos.x < inputNode.lock()->getDatas().pos.x);
-    return true;
-}
-
 bool TestEzFdGraph_CustomFunctorRegisterAndTune() {
     ez::FdGraph graph;
     ez::FdGraph::NodeDatas datas;
@@ -444,14 +458,22 @@ bool TestEzFdGraph_CustomFunctorRegisterAndTune() {
     datas.pos = ez::math::fvec2(100.0f, 0.0f);
     graph.addNode(datas);
 
-    // register a host force and keep the typed reference to its datas
-    auto& myDatas = graph.registerFunctor<PushForceDatas>(&pushForce);
+    // register a host force (with a datas-refresh functor) and keep the typed reference
+    int32_t datasFunctorCalls = 0;
+    auto& myDatas = graph.registerFunctor<PushForceDatas>(&pushForce, [&datasFunctorCalls](const ez::FdGraph::IComputeDatasWeak& aDatas) {
+        ++datasFunctorCalls;
+        return !aDatas.expired();
+    });
     CTEST_ASSERT(graph.getComputeDatas().size() == 1U);
     CTEST_ASSERT(myDatas.callCount == 0);
 
     // a step runs the functor and the datas it consumes are reachable host-side
     graph.step(0.1f);
     CTEST_ASSERT(myDatas.callCount == 1);
+
+    // execComputeDatas runs the datas-refresh functors and reports their change flag
+    CTEST_ASSERT(graph.execComputeDatas() == true);
+    CTEST_ASSERT(datasFunctorCalls == 1);
 
     // tuning the datas host-side is seen by the functor on the next step
     myDatas.push = 0.0f;
@@ -463,13 +485,16 @@ bool TestEzFdGraph_CustomFunctorRegisterAndTune() {
     // be used after this point : the block it referred to has been destroyed)
     graph.clearFunctors();
     CTEST_ASSERT(graph.getComputeDatas().empty());
-    CTEST_ASSERT(graph.getDefaultFunctors().repulseNodes == nullptr);
 
-    // initDefaultComputeFunctors registers the six built-ins and exposes their handles
-    const auto& def = graph.initDefaultComputeFunctors();
-    CTEST_ASSERT(graph.getComputeDatas().size() == 6U);
-    CTEST_ASSERT(def.repulseNodes != nullptr);
-    CTEST_ASSERT(def.centroidGravity != nullptr);
+    // initDefaultComputeFunctors registers the five built-ins, each reachable by downcast
+    graph.initDefaultComputeFunctors();
+    CTEST_ASSERT(graph.getComputeDatas().size() == 5U);
+    const auto forces = getBuiltinForces(graph);
+    CTEST_ASSERT(forces.repulseNodes != nullptr);
+    CTEST_ASSERT(forces.repulseNodesFromLinks != nullptr);
+    CTEST_ASSERT(forces.attractLinks != nullptr);
+    CTEST_ASSERT(forces.snapToGrid != nullptr);
+    CTEST_ASSERT(forces.centroidGravity != nullptr);
     return true;
 }
 
@@ -482,14 +507,13 @@ bool TestEzFdGraph(const std::string& vTest) {
     else IfTestExist(TestEzFdGraph_InitScatter);
     else IfTestExist(TestEzFdGraph_EnergyDecreases);
     else IfTestExist(TestEzFdGraph_LinkAttractionPullsTogether);
-    else IfTestExist(TestEzFdGraph_UpdateLinksCorners);
+    else IfTestExist(TestEzFdGraph_AlignLinksLevelsTheRow);
+    else IfTestExist(TestEzFdGraph_SeparateOverlapsEnforcesMinGap);
     else IfTestExist(TestEzFdGraph_LockedNodeStaysPut);
     else IfTestExist(TestEzFdGraph_DisabledForcesNoMotion);
     else IfTestExist(TestEzFdGraph_ClampForces);
     else IfTestExist(TestEzFdGraph_DerivedDatasAndOverride);
     else IfTestExist(TestEzFdGraph_DisabledNodeIsInert);
-    else IfTestExist(TestEzFdGraph_FlowLayoutOrdersByDirection);
-    else IfTestExist(TestEzFdGraph_FlowLayoutFollowsSlotNotLinkOrder);
     else IfTestExist(TestEzFdGraph_CustomFunctorRegisterAndTune);
     return false;
 }
