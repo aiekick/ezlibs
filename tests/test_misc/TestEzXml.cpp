@@ -198,6 +198,71 @@ bool TestEzXml_EscapeUnescapeXml() {
     return true;
 }
 
+// a literal escape sequence written by the user must not decay : "&quot;"
+// escapes to "&amp;quot;" and must come back as "&quot;", not as a real
+// quote. this holds only if "&amp;" is the LAST pattern unescaped
+bool TestEzXml_EscapeSequenceIsNotDecoded() {
+    const std::string input = "&quot; &amp; &lt; plain &";
+    const std::string escaped = ez::xml::Node::escapeXml(input);
+    CTEST_ASSERT(ez::xml::Node::unEscapeXml(escaped) == input);
+    return true;
+}
+
+// a node stores RAW text : dump escapes once, the parser unescapes once.
+// escaping at set time made a parsed document escape a second time, and a
+// stored "&" came back as "&amp;" after a dump/parse round trip
+bool TestEzXml_RoundTripSpecialChars() {
+    const std::string content = "a < b & c > d \"quoted\" 'single'";
+    const std::string attrValue = "x=\"1\" & y<2";
+
+    ez::Xml writer("config");
+    ez::xml::Node &writerRoot = writer.getRoot();
+    writerRoot.addChild("line").setContent(content);
+    writerRoot.addChild("item").addAttribute("value", attrValue);
+    const std::string doc = writer.dump();
+
+    // the escaped document carries no raw markup character inside the text
+    // nor inside the quoted attribute : this is what keeps it parseable
+    CTEST_ASSERT(doc.find("&lt;") != std::string::npos);
+    CTEST_ASSERT(doc.find("&amp;") != std::string::npos);
+
+    ez::Xml reader;
+    CTEST_ASSERT(reader.parseString(doc));
+    const ez::xml::Nodes &roots = reader.getRoot().getChildren();
+    CTEST_ASSERT(roots.size() == 1U);
+    const ez::xml::Nodes &children = roots[0].getChildren();
+    CTEST_ASSERT(children.size() == 2U);
+    CTEST_ASSERT(children[0].getName() == "line");
+    CTEST_ASSERT(children[0].getContent() == content);
+    CTEST_ASSERT(children[1].getName() == "item");
+    CTEST_ASSERT(children[1].getAttribute("value") == attrValue);
+
+    // stable through a second cycle : re-dumping the parsed node gives back
+    // the very same document (the parsed tree carries a "root" wrapper, so
+    // the comparison starts at the config node the writer dumped)
+    CTEST_ASSERT(roots[0].dump() == doc);
+    return true;
+}
+
+// a generic walk of what a node carries : a converter to another format
+// cannot ask key by key, it has to enumerate
+bool TestEzXml_GetAttributes() {
+    ez::xml::Node node("test");
+    CTEST_ASSERT(node.getAttributes().empty());
+    node.addAttribute("beta", "2");
+    node.addAttribute("alpha", "1");
+    const ez::xml::Node::Attributes &attributes = node.getAttributes();
+    CTEST_ASSERT(attributes.size() == 2U);
+    // a std::map walk is key-ordered, whatever the insertion order
+    ez::xml::Node::Attributes::const_iterator it = attributes.begin();
+    CTEST_ASSERT(it->first == "alpha");
+    CTEST_ASSERT(it->second.getValue() == "1");
+    ++it;
+    CTEST_ASSERT(it->first == "beta");
+    CTEST_ASSERT(it->second.getValue() == "2");
+    return true;
+}
+
 bool TestEzXml_NodeOperations() {
     ez::xml::Node node("testNode");
     node.setContent("TestContent");
@@ -293,6 +358,9 @@ bool TestEzXml(const std::string &vTest) {
     else IfTestExist(TestEzXml_ParsingNOK_1);
     else IfTestExist(TestEzXml_Writing_1);
     else IfTestExist(TestEzXml_EscapeUnescapeXml);
+    else IfTestExist(TestEzXml_EscapeSequenceIsNotDecoded);
+    else IfTestExist(TestEzXml_RoundTripSpecialChars);
+    else IfTestExist(TestEzXml_GetAttributes);
     else IfTestExist(TestEzXml_NodeOperations);
     else IfTestExist(TestEzXml_GetOrAddChild);
     else IfTestExist(TestEzXml_GetChildNull);

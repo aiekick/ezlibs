@@ -100,14 +100,17 @@ namespace ez {
                 return escaped;
             }
 
-            // replace xml excaped pattern by corresponding good pattern
+            // replace xml excaped pattern by corresponding good pattern.
+            // "&amp;" is unescaped LAST, mirroring escapeXml which escapes
+            // "&" FIRST : undoing it earlier would let a literal "&quot;"
+            // (stored as "&amp;quot;") decay into a real quote
             static std::string unEscapeXml(const std::string &vDatas) {
                 std::string unescaped = vDatas;
                 replaceAll(unescaped, "&lt;", "<");
-                replaceAll(unescaped, "&amp;", "&");
+                replaceAll(unescaped, "&gt;", ">");
                 replaceAll(unescaped, "&quot;", "\"");
                 replaceAll(unescaped, "&apos;", "'");
-                replaceAll(unescaped, "&gt;", ">");
+                replaceAll(unescaped, "&amp;", "&");
                 return unescaped;
             }
 
@@ -186,6 +189,15 @@ namespace ez {
                 return (m_attributes.find(vKey) != m_attributes.end());
             }
 
+            typedef std::map<std::string, Attribute> Attributes;
+
+            // the whole attribute map, for a generic walk : a serializer that
+            // does not know the schema (a converter to another format) needs
+            // to enumerate what a node carries, not to ask key by key
+            const Attributes &getAttributes() const {
+                return m_attributes;
+            }
+
             template<typename T = std::string>
             T getAttribute(const std::string &vKey) const {
                 T ret;
@@ -206,15 +218,19 @@ namespace ez {
                 return *this;
             }
 
+            // m_content always holds the RAW (unescaped) text, whatever the
+            // setter used : escaping belongs to dump(), unescaping to the
+            // parser. escaping here made a parsed document escape a second
+            // time, so a stored "&" came back as "&amp;" after a round trip
             Node &setContent(const std::string &vContent) {
-                m_content = escapeXml(vContent);
+                m_content = vContent;
                 return *this;
             }
 
             // specific case for std::string
             template <typename T = std::string>
             typename std::enable_if<std::is_same<T, std::string>::value, T>::type getContent() const {
-                return unEscapeXml(m_content);
+                return m_content;
             }
 
             // specific case for bool
@@ -394,7 +410,8 @@ namespace ez {
                             return false;
                         }
                         for (const auto &kv: attributes) {
-                            newNode.m_setAttribute(kv.first, kv.second);
+                            // the document text is escaped, the node stores raw
+                            newNode.m_setAttribute(kv.first, xml::Node::unEscapeXml(kv.second));
                         }
                     }
                     m_NodeStack.top()->addChild(newNode);
@@ -404,7 +421,8 @@ namespace ez {
                 } else if (token.second == TokenType::CONTENT) {
                     if (!m_NodeStack.empty()) {
                         if (token.first[0] != '\n') {
-                            m_NodeStack.top()->setContent(token.first);
+                            // the document text is escaped, the node stores raw
+                            m_NodeStack.top()->setContent(xml::Node::unEscapeXml(token.first));
                         }
                     }
                 }

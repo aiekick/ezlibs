@@ -31,6 +31,7 @@ file(GLOB EZ_LIBS_SOURCE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSingleton.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezTemplater.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezFigFont.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezHwm.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/wip/derived/ezQrCode.hpp)
 source_group(TREE ${EZ_LIBS_INCLUDE_DIR}/ezlibs PREFIX Libs FILES ${EZ_LIBS_SOURCE})
 
@@ -46,9 +47,13 @@ add_executable(${PROJECT}
 
 set_target_properties(${PROJECT} PROPERTIES FOLDER Tests)
 
-target_include_directories(${PROJECT} PRIVATE 
+target_include_directories(${PROJECT} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+if(WIN32) # ezHwm reads the gpu load through the pdh counters
+	target_link_libraries(${PROJECT} PRIVATE pdh)
+endif()
 
 StageBuildInc()
 
@@ -155,6 +160,9 @@ AddTest("TestEzXml_ParsingNOK_0")
 AddTest("TestEzXml_ParsingNOK_1")
 AddTest("TestEzXml_Writing_1")
 AddTest("TestEzXml_EscapeUnescapeXml")
+AddTest("TestEzXml_EscapeSequenceIsNotDecoded")
+AddTest("TestEzXml_RoundTripSpecialChars")
+AddTest("TestEzXml_GetAttributes")
 AddTest("TestEzXml_NodeOperations")
 AddTest("TestEzXml_GetOrAddChild")
 AddTest("TestEzXml_GetChildNull")
@@ -275,3 +283,11 @@ AddTest("TestEzTemplater_Exception_MissingCloseSimpleTag")
 AddTest("TestEzTemplater_Exception_UnclosedMultilineBlock")
 AddTest("TestEzTemplater_Exception_UnclosedNestedBlock")
 AddTest("TestEzTemplater_Exception_StrayClosingTag")
+
+##########################################################
+##### TESTS EzHwm ########################################
+##########################################################
+
+AddTest("TestEzHwm_CreateReturnsInitializedSampler")
+AddTest("TestEzHwm_PercentsStayInRange")
+AddTest("TestEzHwm_SampleAfterUnitIsSafe")
