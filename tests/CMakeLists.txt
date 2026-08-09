@@ -15,6 +15,7 @@ option(TESTING_MATH "Enable testing of Math related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_MISC "Enable testing of Misc related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_OPENGL "Enable testing of Opengl related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_TIME "Enable testing of Time related libs" ${EZ_LIBS_LOCAL_DEV})
+option(TESTING_TTF "Enable testing of TTF related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_GEO "Enable testing of Geo related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_VISION "Enable testing of Vision related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_DIAGRAM "Enable testing of Diagram related libs" ${EZ_LIBS_LOCAL_DEV})
@@ -97,6 +98,10 @@ endif()
 
 if (TESTING_OPENGL)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_opengl)
+endif()
+
+if (TESTING_TTF)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_ttf)
 endif()
 
 if (TESTING_TIME)
