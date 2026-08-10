@@ -33,7 +33,7 @@
 /cmake-build*
 /.idea
 /.PVS-Studio
-/build
+/build*
 /test.bmp
 /test.gif
 /benchmark_results.md
