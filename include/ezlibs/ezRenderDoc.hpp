@@ -745,120 +745,109 @@ SOFTWARE.
 
 #pragma warning(disable : 4251)
 
+#ifdef WIN32
+#include <Windows.h>
+#endif
+
+namespace ez {
+
 class RenderDocController {
-	IMPLEMENT_SINGLETON(RenderDocController)
-	DISABLE_CONSTRUCTORS(RenderDocController)
-	DISABLE_DESTRUCTORS(RenderDocController)
+    IMPLEMENT_SINGLETON(RenderDocController)
+    DISABLE_CONSTRUCTORS(RenderDocController)
+    DISABLE_DESTRUCTORS(RenderDocController)
 private:
-    RENDERDOC_API_1_0_0* m_RDdocPtr = nullptr;
+    RENDERDOC_API_1_0_0 *m_RDdocPtr = nullptr;
     pRENDERDOC_GetAPI m_GetApiPtr = nullptr;
 
     int32_t m_Capture_FramesLeft = 0;
     bool m_Capture_Started = false;
 
 public:
-    bool Init() {
-		m_GetApiPtr = nullptr;
+    bool init() {
+        m_GetApiPtr = nullptr;
 
-	#if defined(WIN32)
-		HMODULE mod = GetModuleHandleA("renderdoc.dll");
-		if (mod) {
-			m_GetApiPtr = (pRENDERDOC_GetAPI)GetProcAddress(mod, "RENDERDOC_GetAPI");
-		}
-	#elif defined(__linux__)
-		void* mod = dlopen("librenderdoc.so", RTLD_NOW | RTLD_NOLOAD);
-		if (mod) {
-			m_GetApiPtr = (pRENDERDOC_GetAPI)dlsym(mod, "RENDERDOC_GetAPI");
-		}
-	#elif defined(__APPLE__)
-		void* mod = dlopen("librenderdoc.dylib", RTLD_NOW | RTLD_NOLOAD);
-		if (mod) {
-			m_GetApiPtr = (pRENDERDOC_GetAPI)dlsym(mod, "RENDERDOC_GetAPI");
-		}
-	#else
-	#error UNKNOWN PLATFORM
-	#endif
+#if defined(WIN32)
+        HMODULE mod = GetModuleHandleA("renderdoc.dll");
+        if (mod) {
+            m_GetApiPtr = (pRENDERDOC_GetAPI)GetProcAddress(mod, "RENDERDOC_GetAPI");
+        }
+#elif defined(__linux__)
+        void *mod = dlopen("librenderdoc.so", RTLD_NOW | RTLD_NOLOAD);
+        if (mod) {
+            m_GetApiPtr = (pRENDERDOC_GetAPI)dlsym(mod, "RENDERDOC_GetAPI");
+        }
+#elif defined(__APPLE__)
+        void *mod = dlopen("librenderdoc.dylib", RTLD_NOW | RTLD_NOLOAD);
+        if (mod) {
+            m_GetApiPtr = (pRENDERDOC_GetAPI)dlsym(mod, "RENDERDOC_GetAPI");
+        }
+#else
+#error UNKNOWN PLATFORM
+#endif
 
-		if (m_GetApiPtr) {
-			int ret = m_GetApiPtr(eRENDERDOC_API_Version_1_0_0, (void**)&m_RDdocPtr);
-			if (ret != 1) {
-				m_RDdocPtr = nullptr;
-			} else {
-				int major, minor, patch;
-				m_RDdocPtr->GetAPIVersion(&major, &minor, &patch);
-				printf("-----------\n");
-				printf("Renderdoc DLL Loaded\n");
-				printf("Renderdoc Api Version : %i.%i.%i\n", major, minor, patch);
-				printf("-----------\n");
-			}
-		}
+        if (m_GetApiPtr) {
+            int ret = m_GetApiPtr(eRENDERDOC_API_Version_1_0_0, (void **)&m_RDdocPtr);
+            if (ret != 1) {
+                m_RDdocPtr = nullptr;
+            } else {
+                int major, minor, patch;
+                m_RDdocPtr->GetAPIVersion(&major, &minor, &patch);
+                printf("-----------\n");
+                printf("Renderdoc DLL Loaded\n");
+                printf("Renderdoc Api Version : %i.%i.%i\n", major, minor, patch);
+                printf("-----------\n");
+            }
+        }
 
-		return true;
-	}
-	void Unit() {
-		m_RDdocPtr = nullptr;
-		m_GetApiPtr = nullptr;
-	}
+        return true;
+    }
+    void unit() {
+        m_RDdocPtr = nullptr;
+        m_GetApiPtr = nullptr;
+    }
 
-	void RequestCapture(int32_t aFrameCount) {
-		m_Capture_FramesLeft = aFrameCount;
-	}
-	
-	bool IsCaptureRequested() {
-		return m_Capture_FramesLeft > 0;
-	}
-	
-	bool IsCaptureStarted() {
-		return m_Capture_Started;
-	}
+    void requestCapture(int32_t aFrameCount) {
+        m_Capture_FramesLeft = aFrameCount;
+    }
 
-	void StartCaptureIfResquested() {
-		if (m_Capture_FramesLeft <= 0)
-			return;
+    bool isCaptureRequested() {
+        return m_Capture_FramesLeft > 0;
+    }
 
-		m_Capture_Started = true;
+    bool isCaptureStarted() {
+        return m_Capture_Started;
+    }
 
-		if (m_RDdocPtr) {
-			printf("Renderdoc Capture Started (frames left: %i)\n", m_Capture_FramesLeft);
-			m_RDdocPtr->StartFrameCapture(NULL, NULL);
-		}
-	}
-	
-	void EndCaptureIfResquested() {
-		if (!m_Capture_Started)
-			return;
+    void startCaptureIfResquested() {
+        if (m_Capture_FramesLeft <= 0)
+            return;
 
-		// stop the capture
-		if (m_RDdocPtr) {
-			m_RDdocPtr->EndFrameCapture(NULL, NULL);
-			printf("Renderdoc Capture Ended (frames left: %i)\n", m_Capture_FramesLeft - 1);
-		}
+        m_Capture_Started = true;
 
-		--m_Capture_FramesLeft;
-		if (m_Capture_FramesLeft <= 0) {
-			m_Capture_FramesLeft = 0;
-			m_Capture_Started = false;
-		}
-	}
+        if (m_RDdocPtr) {
+            printf("Renderdoc Capture Started (frames left: %i)\n", m_Capture_FramesLeft);
+            m_RDdocPtr->StartFrameCapture(NULL, NULL);
+        }
+    }
 
-    void Unit();
+    void endCaptureIfResquested() {
+        if (!m_Capture_Started)
+            return;
 
-    void RequestCapture(int32_t aFrameCount = 1);
-    bool IsCaptureRequested();
-    bool IsCaptureStarted();
+        // stop the capture
+        if (m_RDdocPtr) {
+            m_RDdocPtr->EndFrameCapture(NULL, NULL);
+            printf("Renderdoc Capture Ended (frames left: %i)\n", m_Capture_FramesLeft - 1);
+        }
 
-    void StartCaptureIfResquested();
-    void EndCaptureIfResquested();
-
-public:
-
-protected:
-    RenderDocController() = default;                            // Prevent construction
-    RenderDocController(const RenderDocController&) = default;  // Prevent construction by copying
-    RenderDocController& operator=(const RenderDocController&) {
-        return *this;
-    };                                 // Prevent assignment
-    virtual ~RenderDocController() = default;  // Prevent unwanted destruction
+        --m_Capture_FramesLeft;
+        if (m_Capture_FramesLeft <= 0) {
+            m_Capture_FramesLeft = 0;
+            m_Capture_Started = false;
+        }
+    }
 };
+
+}  // namespace ez
 
 #endif // __EMSCRIPTEN__
