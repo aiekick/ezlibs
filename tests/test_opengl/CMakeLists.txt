@@ -95,7 +95,7 @@ target_include_directories(${PROJECT} PRIVATE
 )
 
 set_target_properties(glad PROPERTIES FOLDER 3rdparty)
-set_target_properties(${PROJECT} PROPERTIES FOLDER Tests)
+set_target_properties(${PROJECT} PROPERTIES FOLDER tests/ezlibs)
 
 target_compile_definitions(${PROJECT} PRIVATE 
 	-DOPENGL_LOADER="${GLAD_INCLUDE_DIR}/glad/glad.h"

@@ -34,7 +34,7 @@ add_executable(${PROJECT}
 	${PROJECT_TEST_SRC_RECURSE}
 )
 
-set_target_properties(${PROJECT} PROPERTIES FOLDER Tests)
+set_target_properties(${PROJECT} PROPERTIES FOLDER tests/ezlibs)
 
 target_include_directories(${PROJECT} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}
