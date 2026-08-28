@@ -343,9 +343,6 @@ inline bool Sampler::refreshGpuUsage(double a_elapsed_seconds, double& ao_gpu_us
 // platform-independent members, defined after PlatformState is a complete type
 // so the unique_ptr destructor (via unit()) and create() see the full definition
 
-// a returned sampler is ALWAYS initialized : nullptr is the only failure
-// signal, so a caller cannot end up holding a silent no-op sampler whose
-// sample() returns early and reports 0% forever
 inline Sampler::SamplerPtr Sampler::create() {
     auto pRet = SamplerPtr(new Sampler());
     if (!pRet->init()) {
@@ -442,7 +439,7 @@ void burnCpuForMilliseconds(uint32_t a_duration_ms) {
 
 int main() {
     ez::hwm::Sampler::SamplerPtr sampler = ez::hwm::Sampler::create();
-    if (sampler == nullptr) { // create() inits : null means the platform counters refused
+    if (!sampler->init()) {
         std::printf("failed to init hardware sampler\n");
         return 1;
     }

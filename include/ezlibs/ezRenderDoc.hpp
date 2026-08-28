@@ -741,12 +741,16 @@ SOFTWARE.
 #include "ezClass.hpp"
 #include "ezSingleton.hpp"
 
+#include <cstdio>  // printf (msvc leaks it transitively, gcc does not)
+
 #ifndef __EMSCRIPTEN__
 
 #pragma warning(disable : 4251)
 
 #ifdef WIN32
 #include <Windows.h>
+#else
+#include <dlfcn.h>  // dlopen / dlsym / RTLD_* for the linux and apple branches
 #endif
 
 namespace ez {
