@@ -1,6 +1,7 @@
 #ifdef TESTING_WIP
 #include <TestEzLzw.h>
 #endif
+#include <TestEzBinToSrc.h>
 
 #include <string>
 
@@ -18,6 +19,7 @@ bool TestFile(const std::string& vTest) {
 #ifdef TESTING_WIP
     IfTestCollectionExist(TestEzLzw);
 #endif
+    IfTestCollectionExist(TestEzBinToSrc);
     return false;
 }
 

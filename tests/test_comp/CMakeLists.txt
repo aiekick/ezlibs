@@ -17,8 +17,9 @@ file(GLOB_RECURSE PROJECT_TEST_SRC_RECURSE
 	${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX Src FILES ${PROJECT_TEST_SRC_RECURSE})
 
-file(GLOB SRC_RECURSE 
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezLzw.hpp)
+file(GLOB SRC_RECURSE
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezLzw.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezBinToSrc.hpp)
 source_group(TREE ${EZ_LIBS_INCLUDE_DIR}/ezlibs PREFIX Libs FILES ${SRC_RECURSE})
 
 add_executable(${PROJECT} 
@@ -45,3 +46,14 @@ StageBuildInc()
 if (TESTING_WIP)
 	AddTest("TestEzLzw_0")
 endif()
+
+##########################################################
+##### TESTS EzBinToSrc ###################################
+##########################################################
+
+AddTest("TestEzBinToSrc_compressRoundTripsThroughTheReferenceReader")
+AddTest("TestEzBinToSrc_compressHandlesTheTinyAndEmptyInputs")
+AddTest("TestEzBinToSrc_base85SpeaksTheImguiAlphabet")
+AddTest("TestEzBinToSrc_formatEmitsAConsumableStringLiteral")
+AddTest("TestEzBinToSrc_formatEscapesTheTrigraphTwins")
+AddTest("TestEzBinToSrc_formatSwitchesToAByteListWhenHuge")
