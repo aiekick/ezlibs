@@ -312,6 +312,30 @@ bool TestEzFile_saveBinToFileWithTimestamp() {
     return true;
 }
 
+bool TestEzFile_saveStringToFileRefusesAnUnopenablePath() {
+    // a path through a missing directory cannot be opened (ofstream
+    // never creates directories) : the failure must be REPORTED —
+    // a failed open raises failbit only, a bad()-based check lies
+    const std::string missingDir = "ezfile_missing_dir_for_refusal";
+    CTEST_ASSERT(!ez::file::isDirectoryExist(missingDir));
+    const std::string target = missingDir + "/refused.txt";
+    CTEST_ASSERT(!ez::file::saveStringToFile("content", target));
+    CTEST_ASSERT(!ez::file::isFileExist(target));
+    return true;
+}
+
+bool TestEzFile_saveBinToFileRefusesAnUnopenablePath() {
+    // same refusal law for the binary writer
+    const std::string missingDir = "ezfile_missing_dir_for_refusal";
+    CTEST_ASSERT(!ez::file::isDirectoryExist(missingDir));
+    const std::string target = missingDir + "/refused.bin";
+    std::vector<uint8_t> payload;
+    payload.push_back(42U);
+    CTEST_ASSERT(!ez::file::saveBinToFile(payload, target));
+    CTEST_ASSERT(!ez::file::isFileExist(target));
+    return true;
+}
+
 bool TestEzFile_PathInfos_GetFPNE() {
     ez::file::PathInfos info("mypath", "myfile", "txt");
     CTEST_ASSERT(info.isOk);
@@ -397,6 +421,8 @@ bool TestEzFile(const std::string& vTest) {
     else IfTestExist(TestEzFile_correctSlashTypeEdgeCases);
     else IfTestExist(TestEzFile_saveStringToFileWithTimestamp);
     else IfTestExist(TestEzFile_saveBinToFileWithTimestamp);
+    else IfTestExist(TestEzFile_saveStringToFileRefusesAnUnopenablePath);
+    else IfTestExist(TestEzFile_saveBinToFileRefusesAnUnopenablePath);
     else IfTestExist(TestEzFile_PathInfos_GetFPNE);
     else IfTestExist(TestEzFile_PathInfos_GetFPNE_WithPath);
     else IfTestExist(TestEzFile_PathInfos_GetFPNE_WithName);

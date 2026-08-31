@@ -109,10 +109,12 @@ inline bool saveStringToFile(const std::string &vDatas, const std::string &vFile
             }
         }
         std::ofstream configFileWriter(fpn, std::ios::out);
-        if (!configFileWriter.bad()) {
+        // a failed open raises failbit, never badbit : is_open() is the
+        // honest gate, and the post-write state reports a short write
+        if (configFileWriter.is_open()) {
             configFileWriter << vDatas;
             configFileWriter.close();
-            return true;
+            return configFileWriter.good();
         }
     }
     return false;
@@ -148,10 +150,12 @@ inline bool saveBinToFile(const std::vector<uint8_t> &vDatas, const std::string 
             }
         }
         std::ofstream out(fpn, std::ios::binary | std::ios::trunc);
-        if (!out.bad()) {
+        // a failed open raises failbit, never badbit : is_open() is the
+        // honest gate, and the post-write state reports a short write
+        if (out.is_open()) {
             out.write(reinterpret_cast<const char *>(vDatas.data()), vDatas.size());
             out.close();
-            return true;
+            return out.good();
         }
     }
 
@@ -345,7 +349,7 @@ inline bool destroyDir(const std::string &vPath, bool vRecursive) {
         op.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT;
         return SHFileOperationA(&op) == 0;
 #elif defined(UNIX_OS)
-        // nftw parcourt et supprime récursivement
+        // nftw parcourt et supprime rï¿½cursivement
         auto cb = [](const char *p, const struct stat *, int, struct FTW *) -> int { return remove(p); };
         return nftw(vPath.c_str(), cb, 64, FTW_DEPTH | FTW_PHYS) == 0;
 #endif
