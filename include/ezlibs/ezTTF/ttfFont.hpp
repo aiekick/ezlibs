@@ -278,6 +278,10 @@ public:
         return (it != m_colr.baseToLayers.end()) ? &it->second : nullptr;
     }
     std::size_t getPaletteCount() const { return m_cpal.palettes.size(); }
+    // the entry count of one palette (0 for an absent palette)
+    std::size_t getPaletteEntryCount(std::size_t aPaletteIdx) const {
+        return (aPaletteIdx < m_cpal.palettes.size()) ? m_cpal.palettes[aPaletteIdx].size() : 0u;
+    }
     bool getPaletteColor(std::size_t aPaletteIdx, uint16_t aEntryIdx, ColorRgba& aoColor) const {
         if (aPaletteIdx >= m_cpal.palettes.size() || static_cast<std::size_t>(aEntryIdx) >= m_cpal.palettes[aPaletteIdx].size()) {
             return false;

@@ -338,11 +338,90 @@ bool TestEzTtfBuilder_OpensTheCommittedFixture() {
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
+// picking a COLR base embarks its layers : the new font keeps the color
+// pair, the layers point at the embarked outline (a real glyph), the
+// palette entries and the text-color sentinel survive
+bool TestEzTtfBuilder_SubsetEmbarksTheColorLayers() {
+    ez::ttf::Font source;
+    CTEST_ASSERT(buildCompositeSourceFont(source, true));
+    ez::ttf::Builder builder;
+    CTEST_ASSERT(builder.addSource(source) == 0);
+    CTEST_ASSERT(builder.pickGlyph(0, 3u, 0x45u, "base"));  // the color base under 'E'
+    ez::ttf::Font out;
+    CTEST_ASSERT(builder.build(out));
+    CTEST_ASSERT(out.hasColorLayers());
+    const ez::ttf::GlyphIndex newBase = out.getGlyphIndex(0x45u);
+    CTEST_ASSERT(newBase != 0u);
+    const std::vector<ez::ttf::ColrLayer>* pLayers = out.getGlyphColorLayers(newBase);
+    CTEST_ASSERT(pLayers != nullptr);
+    CTEST_ASSERT(pLayers->size() == 2u);
+    ez::ttf::Glyph layerGlyph;
+    CTEST_ASSERT(out.getGlyph((*pLayers)[0].glyphIndex, layerGlyph));
+    CTEST_ASSERT(!layerGlyph.isEmpty());
+    CTEST_ASSERT((*pLayers)[0].paletteEntry == 0u);
+    CTEST_ASSERT((*pLayers)[1].paletteEntry == 0xFFFFu);
+    CTEST_ASSERT(out.getPaletteCount() == 1u);
+    CTEST_ASSERT(out.getPaletteEntryCount(0u) == 2u);
+    ez::ttf::ColorRgba color;
+    CTEST_ASSERT(out.getPaletteColor(0u, 0u, color));
+    CTEST_ASSERT(color.red == 255u);
+    CTEST_ASSERT(color.green == 10u);
+    CTEST_ASSERT(color.blue == 20u);
+    return true;
+}
+
+// merging two color sources concatenates their palettes : the second
+// source's entries shift by the first's count, and the text-color
+// sentinel never shifts
+bool TestEzTtfBuilder_MergeConcatenatesThePalettes() {
+    ez::ttf::Font first;
+    ez::ttf::Font second;
+    CTEST_ASSERT(buildCompositeSourceFont(first, true));
+    CTEST_ASSERT(buildCompositeSourceFont(second, true));
+    ez::ttf::Builder builder;
+    CTEST_ASSERT(builder.addSource(first) == 0);
+    CTEST_ASSERT(builder.addSource(second) == 1);
+    CTEST_ASSERT(builder.pickGlyph(0, 3u, 0x45u, "first"));
+    CTEST_ASSERT(builder.pickGlyph(1, 3u, 0x46u, "second"));
+    ez::ttf::Font out;
+    CTEST_ASSERT(builder.build(out));
+    CTEST_ASSERT(out.getPaletteEntryCount(0u) == 4u);
+    const std::vector<ez::ttf::ColrLayer>* pFirstLayers = out.getGlyphColorLayers(out.getGlyphIndex(0x45u));
+    const std::vector<ez::ttf::ColrLayer>* pSecondLayers = out.getGlyphColorLayers(out.getGlyphIndex(0x46u));
+    CTEST_ASSERT(pFirstLayers != nullptr);
+    CTEST_ASSERT(pSecondLayers != nullptr);
+    CTEST_ASSERT((*pFirstLayers)[0].paletteEntry == 0u);
+    CTEST_ASSERT((*pSecondLayers)[0].paletteEntry == 2u);
+    CTEST_ASSERT((*pSecondLayers)[1].paletteEntry == 0xFFFFu);
+    ez::ttf::ColorRgba color;
+    CTEST_ASSERT(out.getPaletteColor(0u, 2u, color));
+    CTEST_ASSERT(color.red == 255u);
+    return true;
+}
+
+// a pick without color from a color source emits NO color table :
+// never an empty pair
+bool TestEzTtfBuilder_PlainPicksEmitNoColorTables() {
+    ez::ttf::Font source;
+    CTEST_ASSERT(buildCompositeSourceFont(source, true));
+    ez::ttf::Builder builder;
+    CTEST_ASSERT(builder.addSource(source) == 0);
+    CTEST_ASSERT(builder.pickGlyph(0, 1u, 0x41u, "triangle"));
+    ez::ttf::Font out;
+    CTEST_ASSERT(builder.build(out));
+    CTEST_ASSERT(!out.hasColorLayers());
+    CTEST_ASSERT(out.getPaletteCount() == 0u);
+    return true;
+}
+
 bool TestEzTtfBuilder(const std::string& vTest) {
     IfTestExist(TestEzTtfBuilder_SubsetEmbarksTheCompositeClosure);
     else IfTestExist(TestEzTtfBuilder_MergesTwoSourcesLastPickWins);
     else IfTestExist(TestEzTtfBuilder_ColorLayersReadAndRoundTrip);
     else IfTestExist(TestEzTtfBuilder_ValidatesAgainstARealFont);
     else IfTestExist(TestEzTtfBuilder_OpensTheCommittedFixture);
+    else IfTestExist(TestEzTtfBuilder_SubsetEmbarksTheColorLayers);
+    else IfTestExist(TestEzTtfBuilder_MergeConcatenatesThePalettes);
+    else IfTestExist(TestEzTtfBuilder_PlainPicksEmitNoColorTables);
     return false;
 }

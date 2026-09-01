@@ -174,6 +174,18 @@ public:
                 m_errors.push_back("build : a composite closure failed (corrupt source glyph)");
                 return false;
             }
+            // a COLR base embarks its layers : each layer is a glyph of its
+            // own (with its own composite closure), reachable through the
+            // base only — it takes no codepoint of the new font
+            const std::vector<ColrLayer>* pLayers = m_sources[static_cast<std::size_t>(pick.sourceIdx)]->getGlyphColorLayers(pick.sourceGlyph);
+            if (pLayers != nullptr) {
+                for (std::size_t layerIdx = 0; layerIdx < pLayers->size(); ++layerIdx) {
+                    if (!m_include(pick.sourceIdx, (*pLayers)[layerIdx].glyphIndex, included, order)) {
+                        m_errors.push_back("build : a color layer closure failed (corrupt source glyph)");
+                        return false;
+                    }
+                }
+            }
         }
         // glyf + loca + metrics + names, in the new order
         LocaTable loca;
@@ -298,6 +310,56 @@ public:
             postTable.tag = kTagPost;
             emitPostTable(post, postTable.bytes);
             tables.push_back(postTable);
+        }
+        // the color side : every included COLR base re-emits its layers at
+        // their NEW indices, and the palettes of the contributing sources
+        // concatenate (palette 0 of each, in order) — every entry of a
+        // source shifts by that source's offset, 0xFFFF (the text color)
+        // never shifts. a pick without color emits no color table at all
+        std::map<GlyphIndex, std::vector<ColrLayer> > newColr;
+        std::vector<ColorRgba> mergedPalette;
+        std::map<int32_t, uint16_t> paletteOffsets;
+        for (std::size_t orderIdx = 0; orderIdx < order.size(); ++orderIdx) {
+            const int32_t sourceIdx = order[orderIdx].first;
+            const Font& source = *m_sources[static_cast<std::size_t>(sourceIdx)];
+            const std::vector<ColrLayer>* pLayers = source.getGlyphColorLayers(order[orderIdx].second);
+            if (pLayers == nullptr) {
+                continue;
+            }
+            if (paletteOffsets.find(sourceIdx) == paletteOffsets.end()) {
+                paletteOffsets[sourceIdx] = static_cast<uint16_t>(mergedPalette.size());
+                const std::size_t entryCount = source.getPaletteEntryCount(0u);
+                for (std::size_t entryIdx = 0; entryIdx < entryCount; ++entryIdx) {
+                    ColorRgba color;
+                    source.getPaletteColor(0u, static_cast<uint16_t>(entryIdx), color);
+                    mergedPalette.push_back(color);
+                }
+            }
+            std::vector<ColrLayer> newLayers;
+            for (std::size_t layerIdx = 0; layerIdx < pLayers->size(); ++layerIdx) {
+                const ColrLayer& layer = (*pLayers)[layerIdx];
+                const std::map<std::pair<int32_t, GlyphIndex>, GlyphIndex>::const_iterator inc = included.find(std::make_pair(sourceIdx, layer.glyphIndex));
+                if (inc == included.end()) {
+                    m_errors.push_back("build : a color layer escaped the closure");
+                    return false;
+                }
+                ColrLayer newLayer;
+                newLayer.glyphIndex = inc->second;
+                newLayer.paletteEntry = (layer.paletteEntry == 0xFFFFu) ? static_cast<uint16_t>(0xFFFFu) : static_cast<uint16_t>(layer.paletteEntry + paletteOffsets[sourceIdx]);
+                newLayers.push_back(newLayer);
+            }
+            newColr[static_cast<GlyphIndex>(orderIdx)] = newLayers;
+        }
+        if (!newColr.empty()) {
+            TaggedTable colrTable;
+            colrTable.tag = kTagColr;
+            emitColrTable(newColr, colrTable.bytes);
+            tables.push_back(colrTable);
+            std::vector<std::vector<ColorRgba> > palettes(1, mergedPalette);
+            TaggedTable cpalTable;
+            cpalTable.tag = kTagCpal;
+            emitCpalTable(palettes, cpalTable.bytes);
+            tables.push_back(cpalTable);
         }
         std::vector<uint8_t> bytes;
         if (!assembleFont(tables, bytes)) {
