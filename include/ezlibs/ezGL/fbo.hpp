@@ -47,13 +47,13 @@ namespace detail {
 template <typename T>
 struct GLTypeOf;
 
-// Par défaut, le type scalaire c'est T lui-même
+// Par dï¿½faut, le type scalaire c'est T lui-mï¿½me
 template <typename T>
 struct ScalarType {
     using type = T;
 };
 
-// Spécialisations pour tes types vec
+// Spï¿½cialisations pour tes types vec
 template <>
 struct ScalarType<ez::math::fvec4> {
     using type = float;
@@ -96,7 +96,7 @@ struct GLTypeOf<uint16_t> {
     static const GLenum value = GL_UNSIGNED_SHORT;
 };
 
-// ScalarType stays the same — already C++11 compatible
+// ScalarType stays the same ï¿½ already C++11 compatible
 
 template <typename T>
 struct GLTypeForT {
@@ -286,6 +286,8 @@ public:
     void unit() {
         glDeleteFramebuffers(1, &m_FBOId);
         CheckGLErrors;
+        delete[] m_ColorDrawBuffers;  // born in init, written by resize : it lives until here
+        m_ColorDrawBuffers = nullptr;
     }
 
     void blitOnScreen(const GLint vX, const GLint vY, const GLint vW, const GLint vH, const GLint vAttachementID, GLbitfield vMask, GLenum vFilter) {
