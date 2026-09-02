@@ -126,6 +126,26 @@ bool TestEzTtfStream_PadToLongAligns() {
     return true;
 }
 
+// an EMPTY read at the very end of the stream is legal : a post table
+// whose last custom name is empty ends exactly there (the read used to
+// index one past the end)
+bool TestEzTtfStream_AnEmptyReadAtTheEndIsLegal() {
+    const uint8_t bytes[] = {0x03u, 'a', 'b', 'c', 0x00u};
+    ez::ttf::Stream stream(bytes, sizeof(bytes));
+    CTEST_ASSERT(stream.readU8() == 3u);
+    CTEST_ASSERT(stream.readString(3u) == "abc");
+    CTEST_ASSERT(stream.readU8() == 0u);
+    CTEST_ASSERT(stream.getReadPos() == sizeof(bytes));
+    CTEST_ASSERT(stream.readString(0u).empty());
+    CTEST_ASSERT(stream.ok());
+    uint8_t sink[1] = {0xFFu};
+    CTEST_ASSERT(stream.readBytes(sink, 0u));
+    CTEST_ASSERT(stream.ok());
+    CTEST_ASSERT(stream.readString(1u).empty());
+    CTEST_ASSERT(!stream.ok());  // one byte past the end : the error latches
+    return true;
+}
+
 bool TestEzTtfStream_AppendStreamAndString() {
     ez::ttf::Stream tableStream;
     tableStream.writeTag(ez::ttf::kTagName);
@@ -152,5 +172,6 @@ bool TestEzTtfStream(const std::string& vTest) {
     else IfTestExist(TestEzTtfStream_ReadBytesIsAllOrNothing);
     else IfTestExist(TestEzTtfStream_PadToLongAligns);
     else IfTestExist(TestEzTtfStream_AppendStreamAndString);
+    else IfTestExist(TestEzTtfStream_AnEmptyReadAtTheEndIsLegal);
     return false;
 }

@@ -77,6 +77,7 @@ AddTest("TestEzTtfStream_SeekPastEndLatchesTheError")
 AddTest("TestEzTtfStream_ReadBytesIsAllOrNothing")
 AddTest("TestEzTtfStream_PadToLongAligns")
 AddTest("TestEzTtfStream_AppendStreamAndString")
+AddTest("TestEzTtfStream_AnEmptyReadAtTheEndIsLegal")
 
 ##########################################################
 ##### TESTS EzTtfTables ##################################
@@ -141,3 +142,4 @@ AddTest("TestEzTtfSynthesizer_BuildsAFontThatReopens")
 AddTest("TestEzTtfSynthesizer_ColorLayersRoundTrip")
 AddTest("TestEzTtfSynthesizer_MergesThroughTheBuilder")
 AddTest("TestEzTtfSynthesizer_RefusesUnknownLayers")
+AddTest("TestEzTtfSynthesizer_APlainGlyphBeforeTheColoredOne")

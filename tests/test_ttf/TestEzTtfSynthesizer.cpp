@@ -165,6 +165,31 @@ bool TestEzTtfSynthesizer_MergesThroughTheBuilder() {
     return true;
 }
 
+// the colored base need not be the first glyph : a plain glyph before
+// it, its layers after everything — every seat as given
+bool TestEzTtfSynthesizer_APlainGlyphBeforeTheColoredOne() {
+    ez::ttf::Synthesizer synth;
+    synth.setMetrics(2048u, 1638, -410, 0);
+    const ez::ttf::GlyphIndex plain = synth.addGlyph(local_square(0.0, 0.0, 1024.0), 2048u, 0xE000u, "ink");
+    const ez::ttf::GlyphIndex base = synth.addGlyph(local_square(0.0, 0.0, 2048.0), 2048u, 0xE001u, "mixed");
+    const ez::ttf::GlyphIndex blackLayer = synth.addGlyph(local_square(0.0, 0.0, 1024.0), 0u, 0u, "");
+    const ez::ttf::GlyphIndex redLayer = synth.addGlyph(local_square(1024.0, 0.0, 1024.0), 0u, 0u, "");
+    CTEST_ASSERT(synth.addColorLayer(base, blackLayer, local_color(0, 0, 0)));
+    CTEST_ASSERT(synth.addColorLayer(base, redLayer, local_color(255, 0, 0)));
+    ez::ttf::Font font;
+    CTEST_ASSERT_MESSAGE(synth.build(font), "the font with a plain glyph before the colored one failed to build");
+    CTEST_ASSERT(font.getGlyphColorLayers(plain) == nullptr);
+    const std::vector<ez::ttf::ColrLayer>* pLayers = font.getGlyphColorLayers(base);
+    CTEST_ASSERT(pLayers != nullptr);
+    CTEST_ASSERT(pLayers->size() == 2u);
+    std::vector<uint8_t> bytes;
+    CTEST_ASSERT(font.writeToMemory(bytes));
+    ez::ttf::Font again;
+    CTEST_ASSERT(again.openFromMemory(&bytes[0], bytes.size()));
+    CTEST_ASSERT(again.getGlyphColorLayers(base) != nullptr);
+    return true;
+}
+
 bool TestEzTtfSynthesizer_RefusesUnknownLayers() {
     ez::ttf::Synthesizer synth;
     const ez::ttf::GlyphIndex base = synth.addGlyph(local_square(0.0, 0.0, 100.0), 100u, 0xE000u, "x");
@@ -187,5 +212,6 @@ bool TestEzTtfSynthesizer(const std::string& vTest) {
     else IfTestExist(TestEzTtfSynthesizer_ColorLayersRoundTrip);
     else IfTestExist(TestEzTtfSynthesizer_MergesThroughTheBuilder);
     else IfTestExist(TestEzTtfSynthesizer_RefusesUnknownLayers);
+    else IfTestExist(TestEzTtfSynthesizer_APlainGlyphBeforeTheColoredOne);
     return false;
 }

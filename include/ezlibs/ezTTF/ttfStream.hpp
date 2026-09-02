@@ -185,6 +185,9 @@ public:
         if (!m_canRead(aLength)) {
             return std::string();
         }
+        if (aLength == 0) {
+            return std::string();  // an empty string at the very end : legal, nothing to index
+        }
         std::string ret(reinterpret_cast<const char*>(&m_bytes[m_readPos]), aLength);
         m_readPos += aLength;
         return ret;
