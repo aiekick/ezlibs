@@ -3,7 +3,6 @@
 #ifdef TESTING_WIP
 #include <TestEzGif.h>
 #include <TestEzPng.h>
-#include <TestEzSvg.h>
 #include <TestEzJson.h>
 #endif
 #include <TestEzFile.h>
@@ -26,7 +25,6 @@ bool TestFile(const std::string& vTest) {
 #ifdef TESTING_WIP
     else IfTestCollectionExist(TestEzGif);
     else IfTestCollectionExist(TestEzPng);
-    else IfTestCollectionExist(TestEzSvg);
     else IfTestCollectionExist(TestEzJson);
 #endif
     else IfTestCollectionExist(TestEzBinBuf);

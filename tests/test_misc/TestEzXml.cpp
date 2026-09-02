@@ -331,6 +331,34 @@ bool TestEzXml_AttributeWithTemplateTypes() {
     return true;
 }
 
+// the law of a REAL document (an svg from inkscape, illustrator, an icon
+// pack) : the xml prologue, a doctype and a comment before the root are
+// not elements — the root element is found among the top level nodes,
+// whole, with its attributes and its children
+bool TestEzXml_ParsesAPrologueAndADoctype() {
+    const std::string doc =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+        "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n"
+        "<!-- made by hand -->\n"
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">\n"
+        "  <path d=\"M0 0h24v24H0z\"/>\n"
+        "</svg>\n";
+    ez::Xml xml;
+    CTEST_ASSERT(xml.parseString(doc));
+    const ez::xml::Node* pSvg = nullptr;
+    for (const auto& child : xml.getRoot().getChildren()) {
+        if (child.getName() == "svg") {
+            pSvg = &child;
+        }
+    }
+    CTEST_ASSERT(pSvg != nullptr);
+    CTEST_ASSERT(pSvg->getAttribute<std::string>("viewBox") == "0 0 24 24");
+    CTEST_ASSERT(pSvg->getChildren().size() == 1U);
+    CTEST_ASSERT(pSvg->getChildren()[0].getName() == "path");
+    CTEST_ASSERT(pSvg->getChildren()[0].getAttribute<std::string>("d") == "M0 0h24v24H0z");
+    return true;
+}
+
 bool TestEzXml_ReplaceAll() {
     std::string str = "hello world hello";
     ez::xml::Node::replaceAll(str, "hello", "hi");
@@ -367,6 +395,7 @@ bool TestEzXml(const std::string &vTest) {
     else IfTestExist(TestEzXml_AddChilds);
     else IfTestExist(TestEzXml_AttributeWithTemplateTypes);
     else IfTestExist(TestEzXml_ReplaceAll);
+    else IfTestExist(TestEzXml_ParsesAPrologueAndADoctype);
     return false;
 }
 

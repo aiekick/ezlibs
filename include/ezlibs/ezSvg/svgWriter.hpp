@@ -68,16 +68,16 @@ int main() {
 #include "../ezXml.hpp"
 
 namespace ez {
-    namespace img {
+    namespace svg {
 
-        class Svg {
+        class Writer {
         private:
             ez::math::uvec2 m_size{800U};
             std::vector<ez::xml::Node> m_elements;
             std::vector<ez::xml::Node> m_gradients;
 
         public:
-            Svg(const ez::math::uvec2 &vSize = 800U) : m_size(vSize) {}
+            Writer(const ez::math::uvec2 &vSize = 800U) : m_size(vSize) {}
 
             void addRectangle(  //
                     const ez::math::uvec2 &vMin,
@@ -210,5 +210,12 @@ namespace ez {
             }
         };
 
+    }  // namespace svg
+}  // namespace ez
+
+// the historical name of the writer (the wip days) : kept as an alias
+namespace ez {
+    namespace img {
+        typedef ez::svg::Writer Svg;
     }  // namespace img
 }  // namespace ez

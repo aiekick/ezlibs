@@ -37,6 +37,7 @@ file(GLOB SRC_RECURSE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezPlane.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezAABB.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezSdf.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezBezier.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezAABBCC.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVariant.hpp)
 source_group(TREE ${EZ_LIBS_INCLUDE_DIR}/ezlibs PREFIX Libs FILES ${SRC_RECURSE})
@@ -1098,3 +1099,13 @@ AddTest("TestEzSdf_SegmentBoxesAnyHitIsTrue<float>")
 AddTest("TestEzSdf_SegmentBoxesAnyHitIsTrue<double>")
 AddTest("TestEzSdf_SegmentBoxesNoneHitIsFalse<float>")
 AddTest("TestEzSdf_SegmentBoxesNoneHitIsFalse<double>")
+
+##########################################################
+##### TESTS EzBezier #####################################
+##########################################################
+
+AddTest("TestEzBezier_CubicToQuadraticsStaysWithinTolerance")
+AddTest("TestEzBezier_AnElevatedQuadraticGivesOneQuadratic")
+AddTest("TestEzBezier_ArcOfAQuarterTurnLandsOnTheCircle")
+AddTest("TestEzBezier_ArcRadiiTooSmallAreScaledUp")
+AddTest("TestEzBezier_DegenerateArcsAreLines")

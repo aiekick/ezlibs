@@ -198,9 +198,21 @@ namespace ez {
                 return m_attributes;
             }
 
+            // specific case for std::string : the RAW value, spaces included
+            // (a stream extraction stops at the first one — a path, a
+            // transform list, a viewBox, a name with a space lost its tail)
             template<typename T = std::string>
-            T getAttribute(const std::string &vKey) const {
-                T ret;
+            typename std::enable_if<std::is_same<T, std::string>::value, T>::type getAttribute(const std::string &vKey) const {
+                auto it = m_attributes.find(vKey);
+                if (it != m_attributes.end()) {
+                    return it->second.getValue();
+                }
+                return T();
+            }
+
+            template<typename T>
+            typename std::enable_if<!std::is_same<T, std::string>::value, T>::type getAttribute(const std::string &vKey) const {
+                T ret{};
                 std::stringstream ss;
                 auto it = m_attributes.find(vKey);
                 if (it != m_attributes.end()) {
@@ -453,6 +465,16 @@ namespace ez {
             TokenType type = TokenType::Count;
             while (pos < length) {
                 if (vDoc[pos] == '<') {
+                    if ((pos + 1 < length) && (vDoc[pos + 1] == '?')) {
+                        // a processing instruction (the xml prologue of a real
+                        // document) : not an element, skipped whole
+                        const size_t end = vDoc.find("?>", pos);
+                        if (end == std::string::npos) {
+                            break;
+                        }
+                        pos = end + 2;
+                        continue;
+                    }
                     type = TokenType::OPENED;
                     if (vDoc[pos + 1] == '/') {
                         type = TokenType::CLOSED;

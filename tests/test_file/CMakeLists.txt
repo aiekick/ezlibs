@@ -25,7 +25,6 @@ file(GLOB SRC_RECURSE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezBinBuf.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/wip/ezGif.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/wip/ezPng.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/wip/ezSvg.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/wip/ezJson.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVdbWriter.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVoxWriter.hpp
@@ -128,14 +127,6 @@ endif()
 
 if (TESTING_WIP)
 	AddTest("TestEzPng_Writer")
-endif()
-
-##########################################################
-##### TESTS EzSvg ########################################
-##########################################################
-
-if (TESTING_WIP)
-	AddTest("TestEzSvg_Writer")
 endif()
 
 ##########################################################
