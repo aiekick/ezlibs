@@ -3,6 +3,9 @@
 #include <TestEzTtfTables.h>
 #include <TestEzTtfFont.h>
 #include <TestEzTtfBuilder.h>
+#include <TestEzTtfGlyph.h>
+#include <TestEzTtfOutline.h>
+#include <TestEzTtfSynthesizer.h>
 
 #include <string>
 #include <cstdio>
@@ -20,6 +23,9 @@ bool TestTtf(const std::string& vTest) {
     else IfTestCollectionExist(TestEzTtfFont);
     else IfTestCollectionExist(TestEzTtfBuilder);
     else IfTestCollectionExist(TestEzTtfTypes);
+    else IfTestCollectionExist(TestEzTtfGlyph);
+    else IfTestCollectionExist(TestEzTtfOutline);
+    else IfTestCollectionExist(TestEzTtfSynthesizer);
     return false;
 }
 

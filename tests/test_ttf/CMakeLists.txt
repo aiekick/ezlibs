@@ -26,7 +26,10 @@ file(GLOB EZ_LIBS_SOURCE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezTTF/ttfGlyph.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezTTF/ttfWriter.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezTTF/ttfFont.hpp
-	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezTTF/ttfBuilder.hpp)
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezTTF/ttfBuilder.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezTTF/ttfOutline.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezTTF/ttfSynthesizer.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezBezier.hpp)
 source_group(TREE ${EZ_LIBS_INCLUDE_DIR}/ezlibs PREFIX Libs FILES ${EZ_LIBS_SOURCE})
 
 add_executable(${PROJECT}
@@ -110,3 +113,31 @@ AddTest("TestEzTtfBuilder_SubsetEmbarksTheColorLayers")
 AddTest("TestEzTtfBuilder_MergeConcatenatesThePalettes")
 AddTest("TestEzTtfBuilder_PlainPicksEmitNoColorTables")
 AddTest("TestEzTtfBuilder_BuildTellsTheNewIndexOfEveryPick")
+
+##########################################################
+##### TESTS EzTtfGlyph (the emitter) #####################
+##########################################################
+
+AddTest("TestEzTtfGlyph_EmitParseRoundTripsASimpleGlyph")
+AddTest("TestEzTtfGlyph_EmitParseRoundTripsAComposite")
+AddTest("TestEzTtfGlyph_AnEmptyGlyphEmitsNothing")
+AddTest("TestEzTtfGlyph_RoundTripsEveryGlyphOfARealFont")
+
+##########################################################
+##### TESTS EzTtfOutline (the pen) #######################
+##########################################################
+
+AddTest("TestEzTtfOutline_ASquareIsOneClosedContour")
+AddTest("TestEzTtfOutline_ACircleOfCubicsBecomesQuadratics")
+AddTest("TestEzTtfOutline_TheTransformFlipsAndScales")
+AddTest("TestEzTtfOutline_DuplicateClosingPointIsDropped")
+AddTest("TestEzTtfOutline_QuantizationRoundsAndClamps")
+
+##########################################################
+##### TESTS EzTtfSynthesizer #############################
+##########################################################
+
+AddTest("TestEzTtfSynthesizer_BuildsAFontThatReopens")
+AddTest("TestEzTtfSynthesizer_ColorLayersRoundTrip")
+AddTest("TestEzTtfSynthesizer_MergesThroughTheBuilder")
+AddTest("TestEzTtfSynthesizer_RefusesUnknownLayers")

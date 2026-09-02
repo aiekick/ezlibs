@@ -36,6 +36,8 @@ SOFTWARE.
 #include "ttfStream.hpp"
 #include "ttfTables.hpp"
 #include "ttfGlyph.hpp"
+#include "ttfOutline.hpp"
 #include "ttfWriter.hpp"
 #include "ttfFont.hpp"
 #include "ttfBuilder.hpp"
+#include "ttfSynthesizer.hpp"

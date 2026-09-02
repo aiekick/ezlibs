@@ -226,5 +226,169 @@ inline bool parseGlyphData(const uint8_t* apBytes, std::size_t aByteCount, Glyph
     return true;
 }
 
+// the bounding box of a SIMPLE glyph from its points (no point : zeros).
+// a composite keeps the fields it carries : its box depends on the
+// components, which live elsewhere
+inline void computeGlyphBounds(Glyph& aoGlyph) {
+    if (aoGlyph.isComposite) {
+        return;
+    }
+    auto first = true;
+    aoGlyph.xMin = 0;
+    aoGlyph.yMin = 0;
+    aoGlyph.xMax = 0;
+    aoGlyph.yMax = 0;
+    for (std::size_t contourIdx = 0; contourIdx < aoGlyph.contours.size(); ++contourIdx) {
+        const std::vector<GlyphPoint>& contour = aoGlyph.contours[contourIdx];
+        for (std::size_t pointIdx = 0; pointIdx < contour.size(); ++pointIdx) {
+            const GlyphPoint& point = contour[pointIdx];
+            if (first) {
+                aoGlyph.xMin = point.x;
+                aoGlyph.yMin = point.y;
+                aoGlyph.xMax = point.x;
+                aoGlyph.yMax = point.y;
+                first = false;
+            } else {
+                aoGlyph.xMin = (point.x < aoGlyph.xMin) ? point.x : aoGlyph.xMin;
+                aoGlyph.yMin = (point.y < aoGlyph.yMin) ? point.y : aoGlyph.yMin;
+                aoGlyph.xMax = (point.x > aoGlyph.xMax) ? point.x : aoGlyph.xMax;
+                aoGlyph.yMax = (point.y > aoGlyph.yMax) ? point.y : aoGlyph.yMax;
+            }
+        }
+    }
+}
+
+// emits ONE glyf entry, the inverse of parseGlyphData : NOTHING for an
+// empty glyph (an empty span is a space), the contours of a simple glyph
+// with packed flags and short deltas, the components of a composite (xy
+// args, words when a byte cannot hold them, the scale flavour the values
+// need — the flags the model does not keep are not written). the header
+// box rides as the glyph carries it : computeGlyphBounds first. the
+// deltas between consecutive points must fit an int16, as the format says
+inline void emitGlyphData(const Glyph& aGlyph, Stream& aoStream) {
+    if (aGlyph.isEmpty()) {
+        return;
+    }
+    if (!aGlyph.isComposite) {
+        std::vector<uint8_t> flags;
+        Stream xLane;
+        Stream yLane;
+        int32_t previousX = 0;
+        int32_t previousY = 0;
+        std::vector<uint16_t> endPts;
+        uint32_t pointCount = 0;
+        for (std::size_t contourIdx = 0; contourIdx < aGlyph.contours.size(); ++contourIdx) {
+            const std::vector<GlyphPoint>& contour = aGlyph.contours[contourIdx];
+            for (std::size_t pointIdx = 0; pointIdx < contour.size(); ++pointIdx) {
+                const GlyphPoint& point = contour[pointIdx];
+                uint8_t flag = point.onCurve ? kGlyfOnCurve : 0u;
+                const int32_t deltaX = static_cast<int32_t>(point.x) - previousX;
+                const int32_t deltaY = static_cast<int32_t>(point.y) - previousY;
+                previousX = point.x;
+                previousY = point.y;
+                if (deltaX == 0) {
+                    flag |= kGlyfXSameOrPositive;
+                } else if ((deltaX > -256) && (deltaX < 256)) {
+                    flag |= kGlyfXShort;
+                    if (deltaX > 0) {
+                        flag |= kGlyfXSameOrPositive;
+                    }
+                    xLane.writeU8(static_cast<uint8_t>((deltaX < 0) ? -deltaX : deltaX));
+                } else {
+                    xLane.writeI16(static_cast<int16_t>(deltaX));
+                }
+                if (deltaY == 0) {
+                    flag |= kGlyfYSameOrPositive;
+                } else if ((deltaY > -256) && (deltaY < 256)) {
+                    flag |= kGlyfYShort;
+                    if (deltaY > 0) {
+                        flag |= kGlyfYSameOrPositive;
+                    }
+                    yLane.writeU8(static_cast<uint8_t>((deltaY < 0) ? -deltaY : deltaY));
+                } else {
+                    yLane.writeI16(static_cast<int16_t>(deltaY));
+                }
+                flags.push_back(flag);
+                ++pointCount;
+            }
+            endPts.push_back(static_cast<uint16_t>(pointCount - 1u));
+        }
+        aoStream.writeI16(static_cast<int16_t>(aGlyph.contours.size()));
+        aoStream.writeI16(aGlyph.xMin);
+        aoStream.writeI16(aGlyph.yMin);
+        aoStream.writeI16(aGlyph.xMax);
+        aoStream.writeI16(aGlyph.yMax);
+        for (std::size_t contourIdx = 0; contourIdx < endPts.size(); ++contourIdx) {
+            aoStream.writeU16(endPts[contourIdx]);
+        }
+        aoStream.writeU16(0u);  // no instructions : the hints are not ours
+        // the flags, a run of equal ones compressed with REPEAT
+        std::size_t flagIdx = 0;
+        while (flagIdx < flags.size()) {
+            const uint8_t flag = flags[flagIdx];
+            std::size_t run = 1;
+            while (((flagIdx + run) < flags.size()) && (flags[flagIdx + run] == flag) && (run < 256u)) {
+                ++run;
+            }
+            if (run == 1u) {
+                aoStream.writeU8(flag);
+            } else {
+                aoStream.writeU8(static_cast<uint8_t>(flag | kGlyfRepeat));
+                aoStream.writeU8(static_cast<uint8_t>(run - 1u));
+            }
+            flagIdx += run;
+        }
+        aoStream.writeBytes(xLane.getBytes(), xLane.getSize());
+        aoStream.writeBytes(yLane.getBytes(), yLane.getSize());
+        return;
+    }
+    aoStream.writeI16(-1);
+    aoStream.writeI16(aGlyph.xMin);
+    aoStream.writeI16(aGlyph.yMin);
+    aoStream.writeI16(aGlyph.xMax);
+    aoStream.writeI16(aGlyph.yMax);
+    for (std::size_t componentIdx = 0; componentIdx < aGlyph.components.size(); ++componentIdx) {
+        const GlyphComponent& component = aGlyph.components[componentIdx];
+        uint16_t flags = kGlyfArgsAreXY;
+        const bool words = (component.offsetX < -128) || (component.offsetX > 127) || (component.offsetY < -128) || (component.offsetY > 127);
+        if (words) {
+            flags |= kGlyfArgsAreWords;
+        }
+        const bool twoByTwo = (component.scaleXY.raw != 0) || (component.scaleYX.raw != 0);
+        const bool xyScale = !twoByTwo && (component.scaleXX.raw != component.scaleYY.raw);
+        const bool uniformScale = !twoByTwo && !xyScale && (component.scaleXX.raw != 0x4000);
+        if (twoByTwo) {
+            flags |= kGlyfHasTwoByTwo;
+        } else if (xyScale) {
+            flags |= kGlyfHasXYScale;
+        } else if (uniformScale) {
+            flags |= kGlyfHasScale;
+        }
+        if (componentIdx + 1u < aGlyph.components.size()) {
+            flags |= kGlyfMoreComponents;
+        }
+        aoStream.writeU16(flags);
+        aoStream.writeU16(component.glyphIndex);
+        if (words) {
+            aoStream.writeI16(component.offsetX);
+            aoStream.writeI16(component.offsetY);
+        } else {
+            aoStream.writeU8(static_cast<uint8_t>(static_cast<int8_t>(component.offsetX)));
+            aoStream.writeU8(static_cast<uint8_t>(static_cast<int8_t>(component.offsetY)));
+        }
+        if (twoByTwo) {
+            aoStream.writeF2DOT14(component.scaleXX);
+            aoStream.writeF2DOT14(component.scaleXY);
+            aoStream.writeF2DOT14(component.scaleYX);
+            aoStream.writeF2DOT14(component.scaleYY);
+        } else if (xyScale) {
+            aoStream.writeF2DOT14(component.scaleXX);
+            aoStream.writeF2DOT14(component.scaleYY);
+        } else if (uniformScale) {
+            aoStream.writeF2DOT14(component.scaleXX);
+        }
+    }
+}
+
 }  // namespace ttf
 }  // namespace ez
