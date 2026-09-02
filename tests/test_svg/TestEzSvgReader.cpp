@@ -106,12 +106,42 @@ bool TestEzSvgReader_StyleWinsOverTheAttribute() {
     return true;
 }
 
-// no stroking here : a stroke-only shape is not kept, but it is counted
-bool TestEzSvgReader_StrokeOnlyShapesAreCountedNotKept() {
+// a stroked shape keeps its stroke : the paint, the width scaled by the
+// transform, the caps, the joins, the limit, the opacity — inherited
+// from the group, overridden by the style ; a line is stroke only by
+// nature ; a shape with neither a fill nor a stroke is nothing to see
+bool TestEzSvgReader_StrokedShapesKeepTheirStroke() {
     ez::svg::Document document;
-    CTEST_ASSERT(local_read("<svg><path fill=\"none\" stroke=\"black\" d=\"M0 0h10\"/><line x1=\"0\" y1=\"0\" x2=\"5\" y2=\"5\" stroke=\"red\"/><path fill=\"none\" d=\"M0 0h1v1z\"/></svg>", document));
-    CTEST_ASSERT(document.shapes.empty());
-    CTEST_ASSERT(local_warningMentions(document, "2 shapes ignored : stroke only"));
+    CTEST_ASSERT(local_read(
+        "<svg><path fill=\"none\" stroke=\"black\" stroke-width=\"2\" d=\"M0 0h10\"/>"
+        "<line x1=\"0\" y1=\"0\" x2=\"5\" y2=\"5\" stroke=\"red\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"bevel\" stroke-miterlimit=\"2\" stroke-opacity=\"0.5\"/>"
+        "<path fill=\"none\" d=\"M0 0h1v1z\"/>"
+        "<g stroke=\"blue\" stroke-width=\"4\" transform=\"scale(2)\"><path d=\"M0 0h1\" style=\"stroke:#0f0;stroke-linejoin:round\"/></g></svg>",
+        document));
+    CTEST_ASSERT(document.shapes.size() == 3u);
+    const ez::svg::Shape& bar = document.shapes[0];
+    CTEST_ASSERT(bar.fill.kind == ez::svg::PaintKind::None);
+    CTEST_ASSERT(bar.stroke.isVisible());
+    CTEST_ASSERT(local_isColor(bar.stroke.paint, 0, 0, 0));
+    CTEST_ASSERT(std::fabs(bar.stroke.width - 2.0) < 1e-9);
+    CTEST_ASSERT(bar.stroke.cap == ez::svg::LineCap::Butt);
+    CTEST_ASSERT(bar.stroke.join == ez::svg::LineJoin::Miter);
+    const ez::svg::Shape& line = document.shapes[1];
+    CTEST_ASSERT(line.fill.kind == ez::svg::PaintKind::None);
+    CTEST_ASSERT(local_isColor(line.stroke.paint, 255, 0, 0));
+    CTEST_ASSERT(std::fabs(line.stroke.width - 3.0) < 1e-9);
+    CTEST_ASSERT(line.stroke.cap == ez::svg::LineCap::Round);
+    CTEST_ASSERT(line.stroke.join == ez::svg::LineJoin::Bevel);
+    CTEST_ASSERT(std::fabs(line.stroke.miterLimit - 2.0) < 1e-9);
+    CTEST_ASSERT(std::fabs(line.stroke.opacity - 0.5) < 1e-9);
+    CTEST_ASSERT(line.subPaths.size() == 1u);
+    CTEST_ASSERT(local_near(line.subPaths[0].segments[0].end, 5.0, 5.0));
+    const ez::svg::Shape& scaled = document.shapes[2];
+    CTEST_ASSERT(local_isColor(scaled.fill, 0, 0, 0));  // the initial fill, black, still paints
+    CTEST_ASSERT(local_isColor(scaled.stroke.paint, 0, 255, 0));
+    CTEST_ASSERT(std::fabs(scaled.stroke.width - 8.0) < 1e-9);
+    CTEST_ASSERT(scaled.stroke.join == ez::svg::LineJoin::Round);
+    CTEST_ASSERT(document.warnings.empty());
     return true;
 }
 
@@ -212,7 +242,7 @@ bool TestEzSvgReader_UnsupportedFillKeepsTheShape() {
     CTEST_ASSERT(document.shapes.size() == 1u);
     CTEST_ASSERT(document.shapes[0].fill.kind == ez::svg::PaintKind::Unsupported);
     CTEST_ASSERT(document.shapes[0].fill.reference == "#g");
-    CTEST_ASSERT(local_warningMentions(document, "1 fills unsupported"));
+    CTEST_ASSERT(local_warningMentions(document, "1 paints unsupported"));
     return true;
 }
 
@@ -234,7 +264,7 @@ bool TestEzSvgReader(const std::string& vTest) {
     else IfTestExist(TestEzSvgReader_GroupTransformsCompose);
     else IfTestExist(TestEzSvgReader_GroupFillIsInherited);
     else IfTestExist(TestEzSvgReader_StyleWinsOverTheAttribute);
-    else IfTestExist(TestEzSvgReader_StrokeOnlyShapesAreCountedNotKept);
+    else IfTestExist(TestEzSvgReader_StrokedShapesKeepTheirStroke);
     else IfTestExist(TestEzSvgReader_HiddenElementsAreSkipped);
     else IfTestExist(TestEzSvgReader_UnsupportedElementsAreCounted);
     else IfTestExist(TestEzSvgReader_PrologueDoctypeAndCommentsPass);

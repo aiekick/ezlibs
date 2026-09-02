@@ -150,6 +150,38 @@ inline void cubicToQuadratics(const dvec2& aP0, const dvec2& aC0, const dvec2& a
     detail::cubicToQuadraticsSplit(aP0, aC0, aC1, aP1, (aTolerance > 0.0) ? aTolerance : 0.0, 0, aMaxDepth, aoQuads);
 }
 
+// flattens a cubic into the points of a polyline within aTolerance of the
+// curve (the control polygon test, split at one half while it fails),
+// appended to aoPoints WITHOUT aP0 and WITH aP1 — the chain continues
+// from the previous point. aMaxDepth bounds the subdivision
+inline void flattenCubic(const dvec2& aP0, const dvec2& aC0, const dvec2& aC1, const dvec2& aP1, double aTolerance, std::vector<dvec2>& aoPoints, int32_t aMaxDepth = 16) {
+    // the distance of each control from the chord bounds the curve's
+    // distance from it (the convex hull property)
+    const double chordX = aP1.x - aP0.x;
+    const double chordY = aP1.y - aP0.y;
+    const double chordLength = std::sqrt(chordX * chordX + chordY * chordY);
+    double deviation = 0.0;
+    if (chordLength > 1e-12) {
+        const double d0 = std::fabs(chordX * (aC0.y - aP0.y) - chordY * (aC0.x - aP0.x)) / chordLength;
+        const double d1 = std::fabs(chordX * (aC1.y - aP0.y) - chordY * (aC1.x - aP0.x)) / chordLength;
+        deviation = (d0 > d1) ? d0 : d1;
+    } else {
+        deviation = (detail::distance(aP0, aC0) > detail::distance(aP0, aC1)) ? detail::distance(aP0, aC0) : detail::distance(aP0, aC1);
+    }
+    if ((deviation <= ((aTolerance > 0.0) ? aTolerance : 0.0)) || (aMaxDepth <= 0)) {
+        aoPoints.push_back(aP1);
+        return;
+    }
+    const dvec2 m01 = detail::middle(aP0, aC0);
+    const dvec2 m12 = detail::middle(aC0, aC1);
+    const dvec2 m23 = detail::middle(aC1, aP1);
+    const dvec2 m012 = detail::middle(m01, m12);
+    const dvec2 m123 = detail::middle(m12, m23);
+    const dvec2 mid = detail::middle(m012, m123);
+    flattenCubic(aP0, m01, m012, mid, aTolerance, aoPoints, aMaxDepth - 1);
+    flattenCubic(mid, m123, m23, aP1, aTolerance, aoPoints, aMaxDepth - 1);
+}
+
 // the svg elliptical arc from aP0 to aP1 as cubics (at most 90 degrees
 // each), appended to aoCubics — the endpoint to center parameterization
 // of svg 1.1 F.6.5, the radii scaled up when they cannot reach. false

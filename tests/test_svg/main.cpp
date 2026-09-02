@@ -2,6 +2,7 @@
 #include <TestEzSvgTransform.h>
 #include <TestEzSvgColor.h>
 #include <TestEzSvgReader.h>
+#include <TestEzSvgStroker.h>
 #include <TestEzSvgWriter.h>
 
 #include <string>
@@ -19,6 +20,7 @@ bool TestSvg(const std::string& vTest) {
     else IfTestCollectionExist(TestEzSvgTransform);
     else IfTestCollectionExist(TestEzSvgColor);
     else IfTestCollectionExist(TestEzSvgReader);
+    else IfTestCollectionExist(TestEzSvgStroker);
     else IfTestCollectionExist(TestEzSvgWriter);
     return false;
 }

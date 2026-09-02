@@ -25,6 +25,7 @@ file(GLOB EZ_LIBS_SOURCE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvg/svgColor.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvg/svgTransform.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvg/svgPathParser.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvg/svgStroker.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvg/svgReader.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezSvg/svgWriter.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezBezier.hpp
@@ -87,7 +88,7 @@ AddTest("TestEzSvgReader_ACircleBecomesCubics")
 AddTest("TestEzSvgReader_GroupTransformsCompose")
 AddTest("TestEzSvgReader_GroupFillIsInherited")
 AddTest("TestEzSvgReader_StyleWinsOverTheAttribute")
-AddTest("TestEzSvgReader_StrokeOnlyShapesAreCountedNotKept")
+AddTest("TestEzSvgReader_StrokedShapesKeepTheirStroke")
 AddTest("TestEzSvgReader_HiddenElementsAreSkipped")
 AddTest("TestEzSvgReader_UnsupportedElementsAreCounted")
 AddTest("TestEzSvgReader_PrologueDoctypeAndCommentsPass")
@@ -103,3 +104,14 @@ AddTest("TestEzSvgReader_NamespacePrefixesAreStripped")
 ##########################################################
 
 AddTest("TestEzSvgWriter_RoundTripsThroughTheReader")
+
+##########################################################
+##### TESTS EzSvgStroker #################################
+##########################################################
+
+AddTest("TestEzSvgStroker_AHorizontalLineIsARectangle")
+AddTest("TestEzSvgStroker_RoundCapsAndJoinsStayOnTheirCircles")
+AddTest("TestEzSvgStroker_AMiterJoinMakesTheCornerWithinItsLimit")
+AddTest("TestEzSvgStroker_AClosedPathIsARingOfTwoOppositeContours")
+AddTest("TestEzSvgStroker_ADotFollowsItsCap")
+AddTest("TestEzSvgStroker_CurvesAreFlattenedWithinTolerance")

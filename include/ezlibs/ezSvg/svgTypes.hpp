@@ -172,13 +172,38 @@ struct SubPath {
     bool closed{false};
 };
 
+enum class LineCap { Butt, Round, Square };
+enum class LineJoin { Miter, Round, Bevel };
+
+// the stroke of a shape : its paint (none by default, the svg initial
+// value), its width in the DOCUMENT frame (the transform of the element
+// already applied : a scaled group scales its strokes), its caps, its
+// joins and the composed stroke opacity
+struct Stroke {
+    Paint paint;
+    double width{1.0};
+    LineCap cap{LineCap::Butt};
+    LineJoin join{LineJoin::Miter};
+    double miterLimit{4.0};
+    double opacity{1.0};
+    Stroke() {
+        paint = Paint::none();
+    }
+    bool isVisible() const {
+        return paint.isVisible() && (width > 0.0);
+    }
+};
+
 // one painted shape, its points ALREADY transformed into the document
-// frame (svg units, y down), in the order the svg paints it
+// frame (svg units, y down), in the order the svg paints it. the fill
+// paints first, the stroke over it (the svg order) — a shape may carry
+// one of them or both
 struct Shape {
     std::string id;
     Paint fill;
     FillRule fillRule{FillRule::NonZero};
-    double opacity{1.0};  // the composed opacity (fill-opacity and the group opacities)
+    double opacity{1.0};  // the composed fill opacity (fill-opacity and the group opacities)
+    Stroke stroke;
     std::vector<SubPath> subPaths;
 };
 

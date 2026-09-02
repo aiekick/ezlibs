@@ -38,5 +38,6 @@ SOFTWARE.
 #include "svgColor.hpp"
 #include "svgTransform.hpp"
 #include "svgPathParser.hpp"
+#include "svgStroker.hpp"
 #include "svgReader.hpp"
 #include "svgWriter.hpp"

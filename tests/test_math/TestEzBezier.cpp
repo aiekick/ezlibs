@@ -121,6 +121,32 @@ bool TestEzBezier_ArcRadiiTooSmallAreScaledUp() {
     return true;
 }
 
+// the flattening : every vertex lies on the curve, every chord stays
+// within the tolerance of it, the chain ends on the end point
+bool TestEzBezier_FlattenCubicStaysWithinTolerance() {
+    const dvec2 p0(0.0, 0.0);
+    const dvec2 c0(30.0, 80.0);
+    const dvec2 c1(70.0, 80.0);
+    const dvec2 p1(100.0, 0.0);
+    std::vector<dvec2> points;
+    points.push_back(p0);
+    ez::math::bezier::flattenCubic(p0, c0, c1, p1, 0.5, points);
+    CTEST_ASSERT(points.size() >= 4u);
+    CTEST_ASSERT(local_distance(points.back(), p1) < 1e-12);
+    for (std::size_t pointIdx = 0; pointIdx < points.size(); ++pointIdx) {
+        CTEST_ASSERT(local_distanceToCubic(points[pointIdx], p0, c0, c1, p1) < 1e-6);
+    }
+    for (std::size_t pointIdx = 0; pointIdx + 1u < points.size(); ++pointIdx) {
+        const dvec2 chordMiddle((points[pointIdx].x + points[pointIdx + 1u].x) * 0.5, (points[pointIdx].y + points[pointIdx + 1u].y) * 0.5);
+        CTEST_ASSERT(local_distanceToCubic(chordMiddle, p0, c0, c1, p1) <= 0.5 + 0.1);
+    }
+    // a straight cubic flattens to its end alone
+    std::vector<dvec2> straight;
+    ez::math::bezier::flattenCubic(p0, dvec2(30.0, 0.0), dvec2(70.0, 0.0), p1, 0.5, straight);
+    CTEST_ASSERT(straight.size() == 1u);
+    return true;
+}
+
 // coincident points or a zero radius : no arc, the caller draws a line
 bool TestEzBezier_DegenerateArcsAreLines() {
     std::vector<ez::math::bezier::cubic2> cubics;
@@ -141,5 +167,6 @@ bool TestEzBezier(const std::string& vTest) {
     else IfTestExist(TestEzBezier_ArcOfAQuarterTurnLandsOnTheCircle);
     else IfTestExist(TestEzBezier_ArcRadiiTooSmallAreScaledUp);
     else IfTestExist(TestEzBezier_DegenerateArcsAreLines);
+    else IfTestExist(TestEzBezier_FlattenCubicStaysWithinTolerance);
     return false;
 }

@@ -32,8 +32,10 @@ SOFTWARE.
 // the basic shapes ; fill, fill-rule, fill-opacity, opacity, display,
 // visibility, transform, style ; the viewBox and the lengths. what it
 // does not resolve (use, text, css style sheets, gradients, clips,
-// masks, strokes) is IGNORED AND COUNTED in the warnings, never silent
+// masks) is IGNORED AND COUNTED in the warnings, never silent. the
+// strokes are KEPT on the shapes : the Stroker turns them into outlines
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -62,12 +64,20 @@ private:
         double fillOpacity{1.0};
         double opacity{1.0};
         bool hidden{false};
-        bool strokeSet{false};
+        // the stroke properties inherit like the fill ones (svg 1.1 11.4)
+        Paint stroke;
+        double strokeWidth{1.0};
+        LineCap lineCap{LineCap::Butt};
+        LineJoin lineJoin{LineJoin::Miter};
+        double miterLimit{4.0};
+        double strokeOpacity{1.0};
+        State() {
+            stroke = Paint::none();  // the svg initial value : no stroke
+        }
     };
     // the tallies of one parse, turned into warnings at the end
     struct Tally {
         std::map<std::string, int32_t> ignoredElements;
-        int32_t strokeOnlyShapes{0};
         int32_t unsupportedPaints{0};
         int32_t unparsedLengths{0};
         std::vector<std::string> notes;
@@ -195,7 +205,8 @@ private:
     // the presentation attributes and the style attribute of one element
     // folded into the inherited state (style wins over the attribute)
     static void m_applyPresentation(const ez::xml::Node& aNode, State& aoState, Tally& aoTally) {
-        static const char* const sc_names[] = {"fill", "fill-rule", "fill-opacity", "opacity", "display", "visibility", "stroke"};
+        static const char* const sc_names[] = {"fill", "fill-rule", "fill-opacity", "opacity", "display", "visibility",  //
+                                               "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity"};
         std::map<std::string, std::string> properties;
         for (std::size_t nameIdx = 0; nameIdx < sizeof(sc_names) / sizeof(sc_names[0]); ++nameIdx) {
             if (aNode.isAttributeExist(sc_names[nameIdx])) {
@@ -250,7 +261,59 @@ private:
         }
         it = properties.find("stroke");
         if (it != properties.end()) {
-            aoState.strokeSet = (StyleParser::toLower(StyleParser::trim(it->second)) != "none");
+            Paint paint;
+            if (ColorParser::parse(it->second, paint)) {
+                aoState.stroke = paint;
+                if (paint.kind == PaintKind::Unsupported) {
+                    ++aoTally.unsupportedPaints;
+                }
+            } else if (StyleParser::toLower(StyleParser::trim(it->second)) != "inherit") {
+                aoTally.notes.push_back("bad stroke on " + m_elementLabel(aNode) + " : " + it->second);
+            }
+        }
+        it = properties.find("stroke-width");
+        if (it != properties.end()) {
+            double width = 0.0;
+            if (m_parseLength(it->second, width)) {
+                aoState.strokeWidth = (width < 0.0) ? 0.0 : width;
+            } else {
+                ++aoTally.unparsedLengths;
+            }
+        }
+        it = properties.find("stroke-linecap");
+        if (it != properties.end()) {
+            const std::string cap = StyleParser::toLower(StyleParser::trim(it->second));
+            if (cap == "round") {
+                aoState.lineCap = LineCap::Round;
+            } else if (cap == "square") {
+                aoState.lineCap = LineCap::Square;
+            } else if (cap == "butt") {
+                aoState.lineCap = LineCap::Butt;
+            }
+        }
+        it = properties.find("stroke-linejoin");
+        if (it != properties.end()) {
+            const std::string join = StyleParser::toLower(StyleParser::trim(it->second));
+            if ((join == "round") || (join == "arcs")) {
+                aoState.lineJoin = LineJoin::Round;
+            } else if (join == "bevel") {
+                aoState.lineJoin = LineJoin::Bevel;
+            } else if ((join == "miter") || (join == "miter-clip")) {
+                aoState.lineJoin = LineJoin::Miter;
+            }
+        }
+        it = properties.find("stroke-miterlimit");
+        if (it != properties.end()) {
+            const std::string text = StyleParser::trim(it->second);
+            Scanner scanner(text);
+            double limit = 0.0;
+            if (scanner.readNumber(limit) && (limit >= 1.0)) {
+                aoState.miterLimit = limit;
+            }
+        }
+        it = properties.find("stroke-opacity");
+        if (it != properties.end()) {
+            aoState.strokeOpacity = m_parseOpacity(it->second, aoState.strokeOpacity);
         }
         const std::string transform = m_attribute(aNode, "transform");
         if (!transform.empty()) {
@@ -319,28 +382,42 @@ private:
             m_points(aNode, name == "polygon", subPaths);
             m_emitShape(aNode, subPaths, state, aoDocument, aoTally);
         } else if (name == "line") {
-            if (state.strokeSet) {
-                ++aoTally.strokeOnlyShapes;  // a line has no inside : stroke only by nature
-            }
+            // a line has no inside : its stroke is all there is to see
+            std::vector<SubPath> subPaths;
+            SubPath subPath;
+            subPath.start = Point(m_number(aNode, "x1", 0.0), m_number(aNode, "y1", 0.0));
+            subPath.segments.push_back(Segment::line(Point(m_number(aNode, "x2", 0.0), m_number(aNode, "y2", 0.0))));
+            subPaths.push_back(subPath);
+            m_emitShape(aNode, subPaths, state, aoDocument, aoTally, false);
         } else {
             ++aoTally.ignoredElements[name];
         }
     }
-    static void m_emitShape(const ez::xml::Node& aNode, const std::vector<SubPath>& aSubPaths, const State& aState, Document& aoDocument, Tally& aoTally) {
+    static void m_emitShape(const ez::xml::Node& aNode, const std::vector<SubPath>& aSubPaths, const State& aState, Document& aoDocument, Tally& aoTally, bool aFillable = true) {
         if (aSubPaths.empty()) {
             return;
         }
-        if (!aState.fill.isVisible()) {
-            if (aState.strokeSet) {
-                ++aoTally.strokeOnlyShapes;
-            }
-            return;
+        // the stroke width lives in the element frame : the transform
+        // scales it (the geometric mean of the axes for a non uniform one)
+        const double determinant = aState.ctm.scaleX * aState.ctm.scaleY - aState.ctm.skewX * aState.ctm.skewY;
+        const double widthScale = std::sqrt(std::fabs(determinant));
+        Stroke stroke;
+        stroke.paint = aState.stroke;
+        stroke.width = aState.strokeWidth * widthScale;
+        stroke.cap = aState.lineCap;
+        stroke.join = aState.lineJoin;
+        stroke.miterLimit = aState.miterLimit;
+        stroke.opacity = aState.strokeOpacity * aState.opacity;
+        const Paint fill = aFillable ? aState.fill : Paint::none();
+        if (!fill.isVisible() && !stroke.isVisible()) {
+            return;  // nothing to see : neither an inside nor a border
         }
         Shape shape;
         shape.id = m_attribute(aNode, "id");
-        shape.fill = aState.fill;
+        shape.fill = fill;
         shape.fillRule = aState.fillRule;
         shape.opacity = aState.fillOpacity * aState.opacity;
+        shape.stroke = stroke;
         shape.subPaths = aSubPaths;
         if (!aState.ctm.isIdentity()) {
             for (std::size_t pathIdx = 0; pathIdx < shape.subPaths.size(); ++pathIdx) {
@@ -473,11 +550,8 @@ private:
             }
             aoDocument.warnings.push_back(std::to_string(total) + " elements ignored : " + names);
         }
-        if (aTally.strokeOnlyShapes > 0) {
-            aoDocument.warnings.push_back(std::to_string(aTally.strokeOnlyShapes) + " shapes ignored : stroke only (no fill)");
-        }
         if (aTally.unsupportedPaints > 0) {
-            aoDocument.warnings.push_back(std::to_string(aTally.unsupportedPaints) + " fills unsupported (gradient, pattern) : the shapes are kept, their paint is unknown");
+            aoDocument.warnings.push_back(std::to_string(aTally.unsupportedPaints) + " paints unsupported (gradient, pattern) : the shapes are kept, their paint is unknown");
         }
         if (aTally.unparsedLengths > 0) {
             aoDocument.warnings.push_back(std::to_string(aTally.unparsedLengths) + " lengths in a relative unit ignored (percent, em, ex)");
