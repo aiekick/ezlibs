@@ -359,6 +359,51 @@ bool TestEzXml_ParsesAPrologueAndADoctype() {
     return true;
 }
 
+// the law of an EDITOR document (inkscape, illustrator) : the attributes
+// spread over lines and tabs, one per line, a self-closing tag written
+// with a space before its slash — every attribute lands whole, every
+// child is found, the nesting holds
+bool TestEzXml_ParsesAttributesSpreadOverLines() {
+    const std::string doc =
+        "<svg\n"
+        "   xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n"
+        "   width=\"9.9250002mm\"\n"
+        "\tviewBox=\"0 0 9.9250002 8.3374996\"\n"
+        "   id=\"svg8\">\n"
+        "  <defs\n"
+        "     id=\"defs2\" />\n"
+        "  <g\n"
+        "     id=\"layer1\"\n"
+        "     transform=\"translate(-53.245835,-252.47712)\">\n"
+        "    <path\n"
+        "       style=\"fill:#000000;fill-opacity:1\"\n"
+        "       d=\"m 54,253 c 1,2 3,4 5,6 z\"\n"
+        "       id=\"path815\" />\n"
+        "  </g>\n"
+        "</svg>\n";
+    ez::Xml xml;
+    CTEST_ASSERT(xml.parseString(doc));
+    const ez::xml::Nodes &roots = xml.getRoot().getChildren();
+    CTEST_ASSERT(roots.size() == 1U);
+    const ez::xml::Node &svg = roots[0];
+    CTEST_ASSERT(svg.getName() == "svg");
+    CTEST_ASSERT(svg.getAttribute<std::string>("width") == "9.9250002mm");
+    CTEST_ASSERT(svg.getAttribute<std::string>("viewBox") == "0 0 9.9250002 8.3374996");
+    CTEST_ASSERT(svg.getAttribute<std::string>("id") == "svg8");
+    CTEST_ASSERT(svg.getChildren().size() == 2U);
+    CTEST_ASSERT(svg.getChildren()[0].getName() == "defs");
+    CTEST_ASSERT(svg.getChildren()[0].getAttribute<std::string>("id") == "defs2");
+    const ez::xml::Node &group = svg.getChildren()[1];
+    CTEST_ASSERT(group.getName() == "g");
+    CTEST_ASSERT(group.getAttribute<std::string>("transform") == "translate(-53.245835,-252.47712)");
+    CTEST_ASSERT(group.getChildren().size() == 1U);
+    const ez::xml::Node &path = group.getChildren()[0];
+    CTEST_ASSERT(path.getName() == "path");
+    CTEST_ASSERT(path.getAttribute<std::string>("d") == "m 54,253 c 1,2 3,4 5,6 z");
+    CTEST_ASSERT(path.getAttribute<std::string>("style") == "fill:#000000;fill-opacity:1");
+    return true;
+}
+
 bool TestEzXml_ReplaceAll() {
     std::string str = "hello world hello";
     ez::xml::Node::replaceAll(str, "hello", "hi");
@@ -396,6 +441,7 @@ bool TestEzXml(const std::string &vTest) {
     else IfTestExist(TestEzXml_AttributeWithTemplateTypes);
     else IfTestExist(TestEzXml_ReplaceAll);
     else IfTestExist(TestEzXml_ParsesAPrologueAndADoctype);
+    else IfTestExist(TestEzXml_ParsesAttributesSpreadOverLines);
     return false;
 }
 

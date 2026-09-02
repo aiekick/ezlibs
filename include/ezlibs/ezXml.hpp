@@ -501,13 +501,20 @@ namespace ez {
             return tokens;
         }
 
+        // the white space of a tag : an editor (inkscape, illustrator) spreads
+        // the attributes over lines and tabs, one per line
+        static const char *m_tagSpaces() {
+            return " \t\r\n";
+        }
+
         std::string m_extractTagName(const std::string &vLine) {
             std::string ret;
             size_t startPos = vLine.find('<') + 1;
-            while (vLine.at(startPos) == ' ' && vLine.size() > startPos) {
-                ++startPos;
+            startPos = vLine.find_first_not_of(m_tagSpaces(), startPos);
+            if (startPos == std::string::npos) {
+                return ret;
             }
-            size_t endPos = vLine.find_first_of(" \t/>", startPos);
+            size_t endPos = vLine.find_first_of(" \t\r\n/>", startPos);
             return vLine.substr(startPos, endPos - startPos);
         }
 
@@ -534,7 +541,7 @@ namespace ez {
         std::string m_trim2(const std::string &vToken) {
             std::string res;
             for (const auto c: vToken) {
-                if (c != ' ') {
+                if (c != ' ' && c != '\t' && c != '\r' && c != '\n') {
                     res += c;
                 } else if (!res.empty()) {
                     break;
@@ -548,10 +555,15 @@ namespace ez {
             size_t startPos = vLine.find(vTagName);
             if (startPos != std::string::npos) {
                 startPos += vTagName.size();
-                startPos = vLine.find(' ', startPos);
+                startPos = vLine.find_first_of(m_tagSpaces(), startPos);
                 while (startPos != std::string::npos) {
-                    startPos = vLine.find_first_not_of(" \t", startPos);
-                    if (vLine.at(startPos) == '>') {
+                    startPos = vLine.find_first_not_of(m_tagSpaces(), startPos);
+                    if (startPos == std::string::npos) {
+                        break;
+                    }
+                    // the end of the tag, or the slash of a self-closing one
+                    // written with a space before it ("<defs id="x" />")
+                    if (vLine.at(startPos) == '>' || vLine.at(startPos) == '/') {
                         break;
                     }
                     size_t equalsPos = vLine.find('=', startPos);
@@ -560,8 +572,11 @@ namespace ez {
                     }
                     std::string key = m_trim2(vLine.substr(startPos, equalsPos - startPos));
                     startPos = equalsPos + 1;
+                    if (startPos >= vLine.size()) {
+                        return false;
+                    }
                     char quoteChar = vLine[startPos];
-                    while (quoteChar == ' ') {
+                    while ((quoteChar == ' ' || quoteChar == '\t' || quoteChar == '\r' || quoteChar == '\n') && (startPos + 1 < vLine.size())) {
                         quoteChar = vLine[++startPos];
                     }
                     if (quoteChar == '"' || quoteChar == '\'') {
@@ -570,7 +585,7 @@ namespace ez {
                         if (endPos != std::string::npos) {
                             std::string value = vLine.substr(startPos, endPos - startPos);
                             attributes[key] = value;
-                            startPos = vLine.find(' ', endPos);  // Passer ? l'attribut suivant
+                            startPos = vLine.find_first_of(m_tagSpaces(), endPos);  // on to the next attribute
                         } else {
 #ifdef LogVarError
                             LogVarError("The attribut '%s' have invalid value", key.c_str());

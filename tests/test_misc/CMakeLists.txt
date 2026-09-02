@@ -170,6 +170,7 @@ AddTest("TestEzXml_AddChilds")
 AddTest("TestEzXml_AttributeWithTemplateTypes")
 AddTest("TestEzXml_ReplaceAll")
 AddTest("TestEzXml_ParsesAPrologueAndADoctype")
+AddTest("TestEzXml_ParsesAttributesSpreadOverLines")
 
 ##########################################################
 ##### TESTS EzFigFont ####################################
