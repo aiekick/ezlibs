@@ -293,6 +293,42 @@ bool TestEzTtfBuilder_PlainPicksEmitNoColorTables() {
     return true;
 }
 
+// the build tells the NEW index of every glyph it included : the picks
+// (consistent with the cmap of the built font) and what their closures
+// embarked (the components of a composite), notdef staying 0 — nothing
+// before a build, nothing for a glyph the build never took
+bool TestEzTtfBuilder_BuildTellsTheNewIndexOfEveryPick() {
+    ez::ttf::Font first;
+    ez::ttf::Font second;
+    CTEST_ASSERT(buildCompositeSourceFont(first, false));
+    CTEST_ASSERT(buildCompositeSourceFont(second, false));
+    ez::ttf::Builder builder;
+    ez::ttf::GlyphIndex newIndex = 0u;
+    CTEST_ASSERT(!builder.getBuiltGlyphIndex(0, 1u, newIndex));  // nothing built yet
+    CTEST_ASSERT(builder.addSource(first) == 0);
+    CTEST_ASSERT(builder.addSource(second) == 1);
+    CTEST_ASSERT(builder.pickGlyph(0, 1u, 0x41u, "triangle"));
+    CTEST_ASSERT(builder.pickGlyph(1, 3u, 0x42u, "composite"));
+    ez::ttf::Font out;
+    CTEST_ASSERT(builder.build(out));
+    CTEST_ASSERT(builder.getBuiltGlyphIndex(0, 0u, newIndex));
+    CTEST_ASSERT(newIndex == 0u);  // notdef of the first source is glyph 0
+    CTEST_ASSERT(builder.getBuiltGlyphIndex(0, 1u, newIndex));
+    CTEST_ASSERT(newIndex == out.getGlyphIndex(0x41u));  // the pick, where the cmap says
+    CTEST_ASSERT(newIndex != 0u);
+    CTEST_ASSERT(builder.getBuiltGlyphIndex(1, 3u, newIndex));
+    CTEST_ASSERT(newIndex == out.getGlyphIndex(0x42u));
+    // the composite embarked its components : they have an index too,
+    // distinct from the base's
+    ez::ttf::GlyphIndex componentIndex = 0u;
+    CTEST_ASSERT(builder.getBuiltGlyphIndex(1, 1u, componentIndex));
+    CTEST_ASSERT(componentIndex != newIndex);
+    CTEST_ASSERT(componentIndex < out.getGlyphCount());
+    // a glyph nobody picked nor embarked has no index
+    CTEST_ASSERT(!builder.getBuiltGlyphIndex(0, 3u, newIndex));
+    return true;
+}
+
 bool TestEzTtfBuilder(const std::string& vTest) {
     IfTestExist(TestEzTtfBuilder_SubsetEmbarksTheCompositeClosure);
     else IfTestExist(TestEzTtfBuilder_MergesTwoSourcesLastPickWins);
@@ -302,5 +338,6 @@ bool TestEzTtfBuilder(const std::string& vTest) {
     else IfTestExist(TestEzTtfBuilder_SubsetEmbarksTheColorLayers);
     else IfTestExist(TestEzTtfBuilder_MergeConcatenatesThePalettes);
     else IfTestExist(TestEzTtfBuilder_PlainPicksEmitNoColorTables);
+    else IfTestExist(TestEzTtfBuilder_BuildTellsTheNewIndexOfEveryPick);
     return false;
 }

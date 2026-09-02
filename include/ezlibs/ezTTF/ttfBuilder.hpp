@@ -99,6 +99,10 @@ private:
     std::vector<const Font*> m_sources;  // observing : the caller keeps them alive through build
     std::vector<Pick> m_picks;
     std::vector<std::string> m_errors;
+    // (source, old index) -> new index of the LAST successful build : the
+    // picks and everything their closures embarked (components, color
+    // layers). empty after a failed build
+    std::map<std::pair<int32_t, GlyphIndex>, GlyphIndex> m_builtIndices;
 
 public:
     // observing registration : the font must outlive build(). -1 on an
@@ -140,12 +144,25 @@ public:
         return pickGlyph(aSourceIdx, glyphIndex, aTargetCodePoint, aTargetName);
     }
     const std::vector<std::string>& getErrors() const { return m_errors; }
+    // the NEW index a source glyph received in the LAST successful build —
+    // a pick, or a glyph its closure embarked (a component, a color
+    // layer). false before any build, after a failed one, or for a glyph
+    // the build never included
+    bool getBuiltGlyphIndex(int32_t aSourceIdx, GlyphIndex aSourceGlyph, GlyphIndex& aoNewIndex) const {
+        const std::map<std::pair<int32_t, GlyphIndex>, GlyphIndex>::const_iterator it = m_builtIndices.find(std::make_pair(aSourceIdx, aSourceGlyph));
+        if (it == m_builtIndices.end()) {
+            return false;
+        }
+        aoNewIndex = it->second;
+        return true;
+    }
 
     // assembles the new font THROUGH the writer (build -> bytes -> open :
     // the result is a real font by construction). false + errors on an
     // empty selection, mismatched upem sources, or a corrupt composite
     bool build(Font& aoFont) {
         m_errors.clear();
+        m_builtIndices.clear();
         if (m_sources.empty() || m_picks.empty()) {
             m_errors.push_back("build : no source or no pick");
             return false;
@@ -370,6 +387,7 @@ public:
             m_errors.push_back("build : the assembled font does not reopen (writer bug)");
             return false;
         }
+        m_builtIndices = included;  // the map the caller asks after a success
         return true;
     }
 
