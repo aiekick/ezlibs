@@ -1,4 +1,5 @@
 #include <TestEzTtfFont.h>
+#include <TestEzTtfFixtures.hpp>
 #include <ezlibs/ezCTest.hpp>
 #include <ezlibs/ezTTF/ezTTF.hpp>
 
@@ -354,6 +355,127 @@ bool TestEzTtfFont_WriteRoundTripsAndReachesAFixedPoint() {
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
+namespace {
+
+ez::ttf::Glyph local_squareGlyph(int16_t aLeft, int16_t aBottom, int16_t aSide) {
+    ez::ttf::Glyph glyph;
+    std::vector<ez::ttf::GlyphPoint> contour(4);
+    contour[0].x = aLeft;
+    contour[0].y = aBottom;
+    contour[1].x = static_cast<int16_t>(aLeft + aSide);
+    contour[1].y = aBottom;
+    contour[2].x = static_cast<int16_t>(aLeft + aSide);
+    contour[2].y = static_cast<int16_t>(aBottom + aSide);
+    contour[3].x = aLeft;
+    contour[3].y = static_cast<int16_t>(aBottom + aSide);
+    for (std::size_t pointIdx = 0; pointIdx < contour.size(); ++pointIdx) {
+        contour[pointIdx].onCurve = true;
+    }
+    glyph.contours.push_back(contour);
+    ez::ttf::computeGlyphBounds(glyph);
+    return glyph;
+}
+
+bool local_pointIs(const ez::ttf::GlyphPoint& aPoint, int16_t aX, int16_t aY) {
+    return (aPoint.x == aX) && (aPoint.y == aY);
+}
+
+}  // namespace
+
+// the fixture composite resolves to ONE simple outline : the triangle
+// carried to its component offset, the box recomputed ; a simple glyph
+// flattens to its own points, an empty one to nothing, a bad index
+// refuses
+bool TestEzTtfFont_FlattensACompositeIntoItsPoints() {
+    ez::ttf::Font font;
+    CTEST_ASSERT(buildCompositeSourceFont(font));
+    ez::ttf::Glyph flat;
+    CTEST_ASSERT(ez::ttf::flattenComposite(font, 3u, flat));
+    CTEST_ASSERT(!flat.isComposite && flat.components.empty());
+    CTEST_ASSERT((flat.contours.size() == 1u) && (flat.contours[0].size() == 3u));
+    CTEST_ASSERT(local_pointIs(flat.contours[0][0], 10, 20) && flat.contours[0][0].onCurve);
+    CTEST_ASSERT(local_pointIs(flat.contours[0][1], 110, 20) && flat.contours[0][1].onCurve);
+    CTEST_ASSERT(local_pointIs(flat.contours[0][2], 60, 100) && !flat.contours[0][2].onCurve);
+    CTEST_ASSERT((flat.xMin == 10) && (flat.yMin == 20) && (flat.xMax == 110) && (flat.yMax == 100));
+    ez::ttf::Glyph simple;
+    CTEST_ASSERT(ez::ttf::flattenComposite(font, 1u, simple));
+    CTEST_ASSERT((simple.contours.size() == 1u) && local_pointIs(simple.contours[0][1], 100, 0));
+    ez::ttf::Glyph space;
+    CTEST_ASSERT(ez::ttf::flattenComposite(font, 2u, space));
+    CTEST_ASSERT(space.isEmpty());
+    CTEST_ASSERT(!ez::ttf::flattenComposite(font, 4u, space));
+    return true;
+}
+
+// a nested composite : a half-scaled square carried to (200, 0), itself
+// turned by a 2x2 (the format convention : x' = xscale x + scale10 y,
+// y' = scale01 x + yscale y) and lifted by 300, beside a plain square at
+// (-100, -100) — the flattening resolves the tree component by component
+// into two contours, in component order, the box over both ; a glyph
+// that references itself is a cycle and refuses
+bool TestEzTtfFont_FlattensANestedScaledComposite() {
+    ez::ttf::Synthesizer synth;
+    synth.setMetrics(1000u, 800, -200, 0);
+    const ez::ttf::GlyphIndex squareIdx = synth.addGlyph(local_squareGlyph(0, 0, 100), 600u, 0x41u, "square");
+    ez::ttf::Glyph half;
+    half.isComposite = true;
+    ez::ttf::GlyphComponent halfPart;
+    halfPart.glyphIndex = squareIdx;
+    halfPart.offsetX = 200;
+    halfPart.scaleXX.setFloat(0.5f);
+    halfPart.scaleYY.setFloat(0.5f);
+    half.components.push_back(halfPart);
+    half.xMin = 200;
+    half.xMax = 250;
+    half.yMax = 50;
+    const ez::ttf::GlyphIndex halfIdx = synth.addGlyph(half, 600u, 0x42u, "half");
+    ez::ttf::Glyph turned;
+    turned.isComposite = true;
+    ez::ttf::GlyphComponent turnedPart;
+    turnedPart.glyphIndex = halfIdx;
+    turnedPart.offsetY = 300;
+    turnedPart.scaleXX.setFloat(0.0f);
+    turnedPart.scaleXY.setFloat(1.0f);
+    turnedPart.scaleYX.setFloat(-1.0f);
+    turnedPart.scaleYY.setFloat(0.0f);
+    turned.components.push_back(turnedPart);
+    ez::ttf::GlyphComponent plainPart;
+    plainPart.glyphIndex = squareIdx;
+    plainPart.offsetX = -100;
+    plainPart.offsetY = -100;
+    turned.components.push_back(plainPart);
+    turned.xMin = -100;
+    turned.yMin = -100;
+    turned.xMax = 0;
+    turned.yMax = 550;
+    const ez::ttf::GlyphIndex turnedIdx = synth.addGlyph(turned, 600u, 0x43u, "turned");
+    ez::ttf::Glyph cycle;
+    cycle.isComposite = true;
+    ez::ttf::GlyphComponent selfPart;
+    selfPart.glyphIndex = static_cast<ez::ttf::GlyphIndex>(turnedIdx + 1u);  // its own seat
+    cycle.components.push_back(selfPart);
+    const ez::ttf::GlyphIndex cycleIdx = synth.addGlyph(cycle, 600u, 0x44u, "cycle");
+    CTEST_ASSERT(cycleIdx == turnedIdx + 1u);
+    ez::ttf::Font font;
+    CTEST_ASSERT_MESSAGE(synth.build(font), "the nested composite font failed to build");
+    ez::ttf::Glyph flat;
+    CTEST_ASSERT(ez::ttf::flattenComposite(font, turnedIdx, flat));
+    CTEST_ASSERT(!flat.isComposite && (flat.contours.size() == 2u));
+    CTEST_ASSERT(flat.contours[0].size() == 4u);
+    CTEST_ASSERT(local_pointIs(flat.contours[0][0], 0, 500));
+    CTEST_ASSERT(local_pointIs(flat.contours[0][1], 0, 550));
+    CTEST_ASSERT(local_pointIs(flat.contours[0][2], -50, 550));
+    CTEST_ASSERT(local_pointIs(flat.contours[0][3], -50, 500));
+    CTEST_ASSERT(flat.contours[1].size() == 4u);
+    CTEST_ASSERT(local_pointIs(flat.contours[1][0], -100, -100));
+    CTEST_ASSERT(local_pointIs(flat.contours[1][2], 0, 0));
+    CTEST_ASSERT((flat.xMin == -100) && (flat.yMin == -100) && (flat.xMax == 0) && (flat.yMax == 550));
+    ez::ttf::Glyph looped;
+    CTEST_ASSERT(!ez::ttf::flattenComposite(font, cycleIdx, looped));
+    CTEST_ASSERT(looped.isEmpty());
+    return true;
+}
+
 bool TestEzTtfFont(const std::string& vTest) {
     IfTestExist(TestEzTtfFont_OpensACompleteSyntheticFont);
     else IfTestExist(TestEzTtfFont_RefusesAFontMissingARequiredTable);
@@ -361,5 +483,7 @@ bool TestEzTtfFont(const std::string& vTest) {
     else IfTestExist(TestEzTtfFont_ReadsACompositeEntry);
     else IfTestExist(TestEzTtfFont_OpensFromAFile);
     else IfTestExist(TestEzTtfFont_WriteRoundTripsAndReachesAFixedPoint);
+    else IfTestExist(TestEzTtfFont_FlattensACompositeIntoItsPoints);
+    else IfTestExist(TestEzTtfFont_FlattensANestedScaledComposite);
     return false;
 }

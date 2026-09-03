@@ -217,10 +217,70 @@ bool TestEzTtfGlyph_RoundTripsEveryGlyphOfARealFont() {
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
+// the transform maps the points of a simple glyph (a scale about the
+// origin, THEN the offset), quantizes them to font units (nearest,
+// saturated to the int16 rail) and recomputes the box — the curve
+// flags ride along ; a composite refuses, untouched
+bool TestEzTtfGlyph_TransformScalesThenTranslatesASimpleGlyph() {
+    ez::ttf::Glyph glyph;
+    std::vector<ez::ttf::GlyphPoint> contour;
+    contour.push_back(local_point(0, 0, true));
+    contour.push_back(local_point(100, 0, true));
+    contour.push_back(local_point(50, 80, false));
+    contour.push_back(local_point(1, 1, true));  // the rounding witness
+    glyph.contours.push_back(contour);
+    ez::ttf::computeGlyphBounds(glyph);
+    CTEST_ASSERT(ez::ttf::transformGlyph(glyph, ez::ttf::GlyphTransform::scaleThenTranslate(2.0, 0.5, 5.0, -3.0)));
+    CTEST_ASSERT(glyph.contours.size() == 1u && glyph.contours[0].size() == 4u);
+    CTEST_ASSERT((glyph.contours[0][0].x == 5) && (glyph.contours[0][0].y == -3) && glyph.contours[0][0].onCurve);
+    CTEST_ASSERT((glyph.contours[0][1].x == 205) && (glyph.contours[0][1].y == -3) && glyph.contours[0][1].onCurve);
+    CTEST_ASSERT((glyph.contours[0][2].x == 105) && (glyph.contours[0][2].y == 37) && !glyph.contours[0][2].onCurve);
+    CTEST_ASSERT((glyph.contours[0][3].x == 7) && (glyph.contours[0][3].y == -2));  // 0.5 - 3 rounds to the nearest
+    CTEST_ASSERT((glyph.xMin == 5) && (glyph.yMin == -3) && (glyph.xMax == 205) && (glyph.yMax == 37));
+    // the saturation : a huge scale lands on the rail, never wraps
+    CTEST_ASSERT(ez::ttf::transformGlyph(glyph, ez::ttf::GlyphTransform::scaleThenTranslate(1000.0, 1.0, 0.0, 0.0)));
+    CTEST_ASSERT(glyph.contours[0][1].x == 32767);
+    CTEST_ASSERT(glyph.xMax == 32767);
+    // a composite refuses and keeps its references
+    ez::ttf::Glyph composite;
+    composite.isComposite = true;
+    composite.components.push_back(ez::ttf::GlyphComponent());
+    CTEST_ASSERT(!ez::ttf::transformGlyph(composite, ez::ttf::GlyphTransform::scaleThenTranslate(2.0, 2.0, 0.0, 0.0)));
+    CTEST_ASSERT(composite.isComposite && composite.components.size() == 1u);
+    return true;
+}
+
+// the component convention : the four F2DOT14 of a composite read as
+// xscale, scale01, scale10, yscale — x' = xscale x + scale10 y + dx and
+// y' = scale01 x + yscale y + dy (a quarter turn checked on two points) ;
+// a plain component maps to itself
+bool TestEzTtfGlyph_TransformFollowsTheComponentConvention() {
+    ez::ttf::GlyphComponent component;
+    component.offsetX = 10;
+    component.offsetY = 20;
+    component.scaleXX.setFloat(0.0f);
+    component.scaleXY.setFloat(1.0f);
+    component.scaleYX.setFloat(-1.0f);
+    component.scaleYY.setFloat(0.0f);
+    const ez::ttf::GlyphTransform turn = ez::ttf::GlyphTransform::fromComponent(component);
+    double mappedX = 0.0;
+    double mappedY = 0.0;
+    turn.map(100.0, 0.0, mappedX, mappedY);
+    CTEST_ASSERT((mappedX == 10.0) && (mappedY == 120.0));
+    turn.map(0.0, 50.0, mappedX, mappedY);
+    CTEST_ASSERT((mappedX == -40.0) && (mappedY == 20.0));
+    const ez::ttf::GlyphTransform plain = ez::ttf::GlyphTransform::fromComponent(ez::ttf::GlyphComponent());
+    plain.map(7.0, 9.0, mappedX, mappedY);
+    CTEST_ASSERT((mappedX == 7.0) && (mappedY == 9.0));
+    return true;
+}
+
 bool TestEzTtfGlyph(const std::string& vTest) {
     IfTestExist(TestEzTtfGlyph_EmitParseRoundTripsASimpleGlyph);
     else IfTestExist(TestEzTtfGlyph_EmitParseRoundTripsAComposite);
     else IfTestExist(TestEzTtfGlyph_AnEmptyGlyphEmitsNothing);
     else IfTestExist(TestEzTtfGlyph_RoundTripsEveryGlyphOfARealFont);
+    else IfTestExist(TestEzTtfGlyph_TransformScalesThenTranslatesASimpleGlyph);
+    else IfTestExist(TestEzTtfGlyph_TransformFollowsTheComponentConvention);
     return false;
 }

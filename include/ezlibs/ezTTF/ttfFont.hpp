@@ -372,5 +372,54 @@ private:
     }
 };
 
+// the deepest component nesting the flattening follows : a reference
+// tree past it is a cycle (the format bounds real depths far under)
+const uint32_t kMaxCompositeDepth = 32u;
+
+namespace detail {
+
+inline bool flattenCompositeAtDepth(const Font& aFont, GlyphIndex aGlyphIndex, uint32_t aDepth, Glyph& aoGlyph) {
+    aoGlyph = Glyph();
+    if (aDepth > kMaxCompositeDepth) {
+        return false;
+    }
+    Glyph glyph;
+    if (!aFont.getGlyph(aGlyphIndex, glyph)) {
+        return false;
+    }
+    if (!glyph.isComposite) {
+        aoGlyph = glyph;
+        computeGlyphBounds(aoGlyph);
+        return true;
+    }
+    for (std::size_t componentIdx = 0; componentIdx < glyph.components.size(); ++componentIdx) {
+        const GlyphComponent& component = glyph.components[componentIdx];
+        Glyph part;
+        if (!flattenCompositeAtDepth(aFont, component.glyphIndex, aDepth + 1u, part)) {
+            aoGlyph = Glyph();
+            return false;
+        }
+        transformGlyph(part, GlyphTransform::fromComponent(component));  // simple by construction
+        for (std::size_t contourIdx = 0; contourIdx < part.contours.size(); ++contourIdx) {
+            aoGlyph.contours.push_back(part.contours[contourIdx]);
+        }
+    }
+    computeGlyphBounds(aoGlyph);
+    return true;
+}
+
+}  // namespace detail
+
+// resolves ONE glyph of aFont into a SIMPLE outline : a simple glyph is
+// copied (its bounds recomputed), a composite has each component
+// flattened in turn and mapped through its placement (the 2x2 and the
+// offset — the point-matching args the parser keeps as offsets read as
+// offsets too), the contours appended in component order, the bounds
+// recomputed. false on a bad index, a corrupt entry, or a reference
+// tree deeper than kMaxCompositeDepth (a cycle) — aoGlyph empty then
+inline bool flattenComposite(const Font& aFont, GlyphIndex aGlyphIndex, Glyph& aoGlyph) {
+    return detail::flattenCompositeAtDepth(aFont, aGlyphIndex, 0u, aoGlyph);
+}
+
 }  // namespace ttf
 }  // namespace ez

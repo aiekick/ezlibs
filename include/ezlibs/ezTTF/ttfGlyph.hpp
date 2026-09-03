@@ -31,6 +31,7 @@ SOFTWARE.
 // the ttfrrw lesson : a subset must carry the component tree, not its
 // flattening)
 
+#include <cmath>
 #include <cstdint>
 #include <vector>
 
@@ -256,6 +257,82 @@ inline void computeGlyphBounds(Glyph& aoGlyph) {
             }
         }
     }
+}
+
+// a font unit from a real value : rounded to the nearest, saturated to
+// the int16 the format stores (the quantization the OutlinePen shares)
+inline int16_t quantizeFontUnit(double aValue) {
+    const double rounded = std::floor(aValue + 0.5);
+    if (rounded > 32767.0) {
+        return 32767;
+    }
+    if (rounded < -32768.0) {
+        return -32768;
+    }
+    return static_cast<int16_t>(rounded);
+}
+
+// an affine map of an outline, font units :
+//   x' = scaleXX * x + scaleYX * y + translateX
+//   y' = scaleXY * x + scaleYY * y + translateY
+// the composite convention of the format (xscale, scale01, scale10,
+// yscale, then the offset), so a component placement is one of these.
+// identity at birth
+struct GlyphTransform {
+    double scaleXX;
+    double scaleXY;
+    double scaleYX;
+    double scaleYY;
+    double translateX;
+    double translateY;
+    GlyphTransform() : scaleXX(1.0), scaleXY(0.0), scaleYX(0.0), scaleYY(1.0), translateX(0.0), translateY(0.0) {}
+    // the editor map : a scale about the origin, THEN a translation
+    static GlyphTransform scaleThenTranslate(double aScaleX, double aScaleY, double aTranslateX, double aTranslateY) {
+        GlyphTransform transform;
+        transform.scaleXX = aScaleX;
+        transform.scaleYY = aScaleY;
+        transform.translateX = aTranslateX;
+        transform.translateY = aTranslateY;
+        return transform;
+    }
+    // the placement of one composite component, as the format reads it
+    static GlyphTransform fromComponent(const GlyphComponent& aComponent) {
+        GlyphTransform transform;
+        transform.scaleXX = static_cast<double>(aComponent.scaleXX.getFloat());
+        transform.scaleXY = static_cast<double>(aComponent.scaleXY.getFloat());
+        transform.scaleYX = static_cast<double>(aComponent.scaleYX.getFloat());
+        transform.scaleYY = static_cast<double>(aComponent.scaleYY.getFloat());
+        transform.translateX = static_cast<double>(aComponent.offsetX);
+        transform.translateY = static_cast<double>(aComponent.offsetY);
+        return transform;
+    }
+    void map(double aX, double aY, double& aoX, double& aoY) const {
+        aoX = scaleXX * aX + scaleYX * aY + translateX;
+        aoY = scaleXY * aX + scaleYY * aY + translateY;
+    }
+};
+
+// maps every point of a SIMPLE glyph through aTransform (quantized to
+// font units, the curve flags kept) and recomputes its bounds. a
+// composite answers false, untouched : its points live in its
+// components — flatten it first
+inline bool transformGlyph(Glyph& aoGlyph, const GlyphTransform& aTransform) {
+    if (aoGlyph.isComposite) {
+        return false;
+    }
+    for (std::size_t contourIdx = 0; contourIdx < aoGlyph.contours.size(); ++contourIdx) {
+        std::vector<GlyphPoint>& contour = aoGlyph.contours[contourIdx];
+        for (std::size_t pointIdx = 0; pointIdx < contour.size(); ++pointIdx) {
+            GlyphPoint& point = contour[pointIdx];
+            double mappedX = 0.0;
+            double mappedY = 0.0;
+            aTransform.map(static_cast<double>(point.x), static_cast<double>(point.y), mappedX, mappedY);
+            point.x = quantizeFontUnit(mappedX);
+            point.y = quantizeFontUnit(mappedY);
+        }
+    }
+    computeGlyphBounds(aoGlyph);
+    return true;
 }
 
 // emits ONE glyf entry, the inverse of parseGlyphData : NOTHING for an

@@ -168,14 +168,7 @@ private:
         m_open = false;
     }
     static int16_t m_quantize(double aValue) {
-        const double rounded = std::floor(aValue + 0.5);
-        if (rounded > 32767.0) {
-            return 32767;
-        }
-        if (rounded < -32768.0) {
-            return -32768;
-        }
-        return static_cast<int16_t>(rounded);
+        return quantizeFontUnit(aValue);  // the shared quantization of ttfGlyph
     }
 };
 

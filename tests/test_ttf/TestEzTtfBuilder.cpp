@@ -329,6 +329,146 @@ bool TestEzTtfBuilder_BuildTellsTheNewIndexOfEveryPick() {
     return true;
 }
 
+namespace {
+
+ez::ttf::Glyph local_boxGlyph(int16_t aLeft, int16_t aBottom, int16_t aRight, int16_t aTop) {
+    ez::ttf::Glyph glyph;
+    std::vector<ez::ttf::GlyphPoint> contour(4);
+    contour[0].x = aLeft;
+    contour[0].y = aBottom;
+    contour[1].x = aRight;
+    contour[1].y = aBottom;
+    contour[2].x = aRight;
+    contour[2].y = aTop;
+    contour[3].x = aLeft;
+    contour[3].y = aTop;
+    for (std::size_t pointIdx = 0; pointIdx < contour.size(); ++pointIdx) {
+        contour[pointIdx].onCurve = true;
+    }
+    glyph.contours.push_back(contour);
+    ez::ttf::computeGlyphBounds(glyph);
+    return glyph;
+}
+
+bool local_pointAt(const ez::ttf::GlyphPoint& aPoint, int16_t aX, int16_t aY) {
+    return (aPoint.x == aX) && (aPoint.y == aY);
+}
+
+}  // namespace
+
+// an override REPLACES the outline and the metrics one source glyph
+// emits : the built glyph reads back the given points, advance and lsb,
+// and the header box follows the override — the raw span is not copied.
+// an unknown seat refuses ; cleared, the raw copy comes back
+bool TestEzTtfBuilder_AnOverrideReplacesTheOutlineAndTheMetrics() {
+    ez::ttf::Font source;
+    CTEST_ASSERT(buildCompositeSourceFont(source));
+    ez::ttf::Builder builder;
+    CTEST_ASSERT(builder.addSource(source) == 0);
+    const ez::ttf::Glyph box = local_boxGlyph(0, 0, 60, 60);
+    CTEST_ASSERT(builder.overrideGlyph(0, 1u, box, 333u, 7));
+    CTEST_ASSERT(!builder.overrideGlyph(3, 1u, box, 1u, 0));  // no such source
+    CTEST_ASSERT(!builder.overrideGlyph(0, 9u, box, 1u, 0));  // past the face
+    CTEST_ASSERT(builder.pickGlyph(0, 1u, 0x41u, "boxed"));
+    ez::ttf::Font built;
+    CTEST_ASSERT(builder.build(built));
+    const ez::ttf::GlyphIndex boxedIdx = built.getGlyphIndex(0x41u);
+    CTEST_ASSERT(boxedIdx != 0u);
+    ez::ttf::Glyph glyph;
+    CTEST_ASSERT(built.getGlyph(boxedIdx, glyph));
+    CTEST_ASSERT(!glyph.isComposite && (glyph.contours.size() == 1u) && (glyph.contours[0].size() == 4u));
+    CTEST_ASSERT(local_pointAt(glyph.contours[0][2], 60, 60));
+    CTEST_ASSERT((glyph.xMin == 0) && (glyph.xMax == 60) && (glyph.yMax == 60));
+    uint16_t advance = 0u;
+    CTEST_ASSERT(built.getAdvanceWidth(boxedIdx, advance) && (advance == 333u));
+    int16_t bearing = 0;
+    CTEST_ASSERT(built.getLeftSideBearing(boxedIdx, bearing) && (bearing == 7));
+    CTEST_ASSERT((built.getInfos().xMax == 60) && (built.getInfos().yMax == 60));  // the header box follows
+    // cleared : the fixture triangle and its own metrics come back
+    builder.clearOverrides();
+    ez::ttf::Font again;
+    CTEST_ASSERT(builder.build(again));
+    const ez::ttf::GlyphIndex triangleIdx = again.getGlyphIndex(0x41u);
+    CTEST_ASSERT(again.getGlyph(triangleIdx, glyph));
+    CTEST_ASSERT((glyph.contours.size() == 1u) && (glyph.contours[0].size() == 3u));
+    CTEST_ASSERT(again.getAdvanceWidth(triangleIdx, advance) && (advance == 500u));
+    CTEST_ASSERT(again.getLeftSideBearing(triangleIdx, bearing) && (bearing == 10));
+    return true;
+}
+
+// the studio road : a picked composite overridden by its FLATTENED and
+// transformed outline is emitted SIMPLE — nothing of its component tree
+// is embarked, and the points are the flattened ones under the map
+bool TestEzTtfBuilder_AnOverrideCanFlattenAComposite() {
+    ez::ttf::Font source;
+    CTEST_ASSERT(buildCompositeSourceFont(source));
+    ez::ttf::Glyph flat;
+    CTEST_ASSERT(ez::ttf::flattenComposite(source, 3u, flat));
+    CTEST_ASSERT(ez::ttf::transformGlyph(flat, ez::ttf::GlyphTransform::scaleThenTranslate(2.0, 1.0, -10.0, 5.0)));
+    ez::ttf::Builder builder;
+    CTEST_ASSERT(builder.addSource(source) == 0);
+    CTEST_ASSERT(builder.overrideGlyph(0, 3u, flat, 1400u, 10));
+    CTEST_ASSERT(builder.pickGlyph(0, 3u, 0x42u, "flat"));
+    ez::ttf::Font built;
+    CTEST_ASSERT(builder.build(built));
+    CTEST_ASSERT(built.getGlyphCount() == 2u);  // notdef + the flat glyph : the triangle was NOT embarked
+    ez::ttf::GlyphIndex triangleNew = 0u;
+    CTEST_ASSERT(!builder.getBuiltGlyphIndex(0, 1u, triangleNew));
+    const ez::ttf::GlyphIndex flatIdx = built.getGlyphIndex(0x42u);
+    CTEST_ASSERT(flatIdx != 0u);
+    ez::ttf::Glyph glyph;
+    CTEST_ASSERT(built.getGlyph(flatIdx, glyph));
+    CTEST_ASSERT(!glyph.isComposite && (glyph.contours.size() == 1u) && (glyph.contours[0].size() == 3u));
+    CTEST_ASSERT(local_pointAt(glyph.contours[0][0], 10, 25));
+    CTEST_ASSERT(local_pointAt(glyph.contours[0][1], 210, 25));
+    CTEST_ASSERT(local_pointAt(glyph.contours[0][2], 110, 105) && !glyph.contours[0][2].onCurve);
+    uint16_t advance = 0u;
+    CTEST_ASSERT(built.getAdvanceWidth(flatIdx, advance) && (advance == 1400u));
+    return true;
+}
+
+// the layers of an overridden base stay attached : the base and each
+// layer overridden under the same map (the caller's duty), the built
+// base still wears its two layers, the layer glyph reads the overridden
+// points, and the layer was embarked through the color closure alone
+bool TestEzTtfBuilder_TheLayersOfAnOverriddenBaseStayAttached() {
+    ez::ttf::Font source;
+    CTEST_ASSERT(buildCompositeSourceFont(source, true));
+    const ez::ttf::GlyphTransform shift = ez::ttf::GlyphTransform::scaleThenTranslate(1.0, 1.0, 100.0, 0.0);
+    ez::ttf::Glyph baseFlat;
+    CTEST_ASSERT(ez::ttf::flattenComposite(source, 3u, baseFlat));
+    CTEST_ASSERT(ez::ttf::transformGlyph(baseFlat, shift));
+    ez::ttf::Glyph layerGlyph;
+    CTEST_ASSERT(source.getGlyph(1u, layerGlyph));
+    CTEST_ASSERT(ez::ttf::transformGlyph(layerGlyph, shift));
+    ez::ttf::Builder builder;
+    CTEST_ASSERT(builder.addSource(source) == 0);
+    CTEST_ASSERT(builder.overrideGlyph(0, 3u, baseFlat, 800u, 110));
+    CTEST_ASSERT(builder.overrideGlyph(0, 1u, layerGlyph, 600u, 100));
+    CTEST_ASSERT(builder.pickGlyph(0, 3u, 0xE000u, "icon"));
+    ez::ttf::Font built;
+    CTEST_ASSERT(builder.build(built));
+    CTEST_ASSERT(built.getGlyphCount() == 3u);  // notdef + the base + its layer glyph
+    const ez::ttf::GlyphIndex baseIdx = built.getGlyphIndex(0xE000u);
+    CTEST_ASSERT(baseIdx != 0u);
+    const std::vector<ez::ttf::ColrLayer>* pLayers = built.getGlyphColorLayers(baseIdx);
+    CTEST_ASSERT(pLayers != nullptr);
+    CTEST_ASSERT(pLayers->size() == 2u);
+    CTEST_ASSERT((*pLayers)[1].paletteEntry == 0xFFFFu);
+    ez::ttf::Glyph layerBuilt;
+    CTEST_ASSERT(built.getGlyph((*pLayers)[0].glyphIndex, layerBuilt));
+    CTEST_ASSERT((layerBuilt.contours.size() == 1u) && (layerBuilt.contours[0].size() == 3u));
+    CTEST_ASSERT(local_pointAt(layerBuilt.contours[0][0], 100, 0));
+    CTEST_ASSERT(local_pointAt(layerBuilt.contours[0][1], 200, 0));
+    ez::ttf::Glyph baseBuilt;
+    CTEST_ASSERT(built.getGlyph(baseIdx, baseBuilt));
+    CTEST_ASSERT(!baseBuilt.isComposite && (baseBuilt.contours.size() == 1u));
+    CTEST_ASSERT(local_pointAt(baseBuilt.contours[0][0], 110, 20));
+    uint16_t advance = 0u;
+    CTEST_ASSERT(built.getAdvanceWidth(baseIdx, advance) && (advance == 800u));
+    return true;
+}
+
 bool TestEzTtfBuilder(const std::string& vTest) {
     IfTestExist(TestEzTtfBuilder_SubsetEmbarksTheCompositeClosure);
     else IfTestExist(TestEzTtfBuilder_MergesTwoSourcesLastPickWins);
@@ -339,5 +479,8 @@ bool TestEzTtfBuilder(const std::string& vTest) {
     else IfTestExist(TestEzTtfBuilder_MergeConcatenatesThePalettes);
     else IfTestExist(TestEzTtfBuilder_PlainPicksEmitNoColorTables);
     else IfTestExist(TestEzTtfBuilder_BuildTellsTheNewIndexOfEveryPick);
+    else IfTestExist(TestEzTtfBuilder_AnOverrideReplacesTheOutlineAndTheMetrics);
+    else IfTestExist(TestEzTtfBuilder_AnOverrideCanFlattenAComposite);
+    else IfTestExist(TestEzTtfBuilder_TheLayersOfAnOverriddenBaseStayAttached);
     return false;
 }

@@ -32,6 +32,9 @@ SOFTWARE.
 //    the component indices are REWRITTEN in the copied glyf bytes (the
 //    FillResolvedCompositeGlyphs lesson)
 //  - a codepoint picked twice : the LAST pick wins (the Baker rule)
+// and a third, the studio's : a source glyph may be OVERRIDDEN — the
+// build emits a given outline and given metrics in its seat instead of
+// the raw span (the edited glyph of a glyph editor)
 
 #include <cstdint>
 #include <map>
@@ -96,8 +99,17 @@ private:
         std::string targetName;
         Pick() : sourceIdx(0), sourceGlyph(0), targetCodePoint(0) {}
     };
+    // what one source glyph EMITS instead of its raw span, with its
+    // metrics (the edited glyph of a studio)
+    struct Override {
+        Glyph glyph;
+        uint16_t advance;
+        int16_t lsb;
+        Override() : advance(0), lsb(0) {}
+    };
     std::vector<const Font*> m_sources;  // observing : the caller keeps them alive through build
     std::vector<Pick> m_picks;
+    std::map<std::pair<int32_t, GlyphIndex>, Override> m_overrides;  // by (source, old index)
     std::vector<std::string> m_errors;
     // (source, old index) -> new index of the LAST successful build : the
     // picks and everything their closures embarked (components, color
@@ -143,6 +155,31 @@ public:
         }
         return pickGlyph(aSourceIdx, glyphIndex, aTargetCodePoint, aTargetName);
     }
+    // REPLACES what the build emits for one source glyph : aGlyph (its
+    // bounds recomputed here when simple ; a composite override keeps its
+    // component references, LOCAL to the same source, and the box it
+    // carries) instead of the raw span, aAdvance and aLsb instead of the
+    // source hmtx. the seat, the closure (walked on the override's own
+    // components), the codepoints and the color layers are untouched — a
+    // transformed base needs its layers overridden by the caller, each
+    // under the same map. an override on a glyph the build never includes
+    // is simply unused. false on a bad source or glyph index
+    bool overrideGlyph(int32_t aSourceIdx, GlyphIndex aSourceGlyph, const Glyph& aGlyph, uint16_t aAdvance, int16_t aLsb) {
+        if (aSourceIdx < 0 || static_cast<std::size_t>(aSourceIdx) >= m_sources.size()) {
+            return false;
+        }
+        if (static_cast<std::size_t>(aSourceGlyph) >= m_sources[static_cast<std::size_t>(aSourceIdx)]->getGlyphCount()) {
+            return false;
+        }
+        Override entry;
+        entry.glyph = aGlyph;
+        computeGlyphBounds(entry.glyph);  // a composite keeps its own box
+        entry.advance = aAdvance;
+        entry.lsb = aLsb;
+        m_overrides[std::make_pair(aSourceIdx, aSourceGlyph)] = entry;
+        return true;
+    }
+    void clearOverrides() { m_overrides.clear(); }
     const std::vector<std::string>& getErrors() const { return m_errors; }
     // the NEW index a source glyph received in the LAST successful build —
     // a pick, or a glyph its closure embarked (a component, a color
@@ -214,15 +251,33 @@ public:
         for (std::size_t orderIdx = 0; orderIdx < order.size(); ++orderIdx) {
             const Font& source = *m_sources[static_cast<std::size_t>(order[orderIdx].first)];
             const GlyphIndex oldIndex = order[orderIdx].second;
-            const uint8_t* pSpan = nullptr;
-            uint32_t spanLength = 0;
-            if (!source.getGlyphRawSpan(oldIndex, pSpan, spanLength)) {
-                m_errors.push_back("build : a picked span vanished");
-                return false;
-            }
             std::vector<uint8_t> entry;
-            if (spanLength != 0) {
-                entry.assign(pSpan, pSpan + spanLength);
+            uint16_t advance = 0;
+            int16_t bearing = 0;
+            const std::map<std::pair<int32_t, GlyphIndex>, Override>::const_iterator ovr = m_overrides.find(order[orderIdx]);
+            if (ovr != m_overrides.end()) {
+                // the override EMITS its outline and carries its metrics
+                Stream data;
+                emitGlyphData(ovr->second.glyph, data);
+                if (data.getSize() != 0u) {
+                    entry.assign(data.getBytes(), data.getBytes() + data.getSize());
+                }
+                advance = ovr->second.advance;
+                bearing = ovr->second.lsb;
+            } else {
+                const uint8_t* pSpan = nullptr;
+                uint32_t spanLength = 0;
+                if (!source.getGlyphRawSpan(oldIndex, pSpan, spanLength)) {
+                    m_errors.push_back("build : a picked span vanished");
+                    return false;
+                }
+                if (spanLength != 0) {
+                    entry.assign(pSpan, pSpan + spanLength);
+                }
+                source.getAdvanceWidth(oldIndex, advance);
+                source.getLeftSideBearing(oldIndex, bearing);
+            }
+            if (!entry.empty()) {
                 // the composite indices are LOCAL to their source : remap
                 // them through the included set of THAT source
                 std::map<GlyphIndex, GlyphIndex> remap;
@@ -241,10 +296,6 @@ public:
                 glyfBytes.insert(glyfBytes.end(), entry.begin(), entry.end());
             }
             loca.offsets.push_back(static_cast<uint32_t>(glyfBytes.size()));
-            uint16_t advance = 0;
-            int16_t bearing = 0;
-            source.getAdvanceWidth(oldIndex, advance);
-            source.getLeftSideBearing(oldIndex, bearing);
             hmtx.advanceWidths.push_back(advance);
             hmtx.leftSideBearings.push_back(bearing);
             post.glyphNames.push_back(std::string());
@@ -275,7 +326,7 @@ public:
         auto anyBox = false;
         for (std::size_t orderIdx = 0; orderIdx < order.size(); ++orderIdx) {
             Glyph glyph;
-            if (m_sources[static_cast<std::size_t>(order[orderIdx].first)]->getGlyph(order[orderIdx].second, glyph) && !glyph.isEmpty()) {
+            if (m_glyphOf(order[orderIdx], glyph) && !glyph.isEmpty()) {
                 if (!anyBox) {
                     head.xMin = glyph.xMin;
                     head.yMin = glyph.yMin;
@@ -392,6 +443,16 @@ public:
     }
 
 private:
+    // the outline the build sees for one (source, old index) : its
+    // override when there is one, the parsed source glyph otherwise
+    bool m_glyphOf(const std::pair<int32_t, GlyphIndex>& aKey, Glyph& aoGlyph) const {
+        const std::map<std::pair<int32_t, GlyphIndex>, Override>::const_iterator ovr = m_overrides.find(aKey);
+        if (ovr != m_overrides.end()) {
+            aoGlyph = ovr->second.glyph;
+            return true;
+        }
+        return m_sources[static_cast<std::size_t>(aKey.first)]->getGlyph(aKey.second, aoGlyph);
+    }
     // includes (source, glyph) and its composite closure, depth first.
     // false on a corrupt glyph. already-included pairs answer true
     bool m_include(int32_t aSourceIdx, GlyphIndex aGlyphIndex,                          //
@@ -404,7 +465,7 @@ private:
         aoIncluded[key] = static_cast<GlyphIndex>(aoOrder.size());
         aoOrder.push_back(key);
         Glyph glyph;
-        if (!m_sources[static_cast<std::size_t>(aSourceIdx)]->getGlyph(aGlyphIndex, glyph)) {
+        if (!m_glyphOf(key, glyph)) {
             return false;
         }
         for (std::size_t componentIdx = 0; componentIdx < glyph.components.size(); ++componentIdx) {
