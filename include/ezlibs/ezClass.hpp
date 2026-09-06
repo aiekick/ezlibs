@@ -56,7 +56,7 @@ will give :
 */
 #define DATAS_STRUCT_GETTER(TTYPE, TNAME, TDATAS) \
 public:                                           \
-    TTYPE& get##TNAME##Ref() {                    \
+    TTYPE& ref##TNAME() {                    \
         return TDATAS;                            \
     }                                             \
     const TTYPE& get##TNAME() const {             \
