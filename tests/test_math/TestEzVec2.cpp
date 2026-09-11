@@ -310,6 +310,39 @@ bool TestEzVec2_Maxi() {
     return true;
 }
 
+// The unit clamp keeps what already sits inside [0, 1] and folds the rest
+// onto the nearest bound, component by component.
+template <typename T>
+bool TestEzVec2_Clamp01() {
+    const ez::math::vec2<T> clamped = ez::math::clamp(ez::math::vec2<T>(1, 3));
+    CTEST_ASSERT(ez::math::isEqual(clamped.x, static_cast<T>(1)));
+    CTEST_ASSERT(ez::math::isEqual(clamped.y, static_cast<T>(1)));
+    return true;
+}
+
+// The upper bounded clamp folds every component onto [0, b] : the bound is
+// the one GIVEN, never the unit one.
+template <typename T>
+bool TestEzVec2_ClampMax() {
+    const ez::math::vec2<T> clamped = ez::math::clamp(ez::math::vec2<T>(3, 20), static_cast<T>(10));
+    CTEST_ASSERT(ez::math::isEqual(clamped.x, static_cast<T>(3)));
+    CTEST_ASSERT(ez::math::isEqual(clamped.y, static_cast<T>(10)));
+    return true;
+}
+
+// The bounded clamp folds every component onto [a, b], and leaves the
+// components already inside the range untouched.
+template <typename T>
+bool TestEzVec2_ClampMinMax() {
+    const ez::math::vec2<T> clamped = ez::math::clamp(ez::math::vec2<T>(1, 20), static_cast<T>(4), static_cast<T>(12));
+    CTEST_ASSERT(ez::math::isEqual(clamped.x, static_cast<T>(4)));
+    CTEST_ASSERT(ez::math::isEqual(clamped.y, static_cast<T>(12)));
+    const ez::math::vec2<T> contained = ez::math::clamp(ez::math::vec2<T>(6, 9), static_cast<T>(4), static_cast<T>(12));
+    CTEST_ASSERT(ez::math::isEqual(contained.x, static_cast<T>(6)));
+    CTEST_ASSERT(ez::math::isEqual(contained.y, static_cast<T>(9)));
+    return true;
+}
+
 template <typename T>
 bool TestEzVec2_Dot() {
     ez::math::vec2<T> v1(1, 3);
@@ -722,6 +755,24 @@ bool TestEzVec2(const std::string& vTest) {
     else IfTestExist(TestEzVec2_Maxi<int64_t>);
     else IfTestExist(TestEzVec2_Maxi<uint32_t>);
     else IfTestExist(TestEzVec2_Maxi<uint64_t>);
+    else IfTestExist(TestEzVec2_Clamp01<float>);
+    else IfTestExist(TestEzVec2_Clamp01<double>);
+    else IfTestExist(TestEzVec2_Clamp01<int32_t>);
+    else IfTestExist(TestEzVec2_Clamp01<int64_t>);
+    else IfTestExist(TestEzVec2_Clamp01<uint32_t>);
+    else IfTestExist(TestEzVec2_Clamp01<uint64_t>);
+    else IfTestExist(TestEzVec2_ClampMax<float>);
+    else IfTestExist(TestEzVec2_ClampMax<double>);
+    else IfTestExist(TestEzVec2_ClampMax<int32_t>);
+    else IfTestExist(TestEzVec2_ClampMax<int64_t>);
+    else IfTestExist(TestEzVec2_ClampMax<uint32_t>);
+    else IfTestExist(TestEzVec2_ClampMax<uint64_t>);
+    else IfTestExist(TestEzVec2_ClampMinMax<float>);
+    else IfTestExist(TestEzVec2_ClampMinMax<double>);
+    else IfTestExist(TestEzVec2_ClampMinMax<int32_t>);
+    else IfTestExist(TestEzVec2_ClampMinMax<int64_t>);
+    else IfTestExist(TestEzVec2_ClampMinMax<uint32_t>);
+    else IfTestExist(TestEzVec2_ClampMinMax<uint64_t>);
 
     IfTestExist(TestEzVec2_Dot<float>);
     else IfTestExist(TestEzVec2_Dot<double>);

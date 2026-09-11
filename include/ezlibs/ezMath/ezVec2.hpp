@@ -558,8 +558,8 @@ inline vec2<T> clamp(vec2<T> n) {
 template <typename T>
 inline vec2<T> clamp(vec2<T> n, T b) {
     vec2<T> ret;
-    ret.x = ez::math::clamp(n.x);
-    ret.y = ez::math::clamp(n.y);
+    ret.x = ez::math::clamp(n.x, b);
+    ret.y = ez::math::clamp(n.y, b);
     return ret;
 }
 

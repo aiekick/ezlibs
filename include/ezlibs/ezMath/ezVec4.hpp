@@ -504,6 +504,33 @@ inline vec4<T> tan(vec4<T> a) {
     return vec4<T>(ez::math::tan(a.x), ez::math::tan(a.y), ez::math::tan(a.z), ez::math::tan(a.w));
 }
 
+// Clamps a value between 0 and 1.
+// Works with both integral and floating-point types.
+template <typename T>
+inline vec4<T> clamp(vec4<T> n) {
+    return vec4<T>(                            //
+        ez::math::clamp(n.x), ez::math::clamp(n.y),  //
+        ez::math::clamp(n.z), ez::math::clamp(n.w));
+}
+
+// Clamps a value between 0 and b.
+// Works with both integral and floating-point types.
+template <typename T>
+inline vec4<T> clamp(vec4<T> n, T b) {
+    return vec4<T>(                                  //
+        ez::math::clamp(n.x, b), ez::math::clamp(n.y, b),  //
+        ez::math::clamp(n.z, b), ez::math::clamp(n.w, b));
+}
+
+// Clamps a value between a and b.
+// Works with both integral and floating-point types.
+template <typename T>
+inline vec4<T> clamp(vec4<T> n, T a, T b) {
+    return vec4<T>(                                      //
+        ez::math::clamp(n.x, a, b), ez::math::clamp(n.y, a, b),  //
+        ez::math::clamp(n.z, a, b), ez::math::clamp(n.w, a, b));
+}
+
 // Type aliases for common vector types
 using dvec4 = vec4<double>;
 using fvec4 = vec4<float>;
