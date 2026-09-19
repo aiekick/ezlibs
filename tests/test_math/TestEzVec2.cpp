@@ -361,6 +361,27 @@ bool TestEzVec2_Det() {
     return true;
 }
 
+// the tolerance is the law : a point moved by less than epsilon on both
+// axis is the same point, by more on either one is another
+template <typename T>
+bool TestEzVec2_IsEqualWithEpsilon() {
+    const T epsilon = static_cast<T>(1e-3);
+    const T inside = static_cast<T>(1e-4);
+    const T outside = static_cast<T>(1e-2);
+    const ez::math::vec2<T> point(static_cast<T>(2), static_cast<T>(5));
+    CTEST_ASSERT(ez::math::isEqual(point, point, epsilon));
+    CTEST_ASSERT(!ez::math::isDifferent(point, point, epsilon));
+    CTEST_ASSERT(ez::math::isEqual(point, point + ez::math::vec2<T>(inside, inside), epsilon));
+    // one axis past the tolerance is enough to part them
+    CTEST_ASSERT(!ez::math::isEqual(point, point + ez::math::vec2<T>(outside, inside), epsilon));
+    CTEST_ASSERT(!ez::math::isEqual(point, point + ez::math::vec2<T>(inside, outside), epsilon));
+    CTEST_ASSERT(ez::math::isDifferent(point, point + ez::math::vec2<T>(inside, outside), epsilon));
+    // the two answers are always opposite
+    const ez::math::vec2<T> other(static_cast<T>(-7), static_cast<T>(3));
+    CTEST_ASSERT(ez::math::isEqual(point, other, epsilon) == !ez::math::isDifferent(point, other, epsilon));
+    return true;
+}
+
 template <typename T>
 bool TestEzVec2_Reflect() {
     ez::math::vec2<T> v1(1, 3);
@@ -787,6 +808,9 @@ bool TestEzVec2(const std::string& vTest) {
     else IfTestExist(TestEzVec2_Det<int64_t>);
     else IfTestExist(TestEzVec2_Det<uint32_t>);
     else IfTestExist(TestEzVec2_Det<uint64_t>);
+
+    IfTestExist(TestEzVec2_IsEqualWithEpsilon<float>);
+    else IfTestExist(TestEzVec2_IsEqualWithEpsilon<double>);
 
     IfTestExist(TestEzVec2_Reflect<float>);
     else IfTestExist(TestEzVec2_Reflect<double>);

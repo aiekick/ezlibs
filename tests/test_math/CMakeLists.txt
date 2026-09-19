@@ -537,6 +537,9 @@ AddTest("TestEzVec2_Det<uint32_t>")
 AddTest("TestEzVec2_Det<int64_t>")
 AddTest("TestEzVec2_Det<uint64_t>")
 
+AddTest("TestEzVec2_IsEqualWithEpsilon<float>")
+AddTest("TestEzVec2_IsEqualWithEpsilon<double>")
+
 AddTest("TestEzVec2_Reflect<float>")
 AddTest("TestEzVec2_Reflect<double>")
 

@@ -420,6 +420,19 @@ inline T dot(const vec2<T>& a, const vec2<T>& b) {
     return a.x * b.x + a.y * b.y;
 }
 
+// component wise comparison with a custom tolerance : the same point
+// when both axis agree. floating point only, like the scalar isEqual
+// it rides on
+template <typename T>
+inline bool isEqual(const vec2<T>& a, const vec2<T>& b, T vEpsilon) {
+    return ez::math::isEqual(a.x, b.x, vEpsilon) && ez::math::isEqual(a.y, b.y, vEpsilon);
+}
+
+template <typename T>
+inline bool isDifferent(const vec2<T>& a, const vec2<T>& b, T vEpsilon) {
+    return ez::math::isDifferent(a.x, b.x, vEpsilon) || ez::math::isDifferent(a.y, b.y, vEpsilon);
+}
+
 template <typename T>
 inline T det(const vec2<T>& a, const vec2<T>& b) {
     return a.x * b.y - a.y * b.x;
