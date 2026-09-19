@@ -38,6 +38,7 @@ file(GLOB SRC_RECURSE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezAABB.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezSdf.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezBezier.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezRect.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezMath/ezAABBCC.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezVariant.hpp)
 source_group(TREE ${EZ_LIBS_INCLUDE_DIR}/ezlibs PREFIX Libs FILES ${SRC_RECURSE})
@@ -1152,3 +1153,47 @@ AddTest("TestEzBezier_ArcOfAQuarterTurnLandsOnTheCircle")
 AddTest("TestEzBezier_ArcRadiiTooSmallAreScaledUp")
 AddTest("TestEzBezier_DegenerateArcsAreLines")
 AddTest("TestEzBezier_FlattenCubicStaysWithinTolerance")
+
+##########################################################
+##### TESTS EzRect #######################################
+##########################################################
+
+AddTest("TestEzRect_DefaultIsEmptyAtOrigin<float>")
+AddTest("TestEzRect_DefaultIsEmptyAtOrigin<int32_t>")
+AddTest("TestEzRect_DefaultIsEmptyAtOrigin<uint32_t>")
+
+AddTest("TestEzRect_ConstructorKeepsPosAndSize<float>")
+AddTest("TestEzRect_ConstructorKeepsPosAndSize<int32_t>")
+AddTest("TestEzRect_ConstructorKeepsPosAndSize<uint32_t>")
+
+AddTest("TestEzRect_TypedConversionCastsBothFields")
+
+AddTest("TestEzRect_EmptyOnNullOrNegativeSize<float>")
+AddTest("TestEzRect_EmptyOnNullOrNegativeSize<int32_t>")
+
+AddTest("TestEzRect_ContainsPointIsHalfOpen<float>")
+AddTest("TestEzRect_ContainsPointIsHalfOpen<int32_t>")
+AddTest("TestEzRect_ContainsPointIsHalfOpen<uint32_t>")
+
+AddTest("TestEzRect_ContainsRectIsInclusive<float>")
+AddTest("TestEzRect_ContainsRectIsInclusive<int32_t>")
+AddTest("TestEzRect_ContainsRectIsInclusive<uint32_t>")
+
+AddTest("TestEzRect_IntersectsNeedsRealOverlap<float>")
+AddTest("TestEzRect_IntersectsNeedsRealOverlap<int32_t>")
+AddTest("TestEzRect_IntersectsNeedsRealOverlap<uint32_t>")
+
+AddTest("TestEzRect_IntersectedIsTheOverlap<float>")
+AddTest("TestEzRect_IntersectedIsTheOverlap<int32_t>")
+AddTest("TestEzRect_IntersectedIsTheOverlap<uint32_t>")
+
+AddTest("TestEzRect_MergedIsTheUnion<float>")
+AddTest("TestEzRect_MergedIsTheUnion<int32_t>")
+AddTest("TestEzRect_MergedIsTheUnion<uint32_t>")
+
+AddTest("TestEzRect_EqualityComparesAllFourFields<float>")
+AddTest("TestEzRect_EqualityComparesAllFourFields<int32_t>")
+AddTest("TestEzRect_EqualityComparesAllFourFields<uint32_t>")
+
+AddTest("TestEzRect_ReframeMovesEdges<float>")
+AddTest("TestEzRect_ReframeMovesEdges<int32_t>")

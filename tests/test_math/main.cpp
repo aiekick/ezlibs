@@ -16,6 +16,7 @@
 #include <TestEzSdf.h>
 #include <TestEzExpr.h>
 #include <TestEzBezier.h>
+#include <TestEzRect.h>
 
 #include <limits>
 #include <cmath>
@@ -45,6 +46,7 @@ bool TestMisc(const std::string& vTest) {
     IfTestCollectionExist(TestEzSdf);
     IfTestCollectionExist(TestEzExpr);
     IfTestCollectionExist(TestEzBezier);
+    IfTestCollectionExist(TestEzRect);
     return false;
 }
 
