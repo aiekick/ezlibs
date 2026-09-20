@@ -1,4 +1,5 @@
 #include <TestEzCmdProcessor.h>
+#include <TestEzClass.h>
 #include <TestEzGraph.h>
 #include <TestEzFdGraph.h>
 #include <TestEzXml.h>
@@ -25,6 +26,7 @@
 
 bool TestMisc(const std::string& vTest) {
     IfTestCollectionExist(TestEzCmdProcessor);
+    else IfTestCollectionExist(TestEzClass);
     else IfTestCollectionExist(TestEzFdGraph);
     else IfTestCollectionExist(TestEzGraph);
     else IfTestCollectionExist(TestEzXml);

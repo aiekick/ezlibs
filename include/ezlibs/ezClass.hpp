@@ -38,6 +38,17 @@ public:                                      \
     TTYPE& operator=(TTYPE&&) = delete;
 
 /*
+this macro disable copy and move of class, but KEEPS its constructors :
+for a class whose base or members forbid a default one
+*/
+#define DISABLE_COPY_AND_MOVE(TTYPE)         \
+public:                                      \
+    TTYPE(const TTYPE&) = delete;            \
+    TTYPE& operator=(const TTYPE&) = delete; \
+    TTYPE(TTYPE&&) = delete;                 \
+    TTYPE& operator=(TTYPE&&) = delete;
+
+/*
 this macro disable destructors of class
 */
 #define DISABLE_DESTRUCTORS(TTYPE) \

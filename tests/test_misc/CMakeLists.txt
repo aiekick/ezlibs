@@ -19,6 +19,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX Src FILES ${PROJECT_TEST_SR
 
 file(GLOB EZ_LIBS_SOURCE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezCmdProcessor.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezClass.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezGraph.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezFdGraph.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezStr.hpp
@@ -62,6 +63,14 @@ StageBuildInc()
 ##########################################################
 
 AddTest("TestEzCmdProcessor_Basis")
+
+##########################################################
+##### TESTS EzClass ######################################
+##########################################################
+
+AddTest("TestEzClass_DisableCopyAndMoveKeepsTheOwnConstructor")
+AddTest("TestEzClass_DisableConstructorsKeepsOnlyTheDefaultOne")
+AddTest("TestEzClass_DisableDestructorsGivesAVirtualDestructor")
 
 ##########################################################
 ##### TESTS EzGraph ######################################
