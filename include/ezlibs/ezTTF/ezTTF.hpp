@@ -28,7 +28,7 @@ SOFTWARE.
 //
 // ez::ttf : a TrueType reader/writer — parse, subset, merge, rename,
 // generate. NO rasterization (that job belongs to freetype/msdfgen on
-// the consumer side). design plan : ogiFontStudio/.claude/PLAN-EZTTF.md
+// the consumer side).
 //
 // umbrella header : include THIS one, the internal order matters
 
