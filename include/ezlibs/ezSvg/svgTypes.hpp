@@ -36,7 +36,7 @@ SOFTWARE.
 #include <string>
 #include <vector>
 
-#include "../ezMath/ezVec2.hpp"
+#include "../ezMath/ezMath.hpp"  // the umbrella : vec2 alone declares none of the ez::math scalars it calls
 
 namespace ez {
 namespace svg {

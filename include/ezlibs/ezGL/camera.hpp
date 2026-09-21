@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include <array>
 #include <cmath>
-#include "../ezMath/ezVec3.hpp"
+#include "../ezMath/ezMath.hpp"  // the umbrella : vec3 alone declares none of the ez::math scalars it calls
 #include "../ezMath/ezMat4.hpp"
 
 namespace ez {
