@@ -203,23 +203,39 @@ namespace ez {
             // transform list, a viewBox, a name with a space lost its tail)
             template<typename T = std::string>
             typename std::enable_if<std::is_same<T, std::string>::value, T>::type getAttribute(const std::string &vKey) const {
-                auto it = m_attributes.find(vKey);
+                const auto it = m_attributes.find(vKey);
                 if (it != m_attributes.end()) {
                     return it->second.getValue();
                 }
                 return T();
             }
 
+            template <typename T>
+            void getAttribute(const std::string &vKey, typename std::enable_if<std::is_same<T, std::string>::value, T>::type &arValue) const {
+                const auto it = m_attributes.find(vKey);
+                if (it != m_attributes.end()) { arValue = it->second.getValue(); }
+            }
+
             template<typename T>
             typename std::enable_if<!std::is_same<T, std::string>::value, T>::type getAttribute(const std::string &vKey) const {
                 T ret{};
                 std::stringstream ss;
-                auto it = m_attributes.find(vKey);
+                const auto it = m_attributes.find(vKey);
                 if (it != m_attributes.end()) {
                     ss << it->second;
                 }
                 ss >> ret;
                 return ret;
+            }
+
+            template <typename T>
+            void getAttribute(const std::string &vKey, typename std::enable_if<!std::is_same<T, std::string>::value, T>::type &arValue) const {
+                const auto it = m_attributes.find(vKey);
+                if (it != m_attributes.end()) {
+                    std::stringstream ss;
+                    ss << it->second;
+                    ss >> arValue;
+                }
             }
 
             template<typename T>

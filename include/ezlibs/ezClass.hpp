@@ -58,7 +58,7 @@ public:                            \
 /*
 DATAS_GETTER(LocalDatas, Datas, m_datas)
 will give :
-    LocalDatas& getDatasRef() {
+    LocalDatas& refDatas() {
         return m_datas;
     }
     const LocalDatas& getDatas() const{

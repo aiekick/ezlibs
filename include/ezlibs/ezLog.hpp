@@ -61,11 +61,13 @@ SOFTWARE.
 
 #include <iostream>  // std::cout
 
+#include <stack>
 #include <mutex>
 #include <string>
 #include <vector>
 #include <memory>
 #include <cassert>
+#include <cstdint>
 #include <fstream>
 #include <stdexcept>
 #include <functional>
@@ -164,8 +166,8 @@ namespace ez {
 
 class Log {
 public:
-    typedef int MessageType;
-    typedef std::function<void(const int& vType, const std::string& vMessage)> LogMessageFunctor;
+    typedef int32_t MessageType;
+    typedef std::function<void(const int32_t& vType, const std::string& vMessage)> LogMessageFunctor;
     enum MessageTypeEnum { LOGGING_MESSAGE_TYPE_INFOS = 0, LOGGING_MESSAGE_TYPE_WARNING, LOGGING_MESSAGE_TYPE_ERROR };
 
 protected:
@@ -176,7 +178,7 @@ private:
     std::ofstream m_debugLogFile;
     int64 m_lastTick = 0;
     bool m_reseted = false;
-    LogMessageFunctor m_standardLogFunction;
+    std::stack<LogMessageFunctor> m_standardLogFunctionStack;
     LogMessageFunctor m_openGLLogFunction;
     std::vector<std::string> m_messages;  // file, function, line, msg
     bool m_consoleVerbose = false;
@@ -391,7 +393,8 @@ public:
         return msg;
     }
 
-    void setStandardLogMessageFunctor(const LogMessageFunctor& vMessageLogFunctor) { m_standardLogFunction = vMessageLogFunctor; }
+    void pushStandardLogMessageFunctor(const LogMessageFunctor& vMessageLogFunctor) { m_standardLogFunctionStack.push(vMessageLogFunctor); }
+    void popStandardLogMessageFunctor() { m_standardLogFunctionStack.pop(); }
     void setOpenglLogMessageFunctor(const LogMessageFunctor& vMessageLogFunctor) { m_openGLLogFunction = vMessageLogFunctor; }
 
     void setVerboseMode(bool vFlag) { m_consoleVerbose = vFlag; }
@@ -447,20 +450,14 @@ private:
             std::cout << msg << std::endl;
 #endif
 
-            if (vStr && m_standardLogFunction) {
+            if (vStr && m_standardLogFunctionStack.top()) {
                 int type = 0;
-
-                if (vType) {
-                    type = (int)(*vType);
-                }
-
+                if (vType) { type = (int)(*vType); }
                 auto arr = str::splitStringToVector(msg, '\n');
                 if (arr.size() == 1U) {
-                    m_standardLogFunction(type, msg);
+                    m_standardLogFunctionStack.top()(type, msg);
                 } else {
-                    for (auto m : arr) {
-                        m_standardLogFunction(type, m);
-                    }
+                    for (auto m : arr) { m_standardLogFunctionStack.top()(type, m); }
                 }
             }
 
