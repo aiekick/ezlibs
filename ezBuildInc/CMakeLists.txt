@@ -7,6 +7,8 @@ enable_language(CXX)
 
 add_executable(${PROJECT} main.cpp)
 
+target_link_libraries(${PROJECT} PRIVATE ezlibs)
+
 set_target_properties(${PROJECT} PROPERTIES FOLDER 3rdparty/tools)
 
 if (MSVC)
