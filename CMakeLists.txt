@@ -33,7 +33,8 @@ else()
 	set(EZ_LIBS_LOCAL_DEV ON CACHE BOOL "" FORCE)
 endif()
 
-include_directories(${EZ_LIBS_INCLUDE_DIR})
+add_library(ezlibs INTERFACE)
+target_include_directories(ezlibs INTERFACE ${EZ_LIBS_INCLUDE_DIR})
 
 if(NOT TARGET ezBuildInc)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ezBuildInc)
