@@ -450,7 +450,9 @@ private:
             std::cout << msg << std::endl;
 #endif
 
-            if (vStr && m_standardLogFunctionStack.top()) {
+            if (vStr                                      //
+                && (!m_standardLogFunctionStack.empty())  //
+                && m_standardLogFunctionStack.top()) {
                 int type = 0;
                 if (vType) { type = (int)(*vType); }
                 auto arr = str::splitStringToVector(msg, '\n');
