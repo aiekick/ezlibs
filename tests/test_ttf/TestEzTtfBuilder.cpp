@@ -329,6 +329,85 @@ bool TestEzTtfBuilder_BuildTellsTheNewIndexOfEveryPick() {
     return true;
 }
 
+// the names are a CHOICE of the build : on by default, the picks wear
+// their names ; off, no glyph carries one (notdef included) while the
+// cmap and the outlines are untouched ; on again, they come back
+bool TestEzTtfBuilder_TheNamesAreAChoiceOfTheBuild() {
+    ez::ttf::Font source;
+    CTEST_ASSERT(buildCompositeSourceFont(source));
+    ez::ttf::Builder builder;
+    CTEST_ASSERT(builder.addSource(source) == 0);
+    CTEST_ASSERT(builder.pickCodePoint(0, 0x41u, 0xE000u, "ez_triangle"));
+    ez::ttf::Font named;
+    CTEST_ASSERT(builder.build(named));
+    const ez::ttf::GlyphIndex namedIdx = named.getGlyphIndex(0xE000u);
+    CTEST_ASSERT(namedIdx != 0u);
+    CTEST_ASSERT(named.getGlyphName(namedIdx) == "ez_triangle");
+    builder.setExportNames(false);
+    ez::ttf::Font nameless;
+    CTEST_ASSERT(builder.build(nameless));
+    CTEST_ASSERT(nameless.getGlyphCount() == named.getGlyphCount());
+    const ez::ttf::GlyphIndex namelessIdx = nameless.getGlyphIndex(0xE000u);
+    CTEST_ASSERT(namelessIdx == namedIdx);
+    CTEST_ASSERT(nameless.getGlyphName(namelessIdx).empty());
+    CTEST_ASSERT(nameless.getGlyphName(0u).empty());
+    ez::ttf::Glyph namelessGlyph;
+    CTEST_ASSERT(nameless.getGlyph(namelessIdx, namelessGlyph));
+    CTEST_ASSERT((namelessGlyph.contours.size() == 1u) && (namelessGlyph.contours[0].size() == 3u));
+    builder.setExportNames(true);
+    ez::ttf::Font renamed;
+    CTEST_ASSERT(builder.build(renamed));
+    CTEST_ASSERT(renamed.getGlyphName(renamed.getGlyphIndex(0xE000u)) == "ez_triangle");
+    return true;
+}
+
+namespace {
+
+ez::ttf::Glyph local_boxGlyph(int16_t aLeft, int16_t aBottom, int16_t aRight, int16_t aTop);
+
+}  // namespace
+
+// named metrics : the built font is born in the given em with the given
+// vertical metrics ; a source of another em is refused while one of its
+// taken glyphs rides raw (the error names it), and accepted once every
+// glyph it gives is overridden — notdef included
+bool TestEzTtfBuilder_NamedMetricsRequireTheRescaleOfAnotherEm() {
+    ez::ttf::Font source;
+    CTEST_ASSERT(buildCompositeSourceFont(source));
+    const uint16_t sourceEm = source.getInfos().unitsPerEm;
+    const uint16_t targetEm = static_cast<uint16_t>(sourceEm * 2u);
+    ez::ttf::Builder builder;
+    CTEST_ASSERT(builder.addSource(source) == 0);
+    CTEST_ASSERT(builder.pickCodePoint(0, 0x41u, 0xE000u, "tri"));
+    builder.setMetrics(targetEm, 1500, -500, 90);
+    ez::ttf::Font refused;
+    CTEST_ASSERT(!builder.build(refused));
+    CTEST_ASSERT(!builder.getErrors().empty());
+    CTEST_ASSERT(builder.getErrors()[0].find("another em") != std::string::npos);
+    // every taken glyph overridden (here : the notdef and the pick)
+    const ez::ttf::GlyphIndex pickIndex = source.getGlyphIndex(0x41u);
+    CTEST_ASSERT(builder.overrideGlyph(0, 0u, ez::ttf::Glyph(), 0u, 0));
+    CTEST_ASSERT(builder.overrideGlyph(0, pickIndex, local_boxGlyph(0, 0, 200, 200), 400u, 0));
+    ez::ttf::Font built;
+    CTEST_ASSERT(builder.build(built));
+    CTEST_ASSERT(built.getInfos().unitsPerEm == targetEm);
+    CTEST_ASSERT(built.getInfos().ascender == 1500);
+    CTEST_ASSERT(built.getInfos().descender == -500);
+    CTEST_ASSERT(built.getInfos().lineGap == 90);
+    ez::ttf::Glyph glyph;
+    CTEST_ASSERT(built.getGlyph(built.getGlyphIndex(0xE000u), glyph));
+    CTEST_ASSERT((glyph.xMax == 200) && (glyph.yMax == 200));
+    // the same em as the source : nothing to rescale, the raw copy is fine
+    ez::ttf::Builder sameEm;
+    CTEST_ASSERT(sameEm.addSource(source) == 0);
+    CTEST_ASSERT(sameEm.pickCodePoint(0, 0x41u, 0xE000u, "tri"));
+    sameEm.setMetrics(sourceEm, 700, -300, 0);
+    ez::ttf::Font sameBuilt;
+    CTEST_ASSERT(sameEm.build(sameBuilt));
+    CTEST_ASSERT(sameBuilt.getInfos().ascender == 700);
+    return true;
+}
+
 namespace {
 
 ez::ttf::Glyph local_boxGlyph(int16_t aLeft, int16_t aBottom, int16_t aRight, int16_t aTop) {
@@ -479,6 +558,8 @@ bool TestEzTtfBuilder(const std::string& vTest) {
     else IfTestExist(TestEzTtfBuilder_MergeConcatenatesThePalettes);
     else IfTestExist(TestEzTtfBuilder_PlainPicksEmitNoColorTables);
     else IfTestExist(TestEzTtfBuilder_BuildTellsTheNewIndexOfEveryPick);
+    else IfTestExist(TestEzTtfBuilder_TheNamesAreAChoiceOfTheBuild);
+    else IfTestExist(TestEzTtfBuilder_NamedMetricsRequireTheRescaleOfAnotherEm);
     else IfTestExist(TestEzTtfBuilder_AnOverrideReplacesTheOutlineAndTheMetrics);
     else IfTestExist(TestEzTtfBuilder_AnOverrideCanFlattenAComposite);
     else IfTestExist(TestEzTtfBuilder_TheLayersOfAnOverriddenBaseStayAttached);

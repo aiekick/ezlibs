@@ -114,6 +114,8 @@ AddTest("TestEzTtfBuilder_SubsetEmbarksTheColorLayers")
 AddTest("TestEzTtfBuilder_MergeConcatenatesThePalettes")
 AddTest("TestEzTtfBuilder_PlainPicksEmitNoColorTables")
 AddTest("TestEzTtfBuilder_BuildTellsTheNewIndexOfEveryPick")
+AddTest("TestEzTtfBuilder_TheNamesAreAChoiceOfTheBuild")
+AddTest("TestEzTtfBuilder_NamedMetricsRequireTheRescaleOfAnotherEm")
 
 ##########################################################
 ##### TESTS EzTtfGlyph (the emitter) #####################

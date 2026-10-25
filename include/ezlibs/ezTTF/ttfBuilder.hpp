@@ -37,6 +37,7 @@ SOFTWARE.
 // the raw span (the edited glyph of a glyph editor)
 
 #include <cstdint>
+#include <cstdio>
 #include <map>
 #include <string>
 #include <utility>
@@ -115,6 +116,16 @@ private:
     // picks and everything their closures embarked (components, color
     // layers). empty after a failed build
     std::map<std::pair<int32_t, GlyphIndex>, GlyphIndex> m_builtIndices;
+    // the glyph names ride the post table (v2) ; off, the build writes an
+    // honest nameless v3 whatever the picks are named
+    bool m_exportNames{true};
+    // the em and the vertical metrics of the built font : the first
+    // source's until setMetrics names them
+    bool m_hasMetrics{false};
+    uint16_t m_unitsPerEm{0u};
+    int16_t m_ascender{0};
+    int16_t m_descender{0};
+    int16_t m_lineGap{0};
 
 public:
     // observing registration : the font must outlive build(). -1 on an
@@ -180,6 +191,21 @@ public:
         return true;
     }
     void clearOverrides() { m_overrides.clear(); }
+    // true (the default) : the names of the picks are written. false : no
+    // name at all in the built font, notdef included (a smaller file)
+    void setExportNames(bool aExportNames) { m_exportNames = aExportNames; }
+    // the built font is born in THIS em with these vertical metrics
+    // instead of the first source's. sources of another em are welcome
+    // then, under one condition the build checks : every glyph it takes
+    // from them is OVERRIDDEN (the caller rescaled it into this em) — a
+    // raw span of another em would be drawn at the wrong size
+    void setMetrics(uint16_t aUnitsPerEm, int16_t aAscender, int16_t aDescender, int16_t aLineGap) {
+        m_hasMetrics = true;
+        m_unitsPerEm = aUnitsPerEm;
+        m_ascender = aAscender;
+        m_descender = aDescender;
+        m_lineGap = aLineGap;
+    }
     const std::vector<std::string>& getErrors() const { return m_errors; }
     // the NEW index a source glyph received in the LAST successful build —
     // a pick, or a glyph its closure embarked (a component, a color
@@ -205,10 +231,16 @@ public:
             return false;
         }
         const Font& firstSource = *m_sources[0];
-        for (std::size_t sourceIdx = 1; sourceIdx < m_sources.size(); ++sourceIdx) {
-            if (m_sources[sourceIdx]->getInfos().unitsPerEm != firstSource.getInfos().unitsPerEm) {
-                m_errors.push_back("build : mismatched unitsPerEm across sources (v1 refuses, no rescale)");
-                return false;
+        if (m_hasMetrics && (m_unitsPerEm == 0u)) {
+            m_errors.push_back("build : the named metrics carry no em");
+            return false;
+        }
+        if (!m_hasMetrics) {
+            for (std::size_t sourceIdx = 1; sourceIdx < m_sources.size(); ++sourceIdx) {
+                if (m_sources[sourceIdx]->getInfos().unitsPerEm != firstSource.getInfos().unitsPerEm) {
+                    m_errors.push_back("build : mismatched unitsPerEm across sources (name the metrics and rescale)");
+                    return false;
+                }
             }
         }
         // the include list : (source, oldIndex) -> newIndex. notdef of the
@@ -238,6 +270,21 @@ public:
                         m_errors.push_back("build : a color layer closure failed (corrupt source glyph)");
                         return false;
                     }
+                }
+            }
+        }
+        // in named metrics, a glyph of another em must have been rescaled :
+        // the notdef of the first source included (it is glyph 0 of the
+        // built font)
+        if (m_hasMetrics) {
+            for (std::size_t orderIdx = 0; orderIdx < order.size(); ++orderIdx) {
+                const Font& source = *m_sources[static_cast<std::size_t>(order[orderIdx].first)];
+                if ((source.getInfos().unitsPerEm != m_unitsPerEm) && (m_overrides.find(order[orderIdx]) == m_overrides.end())) {
+                    char buffer[128];
+                    std::snprintf(buffer, sizeof(buffer), "build : glyph %u of source %d is in another em and was not rescaled",
+                        static_cast<uint32_t>(order[orderIdx].second), static_cast<int32_t>(order[orderIdx].first));
+                    m_errors.push_back(buffer);
+                    return false;
                 }
             }
         }
@@ -312,15 +359,15 @@ public:
                 anyName = true;
             }
         }
-        if (!anyName) {
-            post.glyphNames.clear();  // nameless selection : an honest v3
+        if (!anyName || !m_exportNames) {
+            post.glyphNames.clear();  // nameless selection or names off : an honest v3
         }
         // the header set rides the first source ; the bbox is the union of
         // the included glyph headers (empty glyphs contribute nothing)
         HeadTable head;
         head.version.setFloat(1.0f);
         head.fontRevision.setFloat(1.0f);
-        head.unitsPerEm = firstSource.getInfos().unitsPerEm;
+        head.unitsPerEm = m_hasMetrics ? m_unitsPerEm : firstSource.getInfos().unitsPerEm;
         head.lowestRecPPEM = 8u;
         head.indexToLocFormat = 1;
         auto anyBox = false;
@@ -342,9 +389,9 @@ public:
             }
         }
         HheaTable hhea;
-        hhea.ascender = firstSource.getInfos().ascender;
-        hhea.descender = firstSource.getInfos().descender;
-        hhea.lineGap = firstSource.getInfos().lineGap;
+        hhea.ascender = m_hasMetrics ? m_ascender : firstSource.getInfos().ascender;
+        hhea.descender = m_hasMetrics ? m_descender : firstSource.getInfos().descender;
+        hhea.lineGap = m_hasMetrics ? m_lineGap : firstSource.getInfos().lineGap;
         uint16_t widest = 0;
         for (std::size_t glyphIdx = 0; glyphIdx < hmtx.advanceWidths.size(); ++glyphIdx) {
             widest = (hmtx.advanceWidths[glyphIdx] > widest) ? hmtx.advanceWidths[glyphIdx] : widest;
