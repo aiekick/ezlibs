@@ -142,6 +142,7 @@ AddTest("TestEzTtfOutline_QuantizationRoundsAndClamps")
 
 AddTest("TestEzTtfSynthesizer_BuildsAFontThatReopens")
 AddTest("TestEzTtfSynthesizer_ColorLayersRoundTrip")
+AddTest("TestEzTtfSynthesizer_AlternatePalettesRoundTrip")
 AddTest("TestEzTtfSynthesizer_MergesThroughTheBuilder")
 AddTest("TestEzTtfSynthesizer_RefusesUnknownLayers")
 AddTest("TestEzTtfSynthesizer_APlainGlyphBeforeTheColoredOne")

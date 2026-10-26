@@ -69,6 +69,7 @@ private:
     int16_t m_lineGap{0};
     std::vector<Entry> m_glyphs;  // glyph 0 is the notdef, posed at birth
     std::vector<ColorRgba> m_palette;
+    std::vector<std::vector<ColorRgba> > m_alternatePalettes;
     std::map<GlyphIndex, std::vector<ColrLayer> > m_layers;
     std::vector<std::string> m_errors;
 
@@ -118,6 +119,12 @@ public:
         layer.paletteEntry = kTextColorEntry;
         m_layers[aBase].push_back(layer);
         return true;
+    }
+    // an ALTERNATE palette (CPAL palette 1, 2...) : one color per entry of
+    // the main palette, in entry order — a dark or themed variant of the
+    // face. its size is checked at build, once every layer is known
+    void addAlternatePalette(const std::vector<ColorRgba>& aColors) {
+        m_alternatePalettes.push_back(aColors);
     }
     std::size_t getGlyphCount() const {
         return m_glyphs.size();
@@ -227,6 +234,13 @@ public:
             emitColrTable(m_layers, colrTable.bytes);
             tables.push_back(colrTable);
             std::vector<std::vector<ColorRgba> > palettes(1, palette);
+            for (std::size_t paletteIdx = 0; paletteIdx < m_alternatePalettes.size(); ++paletteIdx) {
+                if (m_alternatePalettes[paletteIdx].size() != palette.size()) {
+                    m_errors.push_back("build : an alternate palette must carry one color per entry of the main palette");
+                    return false;
+                }
+                palettes.push_back(m_alternatePalettes[paletteIdx]);
+            }
             TaggedTable cpalTable;
             cpalTable.tag = kTagCpal;
             emitCpalTable(palettes, cpalTable.bytes);

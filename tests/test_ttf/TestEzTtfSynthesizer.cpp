@@ -117,6 +117,44 @@ bool TestEzTtfSynthesizer_ColorLayersRoundTrip() {
     return true;
 }
 
+// an alternate palette lands as CPAL palette 1, entry for entry ; one that
+// does not match the main palette entry count is refused at build
+bool TestEzTtfSynthesizer_AlternatePalettesRoundTrip() {
+    ez::ttf::Synthesizer synth;
+    synth.setMetrics(1000u, 800, -200, 0);
+    const ez::ttf::GlyphIndex base = synth.addGlyph(local_square(0.0, 0.0, 600.0), 700u, 0xE000u, "icon");
+    const ez::ttf::GlyphIndex redLayer = synth.addGlyph(local_square(0.0, 0.0, 300.0), 700u, 0u, "");
+    const ez::ttf::GlyphIndex blueLayer = synth.addGlyph(local_square(300.0, 300.0, 300.0), 700u, 0u, "");
+    CTEST_ASSERT(synth.addColorLayer(base, redLayer, local_color(255, 0, 0)));
+    CTEST_ASSERT(synth.addColorLayer(base, blueLayer, local_color(0, 0, 255)));
+    std::vector<ez::ttf::ColorRgba> dark;
+    dark.push_back(local_color(10, 20, 30));
+    dark.push_back(local_color(40, 50, 60));
+    synth.addAlternatePalette(dark);
+    ez::ttf::Font font;
+    CTEST_ASSERT_MESSAGE(synth.build(font), "the font with an alternate palette failed to build");
+    CTEST_ASSERT(font.getPaletteCount() == 2u);
+    CTEST_ASSERT(font.getPaletteEntryCount(1u) == 2u);
+    ez::ttf::ColorRgba color;
+    CTEST_ASSERT(font.getPaletteColor(1u, 1u, color));
+    CTEST_ASSERT((color.red == 40) && (color.green == 50) && (color.blue == 60));
+    CTEST_ASSERT(font.getPaletteColor(0u, 0u, color));
+    CTEST_ASSERT((color.red == 255) && (color.blue == 0));
+    // one color short of the main palette
+    dark.pop_back();
+    ez::ttf::Synthesizer shortSynth;
+    const ez::ttf::GlyphIndex shortBase = shortSynth.addGlyph(local_square(0.0, 0.0, 600.0), 700u, 0xE000u, "icon");
+    const ez::ttf::GlyphIndex layerA = shortSynth.addGlyph(local_square(0.0, 0.0, 300.0), 700u, 0u, "");
+    const ez::ttf::GlyphIndex layerB = shortSynth.addGlyph(local_square(300.0, 300.0, 300.0), 700u, 0u, "");
+    CTEST_ASSERT(shortSynth.addColorLayer(shortBase, layerA, local_color(255, 0, 0)));
+    CTEST_ASSERT(shortSynth.addColorLayer(shortBase, layerB, local_color(0, 0, 255)));
+    shortSynth.addAlternatePalette(dark);
+    ez::ttf::Font refused;
+    CTEST_ASSERT(!shortSynth.build(refused));
+    CTEST_ASSERT(!shortSynth.getErrors().empty());
+    return true;
+}
+
 // the point of it all : a synthesized font is a source like any other
 // for the builder — two of them merge, and a real font joins when the
 // tree provides one of the same em
@@ -210,6 +248,7 @@ bool TestEzTtfSynthesizer_RefusesUnknownLayers() {
 bool TestEzTtfSynthesizer(const std::string& vTest) {
     IfTestExist(TestEzTtfSynthesizer_BuildsAFontThatReopens);
     else IfTestExist(TestEzTtfSynthesizer_ColorLayersRoundTrip);
+    else IfTestExist(TestEzTtfSynthesizer_AlternatePalettesRoundTrip);
     else IfTestExist(TestEzTtfSynthesizer_MergesThroughTheBuilder);
     else IfTestExist(TestEzTtfSynthesizer_RefusesUnknownLayers);
     else IfTestExist(TestEzTtfSynthesizer_APlainGlyphBeforeTheColoredOne);
