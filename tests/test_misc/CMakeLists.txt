@@ -33,6 +33,7 @@ file(GLOB EZ_LIBS_SOURCE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezTemplater.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezFigFont.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezHwm.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezExpected.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/wip/derived/ezQrCode.hpp)
 source_group(TREE ${EZ_LIBS_INCLUDE_DIR}/ezlibs PREFIX Libs FILES ${EZ_LIBS_SOURCE})
 
@@ -302,3 +303,19 @@ AddTest("TestEzTemplater_Exception_StrayClosingTag")
 AddTest("TestEzHwm_CreateReturnsInitializedSampler")
 AddTest("TestEzHwm_PercentsStayInRange")
 AddTest("TestEzHwm_SampleAfterUnitIsSafe")
+
+##########################################################
+##### TESTS EzExpected ###################################
+##########################################################
+
+AddTest("TestEzExpected_HoldsValue")
+AddTest("TestEzExpected_HoldsError")
+AddTest("TestEzExpected_ReturnedFromFunction")
+AddTest("TestEzExpected_ValueOr")
+AddTest("TestEzExpected_ArrowReachesValue")
+AddTest("TestEzExpected_ValueIsMutable")
+AddTest("TestEzExpected_CopyIsIndependent")
+AddTest("TestEzExpected_MoveCarriesValue")
+AddTest("TestEzExpected_AssignSwitchesState")
+AddTest("TestEzExpected_NoDefaultCtorRequired")
+AddTest("TestEzExpected_DestroysWhatItHolds")

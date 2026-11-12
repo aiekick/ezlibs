@@ -14,6 +14,7 @@
 #include <TestEzScreen.h>
 #include <TestEzHwm.h>
 #include <TestEzTemplater.h>
+#include <TestEzExpected.h>
 #ifdef TESTING_WIP
 #include <TestEzQrCode.h>
 #endif
@@ -41,6 +42,7 @@ bool TestMisc(const std::string& vTest) {
     else IfTestCollectionExist(TestEzScreen);
     else IfTestCollectionExist(TestEzHwm);
     else IfTestCollectionExist(TestEzTemplater);
+    else IfTestCollectionExist(TestEzExpected);
 #ifdef TESTING_WIP
     else IfTestCollectionExist(TestEzQrCode);
 #endif
