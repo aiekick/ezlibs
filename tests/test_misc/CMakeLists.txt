@@ -34,6 +34,7 @@ file(GLOB EZ_LIBS_SOURCE
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezFigFont.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezHwm.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezExpected.hpp
+	${EZ_LIBS_INCLUDE_DIR}/ezlibs/ezPlugin.hpp
 	${EZ_LIBS_INCLUDE_DIR}/ezlibs/wip/derived/ezQrCode.hpp)
 source_group(TREE ${EZ_LIBS_INCLUDE_DIR}/ezlibs PREFIX Libs FILES ${EZ_LIBS_SOURCE})
 
@@ -55,6 +56,8 @@ target_include_directories(${PROJECT} PRIVATE
 
 if(WIN32) # ezHwm reads the gpu load through the pdh counters
 	target_link_libraries(${PROJECT} PRIVATE pdh)
+else() # ezPlugin opens the shared libraries through dl
+	target_link_libraries(${PROJECT} PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
 StageBuildInc()
@@ -319,3 +322,13 @@ AddTest("TestEzExpected_MoveCarriesValue")
 AddTest("TestEzExpected_AssignSwitchesState")
 AddTest("TestEzExpected_NoDefaultCtorRequired")
 AddTest("TestEzExpected_DestroysWhatItHolds")
+
+##########################################################
+##### TESTS EzPlugin #####################################
+##########################################################
+
+AddTest("TestEzPlugin_DllExtensionIsKnown")
+AddTest("TestEzPlugin_NeverLoadedInstanceIsDestroyable")
+AddTest("TestEzPlugin_MissingFileFails")
+AddTest("TestEzPlugin_LibraryWithoutSymbolsIsNotAPlugin")
+AddTest("TestEzPlugin_UnitTwiceIsSafe")

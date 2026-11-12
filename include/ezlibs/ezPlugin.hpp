@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-// ezDll is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
+// ezPlugin is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
 #include "ezOS.hpp"
 
@@ -32,6 +32,7 @@ SOFTWARE.
 #include <iterator>
 #include <sstream>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 #include <ctime>
@@ -44,7 +45,8 @@ SOFTWARE.
 #include <dlfcn.h>
 #endif
 
-namespace ez::plugin {
+namespace ez {
+namespace plugin {
 
 template <class T>
 class Loader {
@@ -122,18 +124,18 @@ public:
 #endif  // WINDOWS_OS / UNIX
         // LogVarDebugError("Can't close %s", _pathToLib.c_str());
         }
+        // closed once : a second close would free a handle that is no more ours
+        _handle = nullptr;
     }
 };
 
 inline std::string getDLLExtention() {
 #ifdef WINDOWS_OS
     return "dll";
-#elif defined(__linux__)
+#elif defined(LINUX_OS)
     return "so";
-#elif defined(__APPLE__)
-        return "dylib";
-#elif
-        return "";
+#else
+    return "dylib";
 #endif
 }
 
@@ -174,12 +176,15 @@ public:
     }
 
     void unit() {
-        m_PluginInstance->unit();
-        m_PluginInstance.reset();
+        if (m_PluginInstance != nullptr) {
+            m_PluginInstance->unit();
+            m_PluginInstance.reset();
+        }
         m_Loader.dlCloseLib();
     }
 
     PluginInterfaceWeak get() const { return m_PluginInstance; }
 };
 
-}  // namespace ez::dll
+}  // namespace plugin
+}  // namespace ez
