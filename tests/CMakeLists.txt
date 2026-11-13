@@ -96,6 +96,7 @@ if (TESTING_MATH)
 endif()
 
 if (TESTING_MISC)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_misc_plugin)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_misc)
 endif()
 

@@ -74,10 +74,16 @@ public:
 
     void dlOpenLib() {
 #ifdef WINDOWS_OS
+        // LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR wants a fully qualified path : a
+        // file found from the working directory is given its full one, a
+        // bare name of a system library keeps the default search
+        char fullPath[MAX_PATH + 1] = {};
+        const DWORD fullLength = GetFullPathNameA(_pathToLib.c_str(), MAX_PATH, fullPath, nullptr);
+        const bool isAFile = (fullLength > 0U) && (fullLength < MAX_PATH) && (GetFileAttributesA(fullPath) != INVALID_FILE_ATTRIBUTES);
         _handle = LoadLibraryExA(
-            _pathToLib.c_str(),
+            isAFile ? fullPath : _pathToLib.c_str(),
             NULL,  //
-            LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+            isAFile ? (LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS) : LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
         if (!isValid()) {
             const auto &dw = GetLastError();
             if (dw == ERROR_MOD_NOT_FOUND) {
@@ -156,6 +162,8 @@ public:
     ~PluginInstance() { unit(); }
 
     PluginReturnMsg init(const std::string &vName, const std::string &vFilePathName) {
+        // a plugin already held leaves first, as unit lets it go
+        unit();
         m_Name = vName;
         m_Loader = Loader<T_PluginInterface>(vFilePathName);
         m_Loader.dlOpenLib();

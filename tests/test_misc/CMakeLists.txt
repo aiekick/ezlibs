@@ -54,6 +54,11 @@ target_include_directories(${PROJECT} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+# the plugin the tests of ezPlugin load : its interface, and where it was built
+add_dependencies(${PROJECT} EzLibs_TestPluginFixture)
+target_include_directories(${PROJECT} PRIVATE $<TARGET_PROPERTY:EzLibs_TestPluginFixture,INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_definitions(${PROJECT} PRIVATE EZ_TEST_PLUGIN_PATH="$<TARGET_FILE:EzLibs_TestPluginFixture>")
+
 if(WIN32) # ezHwm reads the gpu load through the pdh counters
 	target_link_libraries(${PROJECT} PRIVATE pdh)
 else() # ezPlugin opens the shared libraries through dl
@@ -332,3 +337,6 @@ AddTest("TestEzPlugin_NeverLoadedInstanceIsDestroyable")
 AddTest("TestEzPlugin_MissingFileFails")
 AddTest("TestEzPlugin_LibraryWithoutSymbolsIsNotAPlugin")
 AddTest("TestEzPlugin_UnitTwiceIsSafe")
+AddTest("TestEzPlugin_LoadsAPlugin")
+AddTest("TestEzPlugin_SecondInitUnitsTheFirst")
+AddTest("TestEzPlugin_RelativePathLoads")
