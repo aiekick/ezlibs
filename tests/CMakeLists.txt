@@ -37,6 +37,7 @@ endif()
 
 function(AddTest arg)
   	add_test("${arg}" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT}" "${arg}")
+  	set_tests_properties("${arg}" PROPERTIES LABELS ezlibs)
 endfunction(AddTest)
 
 if(NOT TARGET ezBuildInc)
