@@ -448,7 +448,9 @@ namespace ez {
                     }
                 } else if (token.second == TokenType::CONTENT) {
                     if (!m_NodeStack.empty()) {
-                        if (token.first[0] != '\n') {
+                        // the white space the dump lays between two tags is no content ; a text
+                        // that opens with a new line is one
+                        if ((token.first[0] != '\n') || (token.first.find_first_not_of(m_tagSpaces()) != std::string::npos)) {
                             // the document text is escaped, the node stores raw
                             m_NodeStack.top()->setContent(xml::Node::unEscapeXml(token.first));
                         }

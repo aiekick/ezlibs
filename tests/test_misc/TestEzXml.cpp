@@ -404,6 +404,35 @@ bool TestEzXml_ParsesAttributesSpreadOverLines() {
     return true;
 }
 
+// a text that opens with a new line is a content like any other : only the white space
+// between two tags is none. a text of many lines comes back whole, its lines and its
+// indentation as they were written
+bool TestEzXml_ContentOpeningWithANewLineIsKept() {
+    const std::string text = "\nfirst line\n    an indented one\n\tlast line\n";
+
+    ez::Xml writer("config");
+    ez::xml::Node &writerRoot = writer.getRoot();
+    writerRoot.addChild("text").setContent(text);
+    writerRoot.addChild("group").addChild("inner");
+    const std::string doc = writer.dump();
+
+    ez::Xml reader;
+    CTEST_ASSERT(reader.parseString(doc));
+    const ez::xml::Nodes &roots = reader.getRoot().getChildren();
+    CTEST_ASSERT(roots.size() == 1U);
+    const ez::xml::Nodes &children = roots[0].getChildren();
+    CTEST_ASSERT(children.size() == 2U);
+    CTEST_ASSERT(children[0].getName() == "text");
+    CTEST_ASSERT(children[0].getContent() == text);
+    // the white space the dump lays between the tags is still no content
+    CTEST_ASSERT(roots[0].getContent().empty());
+    CTEST_ASSERT(children[1].getName() == "group");
+    CTEST_ASSERT(children[1].getContent().empty());
+    CTEST_ASSERT(children[1].getChildren().size() == 1U);
+    CTEST_ASSERT(roots[0].dump() == doc);
+    return true;
+}
+
 bool TestEzXml_ReplaceAll() {
     std::string str = "hello world hello";
     ez::xml::Node::replaceAll(str, "hello", "hi");
@@ -442,6 +471,7 @@ bool TestEzXml(const std::string &vTest) {
     else IfTestExist(TestEzXml_ReplaceAll);
     else IfTestExist(TestEzXml_ParsesAPrologueAndADoctype);
     else IfTestExist(TestEzXml_ParsesAttributesSpreadOverLines);
+    else IfTestExist(TestEzXml_ContentOpeningWithANewLineIsKept);
     return false;
 }
 

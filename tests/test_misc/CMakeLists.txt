@@ -194,6 +194,7 @@ AddTest("TestEzXml_AttributeWithTemplateTypes")
 AddTest("TestEzXml_ReplaceAll")
 AddTest("TestEzXml_ParsesAPrologueAndADoctype")
 AddTest("TestEzXml_ParsesAttributesSpreadOverLines")
+AddTest("TestEzXml_ContentOpeningWithANewLineIsKept")
 
 ##########################################################
 ##### TESTS EzFigFont ####################################
