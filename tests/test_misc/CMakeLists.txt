@@ -168,6 +168,11 @@ AddTest("TestEzStackString_HeapDisabled")
 AddTest("TestEzCnt_Generic")
 AddTest("TestEzCnt_OneTypename")
 AddTest("TestEzCnt_TwoTypename")
+AddTest("TestEzCnt_OrderableDico_IteratesByAscendingOrder")
+AddTest("TestEzCnt_OrderableDico_SameOrderKeepsInsertion")
+AddTest("TestEzCnt_OrderableDico_RefusesAKeyAlreadyThere")
+AddTest("TestEzCnt_OrderableDico_FindsByKey")
+AddTest("TestEzCnt_OrderableDico_ClearEmptiesIt")
 
 ##########################################################
 ##### TESTS EzXml ########################################

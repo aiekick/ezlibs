@@ -26,9 +26,11 @@ SOFTWARE.
 
 // ezCnt is part of the ezLibs project : https://github.com/aiekick/ezLibs.git
 
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
+#include <utility>
 #include <unordered_map>
 
 namespace ez {
@@ -150,6 +152,68 @@ public:
             ret |= tryAdd(it.first, vDico.at(it.second));
         }
         return ret;
+    }
+};
+
+// this class can be searched in like a dico
+// and iterated in the ascending order given with each value,
+// the values of a same order in the order they were added.
+// an entry can not be changed after it was added, only cleared
+template <typename TKey, typename TOrder, typename TValue>
+class OrderableDico {
+public:
+    using Vector = std::vector<TValue>;
+
+private:
+    std::unordered_map<TKey, std::pair<TOrder, TValue>> m_dico{};
+    std::vector<TKey> m_keys{};  // in the order they were added
+    Vector m_orderedArray{};
+
+public:
+    void clear() {
+        m_dico.clear();
+        m_keys.clear();
+        m_orderedArray.clear();
+    }
+    bool empty() const {
+        return m_orderedArray.empty();
+    }
+    size_t size() const {
+        return m_orderedArray.size();
+    }
+    bool exist(const TKey& aKey) const {
+        return (m_dico.find(aKey) != m_dico.end());
+    }
+    const TValue& at(const TKey& aKey) const {
+        return m_dico.at(aKey).second;
+    }
+    typename Vector::const_iterator begin() const {
+        return m_orderedArray.cbegin();
+    }
+    typename Vector::const_iterator end() const {
+        return m_orderedArray.cend();
+    }
+    bool tryAdd(const TKey& aKey, const TOrder& aOrder, const TValue& aValue) {
+        if (exist(aKey)) {
+            return false;
+        }
+        m_dico[aKey] = std::make_pair(aOrder, aValue);
+        m_keys.push_back(aKey);
+        m_reOrderArray();
+        return true;
+    }
+
+private:
+    void m_reOrderArray() {
+        std::map<TOrder, Vector> valuesByOrder;
+        for (const auto& key : m_keys) {
+            const auto& entry = m_dico.at(key);
+            valuesByOrder[entry.first].push_back(entry.second);
+        }
+        m_orderedArray.clear();
+        for (const auto& sameOrder : valuesByOrder) {
+            m_orderedArray.insert(m_orderedArray.end(), sameOrder.second.begin(), sameOrder.second.end());
+        }
     }
 };
 
