@@ -197,11 +197,11 @@ public:
         ASSERT_THROW(m_ProgramPtr != nullptr, "");
         m_ProgramPtr->locateUniforms();
     }
-    bool resize(const GLsizei& vSx, const GLsizei vSy) {
+    bool resize(const GLsizei& /*vSx*/, const GLsizei /*vSy*/) {
         // todo
         return false;
     }
-    void clearBuffers(const std::array<float, 4U>& vColor) {
+    void clearBuffers(const std::array<float, 4U>& /*vColor*/) {
         //todo
     }
     void compute(const GLbitfield vMemoryBarrierBitfield = GL_ALL_BARRIER_BITS) {

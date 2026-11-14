@@ -174,7 +174,7 @@ public:
         m_Format = vFormat;
         m_PixelFormat = vPixelFormat;
         m_ChannelsCount = m_channelsCountFromFormat(vFormat);
-        m_BytesPerPixel = m_bytesPerChannelFromType(vPixelFormat) * m_ChannelsCount;
+        m_BytesPerPixel = static_cast<GLuint>(m_bytesPerChannelFromType(vPixelFormat) * m_ChannelsCount);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexImage2D(GL_TEXTURE_2D, 0, m_InternalFormat, m_Width, m_Height, 0, m_Format, m_PixelFormat, vBuffer);
         CheckGLErrors;
@@ -532,7 +532,7 @@ private:
         m_PixelFormat = vPixelFormat;
         m_ChannelsCount = vChannelsCount;
         const size_t bytesPerChannel = (vPixelFormat == GL_FLOAT) ? sizeof(float) : sizeof(uint8_t);
-        m_BytesPerPixel = bytesPerChannel * static_cast<size_t>(vChannelsCount);
+        m_BytesPerPixel = static_cast<GLuint>(bytesPerChannel * static_cast<size_t>(vChannelsCount));
         switch (vChannelsCount) {
             case 1: {
                 m_Format = GL_RED;
