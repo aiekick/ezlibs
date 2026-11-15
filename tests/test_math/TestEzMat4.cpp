@@ -138,6 +138,68 @@ bool TestEzMat4_FromTranslationOnPoint() {
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
+// what a matrix makes of a direction or of a point, each number near what is expected
+template <typename T>
+static bool mapsTo(const ez::math::mat4<T>& aMatrix, const std::array<T, 4>& aFrom, const std::array<T, 4>& aExpected) {
+    const T tolerance = static_cast<T>(1e-6);
+    const std::array<T, 4> mapped = aMatrix.mulVec(aFrom);
+    return ez::math::isEqual(mapped[0], aExpected[0], tolerance) && ez::math::isEqual(mapped[1], aExpected[1], tolerance) &&
+           ez::math::isEqual(mapped[2], aExpected[2], tolerance) && ez::math::isEqual(mapped[3], aExpected[3], tolerance);
+}
+
+template <typename T>
+bool TestEzMat4_FromRotationXTurnsYToZ() {
+    // A quarter turn about X brings Y onto Z and Z onto -Y, and leaves X ;
+    // no turn is the identity, and a point keeps its w.
+    const T quarter = static_cast<T>(1.5707963267948966);
+    const ez::math::mat4<T> turn = ez::math::mat4<T>::FromRotationX(quarter);
+    CTEST_ASSERT(mapsTo<T>(turn, {T(0), T(1), T(0), T(0)}, {T(0), T(0), T(1), T(0)}));
+    CTEST_ASSERT(mapsTo<T>(turn, {T(0), T(0), T(1), T(0)}, {T(0), T(-1), T(0), T(0)}));
+    CTEST_ASSERT(mapsTo<T>(turn, {T(1), T(0), T(0), T(0)}, {T(1), T(0), T(0), T(0)}));
+    CTEST_ASSERT(mapsTo<T>(turn, {T(2), T(3), T(4), T(1)}, {T(2), T(-4), T(3), T(1)}));
+    CTEST_ASSERT(mapsTo<T>(ez::math::mat4<T>::FromRotationX(T(0)), {T(7), T(8), T(9), T(1)}, {T(7), T(8), T(9), T(1)}));
+    return true;
+}
+
+template <typename T>
+bool TestEzMat4_FromRotationYTurnsZToX() {
+    // A quarter turn about Y brings Z onto X and X onto -Z, and leaves Y.
+    const T quarter = static_cast<T>(1.5707963267948966);
+    const ez::math::mat4<T> turn = ez::math::mat4<T>::FromRotationY(quarter);
+    CTEST_ASSERT(mapsTo<T>(turn, {T(0), T(0), T(1), T(0)}, {T(1), T(0), T(0), T(0)}));
+    CTEST_ASSERT(mapsTo<T>(turn, {T(1), T(0), T(0), T(0)}, {T(0), T(0), T(-1), T(0)}));
+    CTEST_ASSERT(mapsTo<T>(turn, {T(0), T(1), T(0), T(0)}, {T(0), T(1), T(0), T(0)}));
+    CTEST_ASSERT(mapsTo<T>(turn, {T(2), T(3), T(4), T(1)}, {T(4), T(3), T(-2), T(1)}));
+    CTEST_ASSERT(mapsTo<T>(ez::math::mat4<T>::FromRotationY(T(0)), {T(7), T(8), T(9), T(1)}, {T(7), T(8), T(9), T(1)}));
+    return true;
+}
+
+template <typename T>
+bool TestEzMat4_FromRotationZTurnsXToY() {
+    // A quarter turn about Z brings X onto Y and Y onto -X, and leaves Z.
+    const T quarter = static_cast<T>(1.5707963267948966);
+    const ez::math::mat4<T> turn = ez::math::mat4<T>::FromRotationZ(quarter);
+    CTEST_ASSERT(mapsTo<T>(turn, {T(1), T(0), T(0), T(0)}, {T(0), T(1), T(0), T(0)}));
+    CTEST_ASSERT(mapsTo<T>(turn, {T(0), T(1), T(0), T(0)}, {T(-1), T(0), T(0), T(0)}));
+    CTEST_ASSERT(mapsTo<T>(turn, {T(0), T(0), T(1), T(0)}, {T(0), T(0), T(1), T(0)}));
+    CTEST_ASSERT(mapsTo<T>(turn, {T(2), T(3), T(4), T(1)}, {T(-3), T(2), T(4), T(1)}));
+    CTEST_ASSERT(mapsTo<T>(ez::math::mat4<T>::FromRotationZ(T(0)), {T(7), T(8), T(9), T(1)}, {T(7), T(8), T(9), T(1)}));
+    return true;
+}
+
+template <typename T>
+bool TestEzMat4_FromScaleOnPoint() {
+    // Each axis is multiplied by its own factor, and w is left.
+    const ez::math::mat4<T> scale = ez::math::mat4<T>::FromScale({T(2), T(3), T(4)});
+    CTEST_ASSERT(mapsTo<T>(scale, {T(1), T(1), T(1), T(1)}, {T(2), T(3), T(4), T(1)}));
+    CTEST_ASSERT(mapsTo<T>(scale, {T(5), T(-1), T(0.5), T(0)}, {T(10), T(-3), T(2), T(0)}));
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
 bool TestEzMat4(const std::string& vTest) {
     IfTestExist(TestEzMat4_LookAtMapsEyeToOrigin<float>);
     else IfTestExist(TestEzMat4_LookAtMapsEyeToOrigin<double>);
@@ -149,6 +211,14 @@ bool TestEzMat4(const std::string& vTest) {
     else IfTestExist(TestEzMat4_OrthoGLMapsCornerToNDCCorner<double>);
     else IfTestExist(TestEzMat4_FromTranslationOnPoint<float>);
     else IfTestExist(TestEzMat4_FromTranslationOnPoint<double>);
+    else IfTestExist(TestEzMat4_FromRotationXTurnsYToZ<float>);
+    else IfTestExist(TestEzMat4_FromRotationXTurnsYToZ<double>);
+    else IfTestExist(TestEzMat4_FromRotationYTurnsZToX<float>);
+    else IfTestExist(TestEzMat4_FromRotationYTurnsZToX<double>);
+    else IfTestExist(TestEzMat4_FromRotationZTurnsXToY<float>);
+    else IfTestExist(TestEzMat4_FromRotationZTurnsXToY<double>);
+    else IfTestExist(TestEzMat4_FromScaleOnPoint<float>);
+    else IfTestExist(TestEzMat4_FromScaleOnPoint<double>);
     return false;
 }
 

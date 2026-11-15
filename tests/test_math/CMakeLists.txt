@@ -937,6 +937,14 @@ AddTest("TestEzMat4_OrthoGLMapsCornerToNDCCorner<float>")
 AddTest("TestEzMat4_OrthoGLMapsCornerToNDCCorner<double>")
 AddTest("TestEzMat4_FromTranslationOnPoint<float>")
 AddTest("TestEzMat4_FromTranslationOnPoint<double>")
+AddTest("TestEzMat4_FromRotationXTurnsYToZ<float>")
+AddTest("TestEzMat4_FromRotationXTurnsYToZ<double>")
+AddTest("TestEzMat4_FromRotationYTurnsZToX<float>")
+AddTest("TestEzMat4_FromRotationYTurnsZToX<double>")
+AddTest("TestEzMat4_FromRotationZTurnsXToY<float>")
+AddTest("TestEzMat4_FromRotationZTurnsXToY<double>")
+AddTest("TestEzMat4_FromScaleOnPoint<float>")
+AddTest("TestEzMat4_FromScaleOnPoint<double>")
 
 ##########################################################
 ##### TESTS EzMatN #######################################
