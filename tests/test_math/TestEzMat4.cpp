@@ -188,6 +188,25 @@ bool TestEzMat4_FromRotationZTurnsXToY() {
 }
 
 template <typename T>
+bool TestEzMat4_TransposeSwapsRowsAndColumns() {
+    // What is at a row and a column of a matrix is at that column and that
+    // row of its transpose ; transposed twice, a matrix is itself.
+    const ez::math::mat4<T> matrix(T(1), T(2), T(3), T(4), T(5), T(6), T(7), T(8), T(9), T(10), T(11), T(12), T(13), T(14), T(15), T(16));
+    const ez::math::mat4<T> transposed = matrix.transpose();
+    const ez::math::mat4<T> back = transposed.transpose();
+    for (int rowIndex = 0; rowIndex < 4; ++rowIndex) {
+        for (int columnIndex = 0; columnIndex < 4; ++columnIndex) {
+            CTEST_ASSERT(transposed(rowIndex, columnIndex) == matrix(columnIndex, rowIndex));
+            CTEST_ASSERT(back(rowIndex, columnIndex) == matrix(rowIndex, columnIndex));
+        }
+    }
+    // a translation lives in the last column : transposed, it is in the last row
+    const ez::math::mat4<T> moved = ez::math::mat4<T>::FromTranslation({T(7), T(8), T(9)}).transpose();
+    CTEST_ASSERT((moved(3, 0) == T(7)) && (moved(3, 1) == T(8)) && (moved(3, 2) == T(9)) && (moved(0, 3) == T(0)));
+    return true;
+}
+
+template <typename T>
 bool TestEzMat4_FromScaleOnPoint() {
     // Each axis is multiplied by its own factor, and w is left.
     const ez::math::mat4<T> scale = ez::math::mat4<T>::FromScale({T(2), T(3), T(4)});
@@ -217,6 +236,8 @@ bool TestEzMat4(const std::string& vTest) {
     else IfTestExist(TestEzMat4_FromRotationYTurnsZToX<double>);
     else IfTestExist(TestEzMat4_FromRotationZTurnsXToY<float>);
     else IfTestExist(TestEzMat4_FromRotationZTurnsXToY<double>);
+    else IfTestExist(TestEzMat4_TransposeSwapsRowsAndColumns<float>);
+    else IfTestExist(TestEzMat4_TransposeSwapsRowsAndColumns<double>);
     else IfTestExist(TestEzMat4_FromScaleOnPoint<float>);
     else IfTestExist(TestEzMat4_FromScaleOnPoint<double>);
     return false;

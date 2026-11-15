@@ -943,6 +943,8 @@ AddTest("TestEzMat4_FromRotationYTurnsZToX<float>")
 AddTest("TestEzMat4_FromRotationYTurnsZToX<double>")
 AddTest("TestEzMat4_FromRotationZTurnsXToY<float>")
 AddTest("TestEzMat4_FromRotationZTurnsXToY<double>")
+AddTest("TestEzMat4_TransposeSwapsRowsAndColumns<float>")
+AddTest("TestEzMat4_TransposeSwapsRowsAndColumns<double>")
 AddTest("TestEzMat4_FromScaleOnPoint<float>")
 AddTest("TestEzMat4_FromScaleOnPoint<double>")
 
