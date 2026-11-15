@@ -345,6 +345,54 @@ public:
         r(2, 3) = vTranslation[2];
         return r;
     }
+
+    /// Rotation about the X axis by an angle in radians, right-handed :
+    /// a quarter turn brings the Y axis onto the Z axis.
+    static mat4 FromRotationX(T vRadians) {
+        const T cosine = static_cast<T>(std::cos(static_cast<double>(vRadians)));
+        const T sine = static_cast<T>(std::sin(static_cast<double>(vRadians)));
+        mat4 r = Identity();
+        r(1, 1) = cosine;
+        r(2, 1) = sine;
+        r(1, 2) = -sine;
+        r(2, 2) = cosine;
+        return r;
+    }
+
+    /// Rotation about the Y axis by an angle in radians, right-handed :
+    /// a quarter turn brings the Z axis onto the X axis.
+    static mat4 FromRotationY(T vRadians) {
+        const T cosine = static_cast<T>(std::cos(static_cast<double>(vRadians)));
+        const T sine = static_cast<T>(std::sin(static_cast<double>(vRadians)));
+        mat4 r = Identity();
+        r(0, 0) = cosine;
+        r(2, 0) = -sine;
+        r(0, 2) = sine;
+        r(2, 2) = cosine;
+        return r;
+    }
+
+    /// Rotation about the Z axis by an angle in radians, right-handed :
+    /// a quarter turn brings the X axis onto the Y axis.
+    static mat4 FromRotationZ(T vRadians) {
+        const T cosine = static_cast<T>(std::cos(static_cast<double>(vRadians)));
+        const T sine = static_cast<T>(std::sin(static_cast<double>(vRadians)));
+        mat4 r = Identity();
+        r(0, 0) = cosine;
+        r(1, 0) = sine;
+        r(0, 1) = -sine;
+        r(1, 1) = cosine;
+        return r;
+    }
+
+    /// Scale matrix : each axis multiplied by its factor.
+    static mat4 FromScale(const std::array<T, 3>& vScale) {
+        mat4 r = Identity();
+        r(0, 0) = vScale[0];
+        r(1, 1) = vScale[1];
+        r(2, 2) = vScale[2];
+        return r;
+    }
 };
 
 typedef mat4<float> fmat4;
