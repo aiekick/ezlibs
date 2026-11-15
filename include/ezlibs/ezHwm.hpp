@@ -338,6 +338,32 @@ inline bool Sampler::refreshGpuUsage(double a_elapsed_seconds, double& ao_gpu_us
     return true;
 }
 
+#else
+
+// a platform without process counters (the web, an unknown os) : the sampler
+// stands and measures nothing, the gpu measure says it is not available and
+// the cpu stays at zero
+struct PlatformState {};
+
+inline bool Sampler::init() {
+    if (m_initialized) {
+        return true;
+    }
+    m_platformState = std::unique_ptr<PlatformState>(new PlatformState());
+    m_gpuMeasureAvailable = false;
+    m_lastSampleTime = std::chrono::steady_clock::now();
+    m_initialized = true;
+    return true;
+}
+
+inline bool Sampler::refreshCpuUsage(double /*a_elapsed_seconds*/, double& /*ao_cpu_usage_percent*/) {
+    return false;
+}
+
+inline bool Sampler::refreshGpuUsage(double /*a_elapsed_seconds*/, double& /*ao_gpu_usage_percent*/) {
+    return false;
+}
+
 #endif
 
 // platform-independent members, defined after PlatformState is a complete type
