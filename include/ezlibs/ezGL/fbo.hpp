@@ -116,14 +116,16 @@ private:
     GLsizei m_SizeY = 0;
     GLuint m_CountBuffers = 0U;
     bool m_UseMipMapping = false;
+    bool m_UseDepth = false;
+    GLuint m_DepthTexId = 0U;  // its depth, a texture : blitted, sampled, cleared with its colors
     std::vector<TexturePtr> m_Textures{};
     GLenum* m_ColorDrawBuffers = nullptr;
 
 public:
-    static FBOPtr create(const GLsizei& vSX, const GLsizei& vSY, const GLuint vCountBuffers, const bool vUseMipMapping) {
+    static FBOPtr create(const GLsizei& vSX, const GLsizei& vSY, const GLuint vCountBuffers, const bool vUseMipMapping, const bool vUseDepth = false) {
         auto res = std::make_shared<FBO>();
         res->m_This = res;
-        if (!res->init(vSX, vSY, vCountBuffers, vUseMipMapping)) { res.reset(); }
+        if (!res->init(vSX, vSY, vCountBuffers, vUseMipMapping, vUseDepth)) { res.reset(); }
         return res;
     }
 
@@ -131,12 +133,13 @@ public:
     FBO() = default;
     virtual ~FBO() { unit(); }
 
-    bool init(const GLsizei& vSX, const GLsizei& vSY, const GLuint vCountBuffers, const bool vUseMipMapping) {
+    bool init(const GLsizei& vSX, const GLsizei& vSY, const GLuint vCountBuffers, const bool vUseMipMapping, const bool vUseDepth = false) {
         bool res = false;
         m_SizeX = vSX;
         m_SizeY = vSY;
         m_CountBuffers = vCountBuffers;
         m_UseMipMapping = vUseMipMapping;
+        m_UseDepth = vUseDepth;
         if (m_CountBuffers > 0U) {
             glGenFramebuffers(1, &m_FBOId);
             CheckGLErrors;
@@ -152,6 +155,7 @@ public:
                     CheckGLErrors;
                 }
             }
+            m_attachDepth();
             glFinish();
             res = check();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -182,7 +186,8 @@ public:
                 PROFILER_SCOPED("FBO", "clearColor");
 #endif
                 glClearColor(vColor[0], vColor[1], vColor[2], vColor[3]);
-                glClear(GL_COLOR_BUFFER_BIT);
+                // the depth goes back to the far plane with the colors
+                glClear(m_UseDepth ? (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) : GL_COLOR_BUFFER_BIT);
             }
             unbind();
         }
@@ -245,6 +250,13 @@ public:
         return 0U;
     }
 
+    // its depth texture, 0 when it has none
+    GLuint getDepthTextureId() const { return m_DepthTexId; }
+    bool hasDepth() const { return m_UseDepth; }
+    GLuint getFBOId() const { return m_FBOId; }
+    GLsizei getSizeX() const { return m_SizeX; }
+    GLsizei getSizeY() const { return m_SizeY; }
+
     bool resize(const GLsizei& vNewSx, const GLsizei& vNewSy) {
         bool res = false;
         if (m_FBOId > 0) {
@@ -264,6 +276,7 @@ public:
                     }
                 }
             }
+            m_attachDepth();
             glFinish();
             res = check();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -284,6 +297,11 @@ public:
     }
 
     void unit() {
+        if (m_DepthTexId > 0U) {
+            glDeleteTextures(1, &m_DepthTexId);
+            CheckGLErrors;
+            m_DepthTexId = 0U;
+        }
         glDeleteFramebuffers(1, &m_FBOId);
         CheckGLErrors;
         delete[] m_ColorDrawBuffers;  // born in init, written by resize : it lives until here
@@ -306,6 +324,31 @@ public:
 #endif
 
         glBlitFramebuffer(0, 0, m_SizeX, m_SizeY, vX, vY, vX + vW, vY + vH, vMask, vFilter);
+        CheckGLErrors;
+    }
+
+private:
+    // the depth of its size, 24 bits, attached to the bound framebuffer ; made again at each size (webgl2 has no
+    // resizable depth texture storage)
+    void m_attachDepth() {
+        if (!m_UseDepth) {
+            return;
+        }
+        if (m_DepthTexId == 0U) {
+            glGenTextures(1, &m_DepthTexId);
+            CheckGLErrors;
+        }
+        glBindTexture(GL_TEXTURE_2D, m_DepthTexId);
+        CheckGLErrors;
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_SizeX, m_SizeY, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+        CheckGLErrors;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        CheckGLErrors;
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_DepthTexId, 0);
         CheckGLErrors;
     }
 };
