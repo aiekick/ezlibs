@@ -28,6 +28,8 @@ SOFTWARE.
 
 #include "defs.hpp"
 #include "utils.hpp"
+#include "../ezOS.hpp"
+#include "../ezLog.hpp"
 
 #ifdef OPENGL_LOADER
 #include OPENGL_LOADER
@@ -464,10 +466,24 @@ public:
 
 private:
     void m_setSwizzle(std::array<GLenum, 4> vSwizzle) {
+        // the identity is what every texture has at its birth : nothing to set
+        const std::array<GLenum, 4> identity = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
+        if (vSwizzle == identity) {
+            return;
+        }
+#ifdef EMSCRIPTEN_OS
+        // webgl2 has no texture swizzle : the channels stay as they are, said once
+        static bool s_said = false;
+        if (!s_said) {
+            s_said = true;
+            LogVarError("%s", "a texture swizzle is asked, webgl2 has none : the channels stay as they are");
+        }
+#else
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, vSwizzle[0]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, vSwizzle[1]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, vSwizzle[2]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A, vSwizzle[3]);
+#endif
     }
 
     // wrap (repeat|mirror|clamp), filter (linear|nearest)
