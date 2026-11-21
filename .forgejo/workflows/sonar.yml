@@ -1,0 +1,49 @@
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to analyze"
+        required: true
+        default: master
+
+jobs:
+  sonar:
+    runs-on: debian13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || github.ref_name }}
+          fetch-depth: 0
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: clang-tidy
+        run: |
+          FILTER="${TP_REGEX:+^(?!.*/(${TP_REGEX})/)}"
+          run-clang-tidy -p build -j"$(nproc)" ${FILTER:+"$FILTER"} | tee build/clang-tidy.txt || true
+      - name: cppcheck
+        run: >
+          cppcheck --project=build/compile_commands.json
+          --enable=warning,performance,portability
+          --xml --xml-version=2 -j"$(nproc)"
+          2> build/cppcheck.xml || true
+      - name: Analyze
+        env:
+          BRANCH: ${{ inputs.branch || github.ref_name }}
+        run: |
+          KEY="${GITHUB_REPOSITORY/\//::}"
+          NAME="${KEY}"
+          if [ "${BRANCH}" != "master" ]; then
+            SAFE_BRANCH="${BRANCH//[^A-Za-z0-9._-]/-}"
+            KEY="${KEY}:${SAFE_BRANCH}"
+            NAME="${NAME} [${BRANCH}]"
+          fi
+          sonar-scanner \
+            -Dsonar.projectKey="${KEY}" \
+            -Dsonar.projectName="${NAME}" \            
+            -Dsonar.cxx.file.suffixes=.cpp,.cxx,.cc,.c,.hpp,.hxx,.hh,.h \
+            -Dsonar.cxx.jsonCompilationDatabase=build/compile_commands.json \
+            -Dsonar.cxx.clangtidy.reportPaths=build/clang-tidy.txt \
+            -Dsonar.cxx.cppcheck.reportPaths=build/cppcheck.xml \
+            -Dsonar.exclusions=build/**, **/old/**
