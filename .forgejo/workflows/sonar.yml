@@ -42,12 +42,15 @@ jobs:
           cmake --build build --target forcecover_prep_ezLibs -j"$(nproc)"
           cmake --build build -j"$(nproc)"
           xvfb-run --auto-servernum cmake --build build --target cov_ezLibs -j"$(nproc)"
-          # expose the LCOV tracefile under a fixed name for sonar-analyze
-          TRACEFILE=$(find build/Tests/ezLibs -type f \( -name '*.info' -o -name '*.lcov' \) | head -n 1)
-          echo "Tracefile: ${TRACEFILE:-none}"
-          if [ -n "${TRACEFILE}" ]; then
-            cp "${TRACEFILE}" build/coverage.info
+          # expose the LCOV tracefile under a fixed name for sonar-analyze ;
+          # a missing or empty tracefile is a failure, never a silent zero coverage
+          TRACEFILE=build/Tests/ezLibs/lcov.info
+          if ! grep -q '^SF:' "${TRACEFILE}" 2>/dev/null; then
+            echo "::error::no coverage record in ${TRACEFILE}"
+            exit 1
           fi
+          echo "Tracefile: ${TRACEFILE} ($(grep -c '^SF:' "${TRACEFILE}") source files)"
+          cp "${TRACEFILE}" build/coverage.info
 
       - uses: ./.ci/sonar-lint
 

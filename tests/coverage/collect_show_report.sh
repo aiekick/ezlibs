@@ -1,31 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR
+# Usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR EXES_FILE
 # PROFDATA_PATH is the merged .profdata file produced by merge_profraw.sh.
 # PROFRAW_DIR is the directory that *directly* contains the .profraw files
 # (used only for reporting the file count). Both are now passed explicitly
 # so the script does not have to know the per-subsystem naming convention
 # of the EzCoverage macro.
 
-BUILD_DIR="${1:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR}"
-OUT_DIR="${2:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR}"
-OUT_PROFDATA="${3:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR}"
-PROFRAW_DIR="${4:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR}"
+BUILD_DIR="${1:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR EXES_FILE}"
+OUT_DIR="${2:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR EXES_FILE}"
+OUT_PROFDATA="${3:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR EXES_FILE}"
+PROFRAW_DIR="${4:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR EXES_FILE}"
+EXES_FILE="${5:?usage: collect_show_report.sh BUILD_DIR OUT_DIR PROFDATA_PATH PROFRAW_DIR EXES_FILE}"
 
 COV_TXT="${OUT_DIR}/coverage.txt"
 RPT_TXT="${OUT_DIR}/report.txt"
 
-# Ne garder que Tests/Test* et ignorer coverage/forceCover/CMakeFiles
-mapfile -d '' EXES < <(
-  find "${BUILD_DIR}/Tests" \
-    \( -path "${BUILD_DIR}/Tests/coverage" -o -path "${BUILD_DIR}/Tests/coverage/*" \
-       -o -path "${BUILD_DIR}/Tests/forceCover" -o -path "${BUILD_DIR}/Tests/forceCover/*" \
-       -o -path "${BUILD_DIR}/Tests/CMakeFiles" -o -path "${BUILD_DIR}/Tests/CMakeFiles/*" \) -prune -o \
-    -type f -executable -not -name '*.so*' \
-    -path "${BUILD_DIR}/Tests/Test*" \
-    -print0
-)
+# The test executables come from the list made by list_test_executables.py
+mapfile -t EXES < "${EXES_FILE}"
 echo "[show] executables=${#EXES[@]}"
 
 # OBJ mapping

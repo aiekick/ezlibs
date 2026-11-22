@@ -82,6 +82,16 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++"
             }
+        },
+        {
+            "name": "linux-clang-coverage",
+            "displayName": "clang coverage",
+            "inherits": "linux-clang",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "USE_CODE_COVERAGE": "ON",
+                "COVERAGE_VERBOSE": "ON"
+            }
         }
     ],
     "buildPresets": [
@@ -107,6 +117,40 @@
             "displayName": "gcc",
             "inherits": "base",
             "configurePreset": "linux-gcc"
+        },
+        {
+            "name": "linux-clang",
+            "displayName": "clang",
+            "inherits": "base",
+            "configurePreset": "linux-clang"
+        },
+        {
+            "name": "linux-clang-coverage-prep",
+            "displayName": "clang coverage : forceCover + headers",
+            "inherits": "base",
+            "configurePreset": "linux-clang-coverage",
+            "configuration": "Debug",
+            "targets": [
+                "forceCover",
+                "forcecover_prep_ezLibs"
+            ]
+        },
+        {
+            "name": "linux-clang-coverage-build",
+            "displayName": "clang coverage : tests",
+            "inherits": "base",
+            "configurePreset": "linux-clang-coverage",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-coverage-report",
+            "displayName": "clang coverage : run + html report",
+            "inherits": "base",
+            "configurePreset": "linux-clang-coverage",
+            "configuration": "Debug",
+            "targets": [
+                "cov_ezLibs"
+            ]
         }
     ],
     "testPresets": [
@@ -139,6 +183,36 @@
             "displayName": "gcc",
             "inherits": "base",
             "configurePreset": "linux-gcc"
+        },
+        {
+            "name": "linux-clang",
+            "displayName": "clang",
+            "inherits": "base",
+            "configurePreset": "linux-clang"
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "linux-clang-coverage",
+            "displayName": "clang coverage : configure, build, html report",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-coverage"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-coverage-prep"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-coverage-build"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-coverage-report"
+                }
+            ]
         }
     ]
 }

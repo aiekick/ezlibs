@@ -58,6 +58,8 @@ macro(ezCoverage_addSubsystem aSubsystemName aIncludeDir)
     set(_ezcov_cmRunForceCoverHdrs  "${_EZ_COVERAGE_SCRIPTS_DIR}/run_force_cover_headers.cmake")
     set(_ezcov_pyConvertUtf8        "${_EZ_COVERAGE_SCRIPTS_DIR}/convert_to_utf8.py")
     set(_ezcov_pyPatchInline        "${_EZ_COVERAGE_SCRIPTS_DIR}/patch_genhtml_forcecover_inline.py")
+    set(_ezcov_pyListExecutables    "${_EZ_COVERAGE_SCRIPTS_DIR}/list_test_executables.py")
+    set(_ezcov_cmRunCtest           "${_EZ_COVERAGE_SCRIPTS_DIR}/run_ctest_nonblocking.cmake")
 
     set(_ezcov_forceCoverExecutable "${_EZ_COVERAGE_SCRIPTS_DIR}/forceCover/forceCover")
     set(_ezcov_fixCoveragePy        "${_EZ_COVERAGE_SCRIPTS_DIR}/forceCover/fixCoverage.py")
@@ -68,6 +70,7 @@ macro(ezCoverage_addSubsystem aSubsystemName aIncludeDir)
     set(_ezcov_lcovInfo           "${_ezcov_outDir}/lcov.info")
     set(_ezcov_lcovHtmlDir        "${_ezcov_outDir}/coverage_lcov")
     set(_ezcov_coverageTar        "${_ezcov_outDir}/coverage_bundle.tar.gz")
+    set(_ezcov_executablesTxt     "${_ezcov_outDir}/executables.txt")
 
     add_custom_target(forcecover_prep_${aSubsystemName}
         COMMAND ${CMAKE_COMMAND} -E echo "[force-cover/${aSubsystemName}] preprocess -> ${_ezcov_fcMirrorDir}"
@@ -86,15 +89,19 @@ macro(ezCoverage_addSubsystem aSubsystemName aIncludeDir)
 
     add_custom_target(cov_${aSubsystemName}
         COMMAND ${CMAKE_COMMAND} -E echo "== ${aSubsystemName} instrumented ctest =="
+        COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_BINARY_DIR}/profraw_${aSubsystemName}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/profraw_${aSubsystemName}
         COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/profraw_${aSubsystemName}/%p_%m.profraw
-                ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_BINARY_DIR} --output-on-failure
+                ${CMAKE_COMMAND} -DCTEST_EXE=${CMAKE_CTEST_COMMAND} -DCTEST_BUILD_DIR=${CMAKE_BINARY_DIR} -DCTEST_CONFIG=$<CONFIG> -P ${_ezcov_cmRunCtest}
+
+        COMMAND ${CMAKE_COMMAND} -E echo "== list test executables =="
+        COMMAND python3 ${_ezcov_pyListExecutables} ${CMAKE_CTEST_COMMAND} ${CMAKE_BINARY_DIR} "$<CONFIG>" ${_ezcov_executablesTxt}
 
         COMMAND ${CMAKE_COMMAND} -E echo "== merge profraw =="
         COMMAND bash ${_ezcov_shMergeProfraw} ${CMAKE_BINARY_DIR}/profraw_${aSubsystemName} ${CMAKE_BINARY_DIR}/${aSubsystemName}.profdata
 
         COMMAND ${CMAKE_COMMAND} -E echo "== llvm-cov show + report =="
-        COMMAND bash ${_ezcov_shCollectShowReport} ${CMAKE_BINARY_DIR} ${_ezcov_outDir} ${CMAKE_BINARY_DIR}/${aSubsystemName}.profdata ${CMAKE_BINARY_DIR}/profraw_${aSubsystemName}
+        COMMAND bash ${_ezcov_shCollectShowReport} ${CMAKE_BINARY_DIR} ${_ezcov_outDir} ${CMAKE_BINARY_DIR}/${aSubsystemName}.profdata ${CMAKE_BINARY_DIR}/profraw_${aSubsystemName} ${_ezcov_executablesTxt}
 
         COMMAND ${CMAKE_COMMAND} -E echo "== UTF8 + fix_coverage.py =="
         COMMAND python3 ${_ezcov_pyConvertUtf8} ${_ezcov_coverageTxt} ${_ezcov_coverageTxtUtf8}
@@ -102,10 +109,12 @@ macro(ezCoverage_addSubsystem aSubsystemName aIncludeDir)
         COMMAND python3 ${_ezcov_fixCoveragePy} ${_ezcov_coverageTxtUtf8}
 
         COMMAND ${CMAKE_COMMAND} -E echo "== export LCOV + genhtml =="
-        COMMAND bash ${_ezcov_shExportLcovGenhtml} ${CMAKE_BINARY_DIR} ${_ezcov_lcovInfo} ${_ezcov_lcovHtmlDir} ${CMAKE_BINARY_DIR}/${aSubsystemName}.profdata ${aIncludeDir}
+        COMMAND bash ${_ezcov_shExportLcovGenhtml} ${CMAKE_BINARY_DIR} ${_ezcov_lcovInfo} ${_ezcov_lcovHtmlDir} ${CMAKE_BINARY_DIR}/${aSubsystemName}.profdata ${_ezcov_executablesTxt} ${aIncludeDir}
 
         COMMAND ${CMAKE_COMMAND} -E echo "== patch genhtml (inline, optional) =="
-        COMMAND python3 ${_ezcov_pyPatchInline} ${_ezcov_coverageTxtUtf8} ${_ezcov_lcovHtmlDir} || true
+        # optional step : its failure stays its own, a bare || true in the chain
+        # would swallow the failure of every step before it
+        COMMAND bash -c "python3 \"$1\" \"$2\" \"$3\" || echo '[patch genhtml] skipped'" _ ${_ezcov_pyPatchInline} ${_ezcov_coverageTxtUtf8} ${_ezcov_lcovHtmlDir}
 
         COMMAND ${CMAKE_COMMAND} -E echo "== bundle TAR =="
         COMMAND ${CMAKE_COMMAND} -E tar cfvz ${_ezcov_coverageTar}
