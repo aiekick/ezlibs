@@ -82,6 +82,52 @@ Some libs are in inter dependencies, so you may need to include the EzLibs dir i
 |[ezXml](doc/ezXml.md)|:construction:|:heavy_check_mark:|:heavy_check_mark:|xml Parsing|
 |[ezXmlConfig](doc/ezXmlConfig.md)|:construction:|:heavy_check_mark:|:heavy_check_mark:|xml config File Reader/Writer|
 
+# Tests
+
+The test suites are built when EzLibs is the top level project. On Linux, with the presets of `CMakePresets.json` :
+
+```bash
+cmake --preset linux-clang
+cmake --build --preset linux-clang
+ctest --test-dir build/linux-clang -C Debug --output-on-failure
+```
+
+`linux-gcc` works the same way. The OpenGL suites need a display : on a headless machine, run ctest under `xvfb-run -a`.
+
+# Code Coverage
+
+Linux only, with Clang (LLVM source based coverage). The whole pipeline is a single workflow preset :
+
+```bash
+xvfb-run -a cmake --workflow --preset linux-clang-coverage
+```
+
+The html report is then in `build/linux-clang-coverage/Tests/ezLibs/coverage_lcov/index.html`, restricted to the headers of `include/ezlibs`.
+
+The workflow chains four presets, which can also be run one by one (from an IDE for instance) :
+
+|Preset|Kind|What it does|
+|-|-|-|
+|`linux-clang-coverage`|configure|Clang, Debug, `USE_CODE_COVERAGE=ON`, in `build/linux-clang-coverage`|
+|`linux-clang-coverage-prep`|build|builds the forceCover tool and preprocesses the headers with it|
+|`linux-clang-coverage-build`|build|builds the instrumented test suites|
+|`linux-clang-coverage-report`|build|runs the suites, merges the profiles, writes the lcov tracefile and the html report|
+
+Notes :
+
+- a red test is reported as a warning, it does not stop the report : what ran is still measured.
+- without a display (`xvfb-run` or a real one), the OpenGL suites fail and EzGL is missing from the report.
+- the outputs of `build/linux-clang-coverage/Tests/ezLibs/` : `lcov.info` (the tracefile), `report.txt` (llvm-cov report per executable), `coverage_utf8.txt` (annotated sources), `coverage_lcov/` (html), `coverage_bundle.tar.gz` (all of them).
+
+Required tools : `clang`, `llvm` (`llvm-cov`, `llvm-profdata`, `llvm-config`), `libclang-dev` (forceCover links against libclang), GNU `make` (forceCover has its own Makefile), `lcov` (1.x or 2.x, `genhtml` included), `python3`, and `xvfb` for a headless machine. On Debian / Ubuntu :
+
+```bash
+sudo apt-get install clang llvm llvm-dev libclang-dev make lcov python3 xvfb \
+                     libgl1-mesa-dev libx11-dev libxi-dev libxrandr-dev libxinerama-dev libxcursor-dev
+```
+
+The same pipeline runs in CI without presets (single config Debug build) : the GitHub [Coverage](.github/workflows/Coverage.yml) workflow publishes the html report on the [coverage pages](https://aiekick.github.io/ezlibs), and the Forgejo [SonarQube](.forgejo/workflows/sonar.yml) workflow sends `lcov.info` to sonar, and fails when the tracefile holds no record.
+
 # License
 
 Copyright :copyright: 2014-2024 Stephane Cuillerdier
