@@ -107,9 +107,12 @@ macro(ezCoverage_addSubsystem aSubsystemName aIncludeDir)
         COMMAND python3 ${_ezcov_pyConvertUtf8} ${_ezcov_coverageTxt} ${_ezcov_coverageTxtUtf8}
         COMMAND ${CMAKE_COMMAND} -E rm -f ${_ezcov_coverageTxt}
         COMMAND python3 ${_ezcov_fixCoveragePy} ${_ezcov_coverageTxtUtf8}
+        # the fix read the markers in the mirror ; from here every report names the real headers
+        COMMAND bash ${_EZ_COVERAGE_SCRIPTS_DIR}/remap_paths.sh ${_ezcov_fcMirrorDir} ${aIncludeDir} ${_ezcov_coverageTxtUtf8} ${_ezcov_reportTxt}
 
         COMMAND ${CMAKE_COMMAND} -E echo "== export LCOV + genhtml =="
-        COMMAND bash ${_ezcov_shExportLcovGenhtml} ${CMAKE_BINARY_DIR} ${_ezcov_lcovInfo} ${_ezcov_lcovHtmlDir} ${CMAKE_BINARY_DIR}/${aSubsystemName}.profdata ${_ezcov_executablesTxt} ${aIncludeDir}
+        COMMAND ${CMAKE_COMMAND} -E env COV_REMAP_FROM=${_ezcov_fcMirrorDir} COV_REMAP_TO=${aIncludeDir}
+                bash ${_ezcov_shExportLcovGenhtml} ${CMAKE_BINARY_DIR} ${_ezcov_lcovInfo} ${_ezcov_lcovHtmlDir} ${CMAKE_BINARY_DIR}/${aSubsystemName}.profdata ${_ezcov_executablesTxt} ${aIncludeDir}
 
         COMMAND ${CMAKE_COMMAND} -E echo "== patch genhtml (inline, optional) =="
         # optional step : its failure stays its own, a bare || true in the chain

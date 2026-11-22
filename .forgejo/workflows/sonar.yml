@@ -35,6 +35,9 @@ jobs:
         with:
           cmake_args: ${{ env.EZLIBS_CMAKE_ARGS }}
 
+      # the lint reads the tree as configured, before the coverage lane rewrites it over its mirror
+      - uses: ./.ci/sonar-lint
+
       # ezlibs-specific: the coverage lane, same sequence as the GitHub workflow
       - name: Coverage
         run: |
@@ -51,8 +54,6 @@ jobs:
           fi
           echo "Tracefile: ${TRACEFILE} ($(grep -c '^SF:' "${TRACEFILE}") source files)"
           cp "${TRACEFILE}" build/coverage.info
-
-      - uses: ./.ci/sonar-lint
 
       - uses: ./.ci/sonar-analyze
         with:

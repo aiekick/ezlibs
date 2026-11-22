@@ -42,6 +42,12 @@ for exe in "${EXES[@]}"; do
     -format=lcov >> "${LCOV_INFO}" 2>/dev/null || true
 done
 
+# the force-cover mirror back to the sources, line for line, when COV_REMAP_FROM / COV_REMAP_TO are set : the extract
+# and the html then name the real headers
+if [[ -n "${COV_REMAP_FROM:-}" && -n "${COV_REMAP_TO:-}" ]]; then
+  bash "$(dirname "$0")/remap_paths.sh" "${COV_REMAP_FROM}" "${COV_REMAP_TO}" "${LCOV_INFO}"
+fi
+
 # Filet de sécurité: remove chemins systèmes/outils
 EXCLUDE_GLOBS=(
   "/usr/*" "*/lib/*/clang/*" "*/lib/llvm-*/*" "*/include/c++/*"
