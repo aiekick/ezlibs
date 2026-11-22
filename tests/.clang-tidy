@@ -1,0 +1,3 @@
+# the test dispatchers chain IfTestExist macros : the else after the return hidden in the macro is the pattern, not a defect
+InheritParentConfig: true
+Checks: '-readability-else-after-return'
