@@ -21,14 +21,18 @@ template <typename T>
 bool TestEzMat2_DefaultConstructor() {
     ez::math::mat2<T> m;
     // Default constructor creates zero matrix
-    if (!ez::math::isEqual(m(0, 0), static_cast<T>(0)))
+    if (!ez::math::isEqual(m(0, 0), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(m(0, 1), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(m(0, 1), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(m(1, 0), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(m(1, 0), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(m(1, 1), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(m(1, 1), static_cast<T>(0))) {
         return false;
+    }
     return true;
 }
 
@@ -36,14 +40,18 @@ template <typename T>
 bool TestEzMat2_DiagonalConstructor() {
     ez::math::mat2<T> m(static_cast<T>(2));
     // Diagonal constructor
-    if (!ez::math::isEqual(m(0, 0), static_cast<T>(2)))
+    if (!ez::math::isEqual(m(0, 0), static_cast<T>(2))) {
         return false;
-    if (!ez::math::isEqual(m(0, 1), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(m(0, 1), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(m(1, 0), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(m(1, 0), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(m(1, 1), static_cast<T>(2)))
+    }
+    if (!ez::math::isEqual(m(1, 1), static_cast<T>(2))) {
         return false;
+    }
     return true;
 }
 
@@ -51,42 +59,54 @@ template <typename T>
 bool TestEzMat2_ElementConstructor() {
     // Column-major: c0r0, c0r1, c1r0, c1r1
     ez::math::mat2<T> m(static_cast<T>(1), static_cast<T>(2), static_cast<T>(3), static_cast<T>(4));
-    if (!ez::math::isEqual(m(0, 0), static_cast<T>(1)))
+    if (!ez::math::isEqual(m(0, 0), static_cast<T>(1))) {
         return false;
-    if (!ez::math::isEqual(m(1, 0), static_cast<T>(2)))
+    }
+    if (!ez::math::isEqual(m(1, 0), static_cast<T>(2))) {
         return false;
-    if (!ez::math::isEqual(m(0, 1), static_cast<T>(3)))
+    }
+    if (!ez::math::isEqual(m(0, 1), static_cast<T>(3))) {
         return false;
-    if (!ez::math::isEqual(m(1, 1), static_cast<T>(4)))
+    }
+    if (!ez::math::isEqual(m(1, 1), static_cast<T>(4))) {
         return false;
+    }
     return true;
 }
 
 template <typename T>
 bool TestEzMat2_Identity() {
     ez::math::mat2<T> m = ez::math::mat2<T>::Identity();
-    if (!ez::math::isEqual(m(0, 0), static_cast<T>(1)))
+    if (!ez::math::isEqual(m(0, 0), static_cast<T>(1))) {
         return false;
-    if (!ez::math::isEqual(m(0, 1), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(m(0, 1), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(m(1, 0), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(m(1, 0), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(m(1, 1), static_cast<T>(1)))
+    }
+    if (!ez::math::isEqual(m(1, 1), static_cast<T>(1))) {
         return false;
+    }
     return true;
 }
 
 template <typename T>
 bool TestEzMat2_Zero() {
     ez::math::mat2<T> m = ez::math::mat2<T>::Zero();
-    if (!ez::math::isEqual(m(0, 0), static_cast<T>(0)))
+    if (!ez::math::isEqual(m(0, 0), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(m(0, 1), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(m(0, 1), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(m(1, 0), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(m(1, 0), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(m(1, 1), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(m(1, 1), static_cast<T>(0))) {
         return false;
+    }
     return true;
 }
 
@@ -99,14 +119,18 @@ bool TestEzMat2_Multiplication() {
     ez::math::mat2<T> result = m1 * m2;
 
     // Expected: [[1,3],[2,4]] * [[2,1],[0,2]] = [[2,7],[4,10]]
-    if (!ez::math::isEqual(result(0, 0), static_cast<T>(2)))
+    if (!ez::math::isEqual(result(0, 0), static_cast<T>(2))) {
         return false;
-    if (!ez::math::isEqual(result(0, 1), static_cast<T>(7)))
+    }
+    if (!ez::math::isEqual(result(0, 1), static_cast<T>(7))) {
         return false;
-    if (!ez::math::isEqual(result(1, 0), static_cast<T>(4)))
+    }
+    if (!ez::math::isEqual(result(1, 0), static_cast<T>(4))) {
         return false;
-    if (!ez::math::isEqual(result(1, 1), static_cast<T>(10)))
+    }
+    if (!ez::math::isEqual(result(1, 1), static_cast<T>(10))) {
         return false;
+    }
 
     return true;
 }
@@ -120,10 +144,12 @@ bool TestEzMat2_MulVec() {
     auto result = m.mulVec(v);
 
     // [[1,3],[2,4]] * [2,3] = [1*2 + 3*3, 2*2 + 4*3] = [11, 16]
-    if (!ez::math::isEqual(result[0], static_cast<T>(11)))
+    if (!ez::math::isEqual(result[0], static_cast<T>(11))) {
         return false;
-    if (!ez::math::isEqual(result[1], static_cast<T>(16)))
+    }
+    if (!ez::math::isEqual(result[1], static_cast<T>(16))) {
         return false;
+    }
 
     return true;
 }
@@ -134,14 +160,18 @@ bool TestEzMat2_Transpose() {
     ez::math::mat2<T> t = m.transpose();
 
     // [[1,3],[2,4]] transposed = [[1,2],[3,4]]
-    if (!ez::math::isEqual(t(0, 0), static_cast<T>(1)))
+    if (!ez::math::isEqual(t(0, 0), static_cast<T>(1))) {
         return false;
-    if (!ez::math::isEqual(t(0, 1), static_cast<T>(2)))
+    }
+    if (!ez::math::isEqual(t(0, 1), static_cast<T>(2))) {
         return false;
-    if (!ez::math::isEqual(t(1, 0), static_cast<T>(3)))
+    }
+    if (!ez::math::isEqual(t(1, 0), static_cast<T>(3))) {
         return false;
-    if (!ez::math::isEqual(t(1, 1), static_cast<T>(4)))
+    }
+    if (!ez::math::isEqual(t(1, 1), static_cast<T>(4))) {
         return false;
+    }
 
     return true;
 }
@@ -152,8 +182,9 @@ bool TestEzMat2_Determinant() {
 
     // det([[1,3],[2,4]]) = 1*4 - 3*2 = 4 - 6 = -2
     T det = m.determinant();
-    if (!ez::math::isEqual(det, static_cast<T>(-2)))
+    if (!ez::math::isEqual(det, static_cast<T>(-2))) {
         return false;
+    }
 
     return true;
 }
@@ -166,27 +197,35 @@ bool TestEzMat2_Inverse() {
     // inv = (1/10) * [[6,-2],[-7,4]]
     ez::math::mat2<T> inv = m.inverse();
 
-    if (ez::math::isDifferent(inv(0, 0), static_cast<T>(0.6)))
+    if (ez::math::isDifferent(inv(0, 0), static_cast<T>(0.6))) {
         return false;
-    if (ez::math::isDifferent(inv(0, 1), static_cast<T>(-0.2)))
+    }
+    if (ez::math::isDifferent(inv(0, 1), static_cast<T>(-0.2))) {
         return false;
-    if (ez::math::isDifferent(inv(1, 0), static_cast<T>(-0.7)))
+    }
+    if (ez::math::isDifferent(inv(1, 0), static_cast<T>(-0.7))) {
         return false;
-    if (ez::math::isDifferent(inv(1, 1), static_cast<T>(0.4)))
+    }
+    if (ez::math::isDifferent(inv(1, 1), static_cast<T>(0.4))) {
         return false;
+    }
 
     // Verify M * M^-1 = I
     ez::math::mat2<T> identity = m * inv;
     // Use a more lenient epsilon for accumulated floating-point errors in matrix multiplication
     T tolerance = static_cast<T>(1e-5);
-    if (ez::math::isDifferent(identity(0, 0), static_cast<T>(1), tolerance))
+    if (ez::math::isDifferent(identity(0, 0), static_cast<T>(1), tolerance)) {
         return false;
-    if (ez::math::isDifferent(identity(1, 1), static_cast<T>(1), tolerance))
+    }
+    if (ez::math::isDifferent(identity(1, 1), static_cast<T>(1), tolerance)) {
         return false;
-    if (ez::math::isDifferent(identity(0, 1), static_cast<T>(0), tolerance))
+    }
+    if (ez::math::isDifferent(identity(0, 1), static_cast<T>(0), tolerance)) {
         return false;
-    if (ez::math::isDifferent(identity(1, 0), static_cast<T>(0), tolerance))
+    }
+    if (ez::math::isDifferent(identity(1, 0), static_cast<T>(0), tolerance)) {
         return false;
+    }
 
     return true;
 }
@@ -198,19 +237,24 @@ bool TestEzMat2_InverseSingular() {
 
     // det([[1,2],[2,4]]) = 1*4 - 2*2 = 0
     T det = m.determinant();
-    if (!ez::math::isEqual(det, static_cast<T>(0)))
+    if (!ez::math::isEqual(det, static_cast<T>(0))) {
         return false;
+    }
 
     // Inverse should return zero matrix
     ez::math::mat2<T> inv = m.inverse();
-    if (!ez::math::isEqual(inv(0, 0), static_cast<T>(0)))
+    if (!ez::math::isEqual(inv(0, 0), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(inv(0, 1), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(inv(0, 1), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(inv(1, 0), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(inv(1, 0), static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(inv(1, 1), static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(inv(1, 1), static_cast<T>(0))) {
         return false;
+    }
 
     return true;
 }

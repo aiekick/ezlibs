@@ -51,14 +51,18 @@ struct AABB  // copy of b2AABB struct
     {
         std::vector<float> result = str::stringToNumberVector<float>(vec, c);
         const size_t s = result.size();
-        if (s > 0)
+        if (s > 0) {
             lowerBound.x = result[0];
-        if (s > 1)
+        }
+        if (s > 1) {
             lowerBound.y = result[1];
-        if (s > 2)
+        }
+        if (s > 2) {
             upperBound.x = result[2];
-        if (s > 3)
+        }
+        if (s > 3) {
             upperBound.y = result[3];
+        }
     }
 
 #ifdef COCOS2D

@@ -56,10 +56,12 @@ inline ez::math::dvec2 fromDegressToMercatorMeters(const ez::math::dvec2& vPoint
     ez::math::dvec2 ret{vPointDegree};
     // Clamp latitude to avoid infinities at the poles
     const double maxLat = 89.9999;
-    if (ret.y > maxLat)
+    if (ret.y > maxLat) {
         ret.y = maxLat;
-    if (ret.y < -maxLat)
+    }
+    if (ret.y < -maxLat) {
         ret.y = -maxLat;
+    }
 
     double lonRad = ret.x * M_PI / 180.0;
     double latRad = ret.y * M_PI / 180.0;
@@ -109,8 +111,9 @@ inline int16_t parseDemCoordinate(const std::string& vStr) {
  * Returns true if valid, also fills voLat and voLon with longitude/latitude codes.
  */
 inline bool checkDemFileName(const std::string& vFileName, std::string& voLat, std::string& voLon) {
-    if (vFileName.size() != 7U)
+    if (vFileName.size() != 7U) {
         return false;
+    }
     try {
         bool ret = true;
         const auto& sLat = vFileName.substr(0, 3);

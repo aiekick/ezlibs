@@ -519,8 +519,9 @@ public:
     }
 
     Writer& addColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a, const uint8_t& index) {
-        while (colors.size() <= index)
+        while (colors.size() <= index) {
             colors.push_back(0);
+        }
         colors[index] = GetID(r, g, b, a);
         return *this;
     }
@@ -706,7 +707,9 @@ private:
         m_file = fopen(vFilePathName.c_str(), "wb");
         lastError = m_file ? 0 : errno;
 #endif
-        if (lastError != 0) return false;
+        if (lastError != 0) {
+            return false;
+        }
         return true;
     }
 

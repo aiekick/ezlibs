@@ -260,11 +260,13 @@ inline std::string simplifyFilePath(const std::string &vFilePath) {
     std::string item;
 
     while (std::getline(ss, item, EZ_FILE_SLASH_TYPE[0])) {
-        if (item == "" || item == ".")
+        if (item == "" || item == ".") {
             continue;
+        }
         if (item == "..") {
-            if (!parts.empty())
+            if (!parts.empty()) {
                 parts.pop_back();
+            }
             // sinon on est au-dessus de root => on ignore
         } else {
             parts.push_back(item);
@@ -274,8 +276,9 @@ inline std::string simplifyFilePath(const std::string &vFilePath) {
     std::string result;
     for (size_t i = 0; i < parts.size(); ++i) {
         result += parts[i];
-        if (i < parts.size() - 1)
+        if (i < parts.size() - 1) {
             result += EZ_FILE_SLASH_TYPE;
+        }
     }
     return result;
 }

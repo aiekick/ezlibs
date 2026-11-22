@@ -58,8 +58,9 @@ namespace date {
  * @return true if parsing succeeds and fields look valid; false otherwise.
  */
 inline bool parseYmd(const std::string& s, int32_t& y, int32_t& m, int32_t& d) {
-    if (s.size() != 10 || s[4] != '-' || s[7] != '-')
+    if (s.size() != 10 || s[4] != '-' || s[7] != '-') {
         return false;
+    }
     y = std::atoi(s.substr(0, 4).c_str());
     m = std::atoi(s.substr(5, 2).c_str());
     d = std::atoi(s.substr(8, 2).c_str());
@@ -86,8 +87,9 @@ inline bool isLeap(int32_t y) {
 inline int32_t monthDays(int32_t y, int32_t m) {
     static const int32_t md[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     int32_t d = md[m - 1];
-    if (m == 2 && isLeap(y))
+    if (m == 2 && isLeap(y)) {
         d = 29;
+    }
     return d;
 }
 
@@ -104,10 +106,12 @@ inline int32_t monthDays(int32_t y, int32_t m) {
 inline int32_t ymdToDays(int32_t Y, int32_t M, int32_t D) {
     int32_t y = Y, m = M, d = D;
     int32_t n = 0;
-    for (int32_t yy = 1970; yy < y; ++yy)
+    for (int32_t yy = 1970; yy < y; ++yy) {
         n += 365 + (isLeap(yy) ? 1 : 0);
-    for (int32_t mm = 1; mm < m; ++mm)
+    }
+    for (int32_t mm = 1; mm < m; ++mm) {
         n += monthDays(y, mm);
+    }
     n += d - 1;
     return n;
 }
@@ -127,8 +131,9 @@ inline void daysToYmd(int32_t days, int32_t& Y, int32_t& M, int32_t& D) {
         if (days >= len) {
             days -= len;
             ++y;
-        } else
+        } else {
             break;
+        }
     }
     int32_t m = 1;
     while (true) {
@@ -136,8 +141,9 @@ inline void daysToYmd(int32_t days, int32_t& Y, int32_t& M, int32_t& D) {
         if (days >= len) {
             days -= len;
             ++m;
-        } else
+        } else {
             break;
+        }
     }
     int32_t d = days + 1;
     Y = y;
@@ -154,8 +160,9 @@ inline void daysToYmd(int32_t days, int32_t& Y, int32_t& M, int32_t& D) {
  */
 inline std::string addDays(const std::string& s, int32_t off) {
     int32_t y, m, d;
-    if (!parseYmd(s, y, m, d))
+    if (!parseYmd(s, y, m, d)) {
         return s;
+    }
     int32_t base = ymdToDays(y, m, d);
     int32_t tgt = base + off;
     int32_t Y, M, D;
@@ -174,8 +181,9 @@ inline std::string addDays(const std::string& s, int32_t off) {
  */
 inline int32_t diffDays(const std::string& a, const std::string& b) {
     int32_t ya, ma, da, yb, mb, db;
-    if (!parseYmd(a, ya, ma, da) || !parseYmd(b, yb, mb, db))
+    if (!parseYmd(a, ya, ma, da) || !parseYmd(b, yb, mb, db)) {
         return 0;
+    }
     return ymdToDays(ya, ma, da) - ymdToDays(yb, mb, db);
 }
 
@@ -187,8 +195,9 @@ inline int32_t diffDays(const std::string& a, const std::string& b) {
  */
 inline std::string startOfMonth(const std::string& s) {
     int32_t y, m, d;
-    if (!parseYmd(s, y, m, d))
+    if (!parseYmd(s, y, m, d)) {
         return s;
+    }
     std::ostringstream oss;
     oss << std::setfill('0') << std::setw(4) << y << "-" << std::setw(2) << m << "-01";
     return oss.str();
@@ -204,8 +213,9 @@ inline std::string startOfMonth(const std::string& s) {
  */
 inline std::string endOfMonth(const std::string& s) {
     int32_t y, m, d;
-    if (!parseYmd(s, y, m, d))
+    if (!parseYmd(s, y, m, d)) {
         return s;
+    }
     int32_t md = monthDays(y, m);
     std::ostringstream oss;
     oss << std::setfill('0') << std::setw(4) << y << "-" << std::setw(2) << m << "-" << std::setw(2) << md;

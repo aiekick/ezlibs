@@ -99,8 +99,9 @@ public:
     }
     void setMinDistance(T vMinDistance) {
         m_minDistance = (vMinDistance <= T(0)) ? T(0.000001) : vMinDistance;
-        if (m_distance < m_minDistance)
+        if (m_distance < m_minDistance) {
             m_distance = m_minDistance;
+        }
     }
 
     // Update base camera position and target from orbit parameters
@@ -224,8 +225,12 @@ public:
 private:
     T m_clampPitch(T vRadians) const {
         const T limit = k_halfPi - k_pitchEpsilon;
-        if (vRadians > limit) return limit;
-        if (vRadians < -limit) return -limit;
+        if (vRadians > limit) {
+            return limit;
+        }
+        if (vRadians < -limit) {
+            return -limit;
+        }
         return vRadians;
     }
 };

@@ -16,14 +16,18 @@
 template <typename T>
 bool TestEzAABB_DefaultConstructor() {
     ez::math::AABB<T> aabb;
-    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(0)))
+    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(0))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(0)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(0))) {
         return false;
+    }
     return true;
 }
 
@@ -32,14 +36,18 @@ bool TestEzAABB_Vec2Constructor() {
     ez::math::vec2<T> lower(1, 2);
     ez::math::vec2<T> upper(5, 6);
     ez::math::AABB<T> aabb(lower, upper);
-    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(1)))
+    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(1))) {
         return false;
-    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(2)))
+    }
+    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(2))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(5)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(5))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(6)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(6))) {
         return false;
+    }
     return true;
 }
 
@@ -47,14 +55,18 @@ template <typename T>
 bool TestEzAABB_Vec4Constructor() {
     ez::math::vec4<T> v(1, 2, 5, 6);
     ez::math::AABB<T> aabb(v);
-    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(1)))
+    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(1))) {
         return false;
-    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(2)))
+    }
+    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(2))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(5)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(5))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(6)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(6))) {
         return false;
+    }
     return true;
 }
 
@@ -65,14 +77,18 @@ bool TestEzAABB_AddVec() {
     ez::math::AABB<T> aabb(lower, upper);
     ez::math::vec2<T> offset(10, 20);
     aabb += offset;
-    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(11)))
+    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(11))) {
         return false;
-    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(22)))
+    }
+    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(22))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(15)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(15))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(26)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(26))) {
         return false;
+    }
     return true;
 }
 
@@ -83,14 +99,18 @@ bool TestEzAABB_SubVec() {
     ez::math::AABB<T> aabb(lower, upper);
     ez::math::vec2<T> offset(5, 10);
     aabb -= offset;
-    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(5)))
+    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(5))) {
         return false;
-    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(10)))
+    }
+    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(10))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(45)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(45))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(50)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(50))) {
         return false;
+    }
     return true;
 }
 
@@ -100,14 +120,18 @@ bool TestEzAABB_MulScalar() {
     ez::math::vec2<T> upper(5, 6);
     ez::math::AABB<T> aabb(lower, upper);
     aabb *= 2;
-    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(2)))
+    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(2))) {
         return false;
-    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(4)))
+    }
+    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(4))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(10)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(10))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(12)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(12))) {
         return false;
+    }
     return true;
 }
 
@@ -117,14 +141,18 @@ bool TestEzAABB_DivScalar() {
     ez::math::vec2<T> upper(50, 60);
     ez::math::AABB<T> aabb(lower, upper);
     aabb /= 2;
-    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(5)))
+    if (!ez::math::isEqual(aabb.lowerBound.x, static_cast<T>(5))) {
         return false;
-    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(10)))
+    }
+    if (!ez::math::isEqual(aabb.lowerBound.y, static_cast<T>(10))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(25)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.x, static_cast<T>(25))) {
         return false;
-    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(30)))
+    }
+    if (!ez::math::isEqual(aabb.upperBound.y, static_cast<T>(30))) {
         return false;
+    }
     return true;
 }
 

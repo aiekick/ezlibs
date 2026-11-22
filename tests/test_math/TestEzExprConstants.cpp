@@ -33,11 +33,13 @@ SOFTWARE.
 bool TestEzExpr_Constants_Parsings_PI() {
     ez::Expr ev;
     try {
-        if (!ev.parse("pi").eval().check(M_PI))
+        if (!ev.parse("pi").eval().check(M_PI)) {
             return false;
+        }
     } catch (const ez::ExprException& e) {
-        if (e.getCode() != ez::ErrorCode::NONE)
+        if (e.getCode() != ez::ErrorCode::NONE) {
             return false;
+        }
     }
     return true;
 }
@@ -45,11 +47,13 @@ bool TestEzExpr_Constants_Parsings_PI() {
 bool TestEzExpr_Constants_Parsings_E() {
     ez::Expr ev;
     try {
-        if (!ev.parse("e").eval().check(M_E))
+        if (!ev.parse("e").eval().check(M_E)) {
             return false;
+        }
     } catch (const ez::ExprException& e) {
-        if (e.getCode() != ez::ErrorCode::NONE)
+        if (e.getCode() != ez::ErrorCode::NONE) {
             return false;
+        }
     }
     return true;
 }

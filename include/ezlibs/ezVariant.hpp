@@ -193,16 +193,19 @@ public:
     bool operator==(variant<T> v) {
         if (inputtype == v.inputtype) {
 #ifdef EZ_TOOLS_VEC4
-            if (inputtype == "math::vec4")
+            if (inputtype == "math::vec4") {
                 return rect_value == v.rect_value;
+            }
 #endif
 #ifdef EZ_TOOLS_VEC3
-            if (inputtype == "math::vec3")
+            if (inputtype == "math::vec3") {
                 return v3_value == v.v3_value;
+            }
 #endif
 #ifdef EZ_TOOLS_VEC2
-            if (inputtype == "math::vec2")
+            if (inputtype == "math::vec2") {
                 return point_value == v.point_value;
+            }
 #endif
 #ifdef EZ_TOOLS_AABB
             if (inputtype == "math::AABB")
@@ -212,20 +215,27 @@ public:
             if (inputtype == "math::AABBCC")
                 return aabbcc_value == v.aabbcc_value;
 #endif
-            if (inputtype == "bool")
+            if (inputtype == "bool") {
                 return bool_value == v.bool_value;
-            if (inputtype == "float")
+            }
+            if (inputtype == "float") {
                 return ez::math::isEqual(float_value, v.float_value);
-            if (inputtype == "double")
+            }
+            if (inputtype == "double") {
                 return ez::math::isEqual(double_value, v.double_value);
-            if (inputtype == "int")
+            }
+            if (inputtype == "int") {
                 return int_value == v.int_value;
-            if (inputtype == "long")
+            }
+            if (inputtype == "long") {
                 return long_value == v.long_value;
-            if (inputtype == "uint32_t")
+            }
+            if (inputtype == "uint32_t") {
                 return uint32_t_value == v.uint32_t_value;
-            if (inputtype == "uint64_t")
+            }
+            if (inputtype == "uint64_t") {
                 return uint64_t_value == v.uint64_t_value;
+            }
             return string_value == v.string_value;
         }
         return false;

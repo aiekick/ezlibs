@@ -57,7 +57,9 @@ private:
     }
     static std::array<T,3> normalize(const std::array<T,3>& v, T vEpsilon = T(1e-12)) {
         double len = std::sqrt(static_cast<double>(dot(v,v)));
-        if (len <= static_cast<double>(vEpsilon)) return { T(0), T(0), T(0) };
+        if (len <= static_cast<double>(vEpsilon)) {
+            return {T(0), T(0), T(0)};
+        }
         T inv = static_cast<T>(1.0 / len);
         return { v[0]*inv, v[1]*inv, v[2]*inv };
     }

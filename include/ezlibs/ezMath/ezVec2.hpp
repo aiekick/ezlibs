@@ -224,8 +224,9 @@ struct vec2 {
 
     T normalize() {
         T len = length();
-        if (len < static_cast<T>(1e-5))
+        if (len < static_cast<T>(1e-5)) {
             return static_cast<T>(0.0);
+        }
         T invLen = static_cast<T>(1.0) / len;
         x *= invLen;
         y *= invLen;
@@ -257,15 +258,17 @@ struct vec2 {
     // Ratio functions
     template <typename U>
     U ratioXY() const {
-        if (y != static_cast<T>(0))
+        if (y != static_cast<T>(0)) {
             return static_cast<U>(x) / static_cast<U>(y);
+        }
         return static_cast<U>(0);
     }
 
     template <typename U>
     U ratioYX() const {
-        if (x != static_cast<T>(0))
+        if (x != static_cast<T>(0)) {
             return static_cast<U>(y) / static_cast<U>(x);
+        }
         return static_cast<U>(0);
     }
 

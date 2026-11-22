@@ -115,7 +115,9 @@ namespace ez {
             }
 
             static void replaceAll(std::string &vStr, const std::string &vFrom, const std::string &vTo) {
-                if (vFrom.empty()) return;
+                if (vFrom.empty()) {
+                    return;
+                }
                 size_t startPos = 0;
                 while ((startPos = vStr.find(vFrom, startPos)) != std::string::npos) {
                     vStr.replace(startPos, vFrom.length(), vTo);

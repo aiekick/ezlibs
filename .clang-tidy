@@ -37,6 +37,10 @@ Checks: >
 #   class sections repeat their access specifiers, several declarations on a line, if (flags & X)
 #   config knobs are macros (overridable by -D), complexity is measured by Sonar
 
+CheckOptions:
+  # simplifying a boolean expression stays a rule ; rewriting it by De Morgan is a taste, not a defect
+  readability-simplify-boolean-expr.SimplifyDeMorgan: false
+
 # Report warnings in project headers too, never in vendored code nor generated or old folders
 HeaderFilterRegex: '.*'
 ExcludeHeaderFilterRegex: '.*/(old|build|archives|3rdparty|_deps)/.*'

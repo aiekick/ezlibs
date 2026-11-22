@@ -81,20 +81,22 @@ inline std::list<std::string> splitStringToList(const std::string& text, const s
         while (end != std::string::npos) {
             std::string token = text.substr(start, end - start);
             if (!token.empty() || (token.empty() && pushEmpty)) {
-                if (vInversion)
+                if (vInversion) {
                     arr.emplace_front(token);
-                else
+                } else {
                     arr.emplace_back(token);
+                }
             }
             start = end + 1;
             end = text.find_first_of(delimiters, start);
         }
         std::string token = text.substr(start);
         if (!token.empty() || (token.empty() && pushEmpty)) {
-            if (vInversion)
+            if (vInversion) {
                 arr.emplace_front(token);
-            else
+            } else {
                 arr.emplace_back(token);
+            }
         }
     }
     return arr;
@@ -107,14 +109,16 @@ inline std::vector<std::string> splitStringToVector(const std::string& text, con
         std::string::size_type end = text.find_first_of(delimiters, start);
         while (end != std::string::npos) {
             std::string token = text.substr(start, end - start);
-            if (!token.empty() || (token.empty() && pushEmpty))
+            if (!token.empty() || (token.empty() && pushEmpty)) {
                 arr.emplace_back(token);
+            }
             start = end + 1;
             end = text.find_first_of(delimiters, start);
         }
         std::string token = text.substr(start);
-        if (!token.empty() || (token.empty() && pushEmpty))
+        if (!token.empty() || (token.empty() && pushEmpty)) {
             arr.emplace_back(token);
+        }
     }
     return arr;
 }
@@ -126,14 +130,16 @@ inline std::set<std::string> splitStringToSet(const std::string& text, const std
         std::string::size_type end = text.find_first_of(delimiters, start);
         while (end != std::string::npos) {
             std::string token = text.substr(start, end - start);
-            if (!token.empty() || (token.empty() && pushEmpty))
+            if (!token.empty() || (token.empty() && pushEmpty)) {
                 arr.emplace(token);
+            }
             start = end + 1;
             end = text.find_first_of(delimiters, start);
         }
         std::string token = text.substr(start);
-        if (!token.empty() || (token.empty() && pushEmpty))
+        if (!token.empty() || (token.empty() && pushEmpty)) {
             arr.emplace(token);
+        }
     }
     return arr;
 }
@@ -146,20 +152,22 @@ inline std::list<std::string> splitStringToList(const std::string& text, char de
         while (end != std::string::npos) {
             std::string token = text.substr(start, end - start);
             if (!token.empty() || (token.empty() && pushEmpty)) {
-                if (vInversion)
+                if (vInversion) {
                     arr.emplace_front(token);
-                else
+                } else {
                     arr.emplace_back(token);
+                }
             }
             start = end + 1;
             end = text.find(delimiter, start);
         }
         std::string token = text.substr(start);
         if (!token.empty() || (token.empty() && pushEmpty)) {
-            if (vInversion)
+            if (vInversion) {
                 arr.emplace_front(token);
-            else
+            } else {
                 arr.emplace_back(token);
+            }
         }
     }
     return arr;
@@ -172,14 +180,16 @@ inline std::vector<std::string> splitStringToVector(const std::string& text, cha
         std::string::size_type end = text.find(delimiter, start);
         while (end != std::string::npos) {
             std::string token = text.substr(start, end - start);
-            if (!token.empty() || (token.empty() && pushEmpty))
+            if (!token.empty() || (token.empty() && pushEmpty)) {
                 arr.emplace_back(token);
+            }
             start = end + 1;
             end = text.find(delimiter, start);
         }
         std::string token = text.substr(start);
-        if (!token.empty() || (token.empty() && pushEmpty))
+        if (!token.empty() || (token.empty() && pushEmpty)) {
             arr.emplace_back(token);
+        }
     }
     return arr;
 }
@@ -191,14 +201,16 @@ inline std::set<std::string> splitStringToSet(const std::string& text, char deli
         std::string::size_type end = text.find(delimiter, start);
         while (end != std::string::npos) {
             std::string token = text.substr(start, end - start);
-            if (!token.empty() || (token.empty() && pushEmpty))
+            if (!token.empty() || (token.empty() && pushEmpty)) {
                 arr.emplace(token);
+            }
             start = end + 1;
             end = text.find(delimiter, start);
         }
         std::string token = text.substr(start);
-        if (!token.empty() || (token.empty() && pushEmpty))
+        if (!token.empty() || (token.empty() && pushEmpty)) {
             arr.emplace(token);
+        }
     }
     return arr;
 }
@@ -294,8 +306,9 @@ inline std::string toStrFromArray(T* arr, size_t n, char delimiter = ';') {
         std::ostringstream os;
         for (size_t i = 0; i < n; ++i) {
             os << arr[i];
-            if (i < n - 1)
+            if (i < n - 1) {
                 os << delimiter;
+            }
         }
         return os.str();
     }

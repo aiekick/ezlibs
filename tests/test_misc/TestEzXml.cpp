@@ -42,79 +42,113 @@ bool TestEzXml_ParsingOK() {
 </config>
 )";
     ez::Xml xml;
-    if (!xml.parseString(doc))
+    if (!xml.parseString(doc)) {
         return false;
+    }
     std::cout << xml.dump() << std::endl;
-    if (xml.getRoot().getChildren().empty())
+    if (xml.getRoot().getChildren().empty()) {
         return false;
+    }
     const auto &rootChildrens = xml.getRoot().getChildren();
-    if (rootChildrens.size() != 1U)
+    if (rootChildrens.size() != 1U) {
         return false;
-    if (rootChildrens[0].getName() != "config")
+    }
+    if (rootChildrens[0].getName() != "config") {
         return false;
+    }
     const auto &configChildrens = rootChildrens[0].getChildren();
-    if (configChildrens.size() != 3U)
+    if (configChildrens.size() != 3U) {
         return false;
-    if (configChildrens[0].getContent() != "<!-- Comment 1 -->")
+    }
+    if (configChildrens[0].getContent() != "<!-- Comment 1 -->") {
         return false;
-    if (configChildrens[1].getName() != "NumberOneLine")
+    }
+    if (configChildrens[1].getName() != "NumberOneLine") {
         return false;
-    if (configChildrens[1].getContent() != "60")
+    }
+    if (configChildrens[1].getContent() != "60") {
         return false;
-    if (configChildrens[2].getName() != "Tests")
+    }
+    if (configChildrens[2].getName() != "Tests") {
         return false;
+    }
     const auto &testsChildrens = configChildrens[2].getChildren();
-    if (testsChildrens.size() != 6U)
+    if (testsChildrens.size() != 6U) {
         return false;
-    if (testsChildrens[0].getContent() != "<!-- Comment 2 -->")
+    }
+    if (testsChildrens[0].getContent() != "<!-- Comment 2 -->") {
         return false;
-    if (testsChildrens[1].getName() != "Test")
+    }
+    if (testsChildrens[1].getName() != "Test") {
         return false;
-    if (testsChildrens[1].getParentNodeName() != "Tests")
+    }
+    if (testsChildrens[1].getParentNodeName() != "Tests") {
         return false;
-    if (!testsChildrens[1].isAttributeExist("name"))
+    }
+    if (!testsChildrens[1].isAttributeExist("name")) {
         return false;
-    if (testsChildrens[1].getAttribute("name") != "test1")
+    }
+    if (testsChildrens[1].getAttribute("name") != "test1") {
         return false;
-    if (testsChildrens[1].getAttribute("number") != "50")
+    }
+    if (testsChildrens[1].getAttribute("number") != "50") {
         return false;
-    if (testsChildrens[2].getAttribute("name") != "test2")
+    }
+    if (testsChildrens[2].getAttribute("name") != "test2") {
         return false;
-    if (testsChildrens[2].getAttribute("number") != "100")
+    }
+    if (testsChildrens[2].getAttribute("number") != "100") {
         return false;
-    if (testsChildrens[3].getAttribute("name") != "test3")
+    }
+    if (testsChildrens[3].getAttribute("name") != "test3") {
         return false;
-    if (testsChildrens[3].getAttribute("number") != "150")
+    }
+    if (testsChildrens[3].getAttribute("number") != "150") {
         return false;
-    if (testsChildrens[4].getAttribute("name") != "test4")
+    }
+    if (testsChildrens[4].getAttribute("name") != "test4") {
         return false;
-    if (testsChildrens[4].getAttribute("number") != "200")
+    }
+    if (testsChildrens[4].getAttribute("number") != "200") {
         return false;
-    if (testsChildrens[5].getName() != "Test")
+    }
+    if (testsChildrens[5].getName() != "Test") {
         return false;
+    }
     const auto &test4Childrens = testsChildrens[4].getChildren();
-    if (test4Childrens.size() != 4U)
+    if (test4Childrens.size() != 4U) {
         return false;
-    if (test4Childrens[0].getName() != "SubTest")
+    }
+    if (test4Childrens[0].getName() != "SubTest") {
         return false;
-    if (test4Childrens[0].getAttribute("name") != "subTest1")
+    }
+    if (test4Childrens[0].getAttribute("name") != "subTest1") {
         return false;
-    if (test4Childrens[0].getAttribute("number") != "250")
+    }
+    if (test4Childrens[0].getAttribute("number") != "250") {
         return false;
-    if (test4Childrens[1].getName() != "SubTest")
+    }
+    if (test4Childrens[1].getName() != "SubTest") {
         return false;
-    if (test4Childrens[1].getAttribute("name") != "subTest2")
+    }
+    if (test4Childrens[1].getAttribute("name") != "subTest2") {
         return false;
-    if (test4Childrens[1].getAttribute<int32_t>("number") != 300)
+    }
+    if (test4Childrens[1].getAttribute<int32_t>("number") != 300) {
         return false;
-    if (test4Childrens[2].getName() != "bool")
+    }
+    if (test4Childrens[2].getName() != "bool") {
         return false;
-    if (test4Childrens[2].getContent<bool>() != false)
+    }
+    if (test4Childrens[2].getContent<bool>() != false) {
         return false;
-    if (test4Childrens[3].getName() != "bool")
+    }
+    if (test4Childrens[3].getName() != "bool") {
         return false;
-    if (test4Childrens[3].getContent<bool>() != true)
+    }
+    if (test4Childrens[3].getContent<bool>() != true) {
         return false;
+    }
     return true;
 }
 
@@ -127,8 +161,9 @@ bool TestEzXml_ParsingNOK_0() {
 </config>
 )";
     ez::Xml xml;
-    if (xml.parseString(doc))
+    if (xml.parseString(doc)) {
         return false;
+    }
     std::cout << xml.dump() << std::endl;
     return true;
 }
@@ -141,8 +176,9 @@ bool TestEzXml_ParsingNOK_1() {
 <config>
 )";
     ez::Xml xml;
-    if (!xml.parseString(doc))
+    if (!xml.parseString(doc)) {
         return false;
+    }
     std::cout << xml.dump() << std::endl;
     return true;
 }

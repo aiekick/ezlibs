@@ -159,8 +159,9 @@ inline void centeredZoom(
     float& zoom,        // IN/OUT
     math::fvec2& worldCenter  // IN/OUT
 ) {
-    if (factor <= 0.0f || sFitPx <= 0.0f)
+    if (factor <= 0.0f || sFitPx <= 0.0f) {
         return;
+    }
 
     const float VW = viewportSize.x, VH = viewportSize.y;
     const float sPx_before = zoom * sFitPx;
@@ -187,8 +188,9 @@ inline void zoomedTranslation(
     float zoom,
     math::fvec2& worldCenter  // IN/OUT
 ) {
-    if (sFitPx <= 0.0f || zoom <= 0.0f)
+    if (sFitPx <= 0.0f || zoom <= 0.0f) {
         return;
+    }
     const float sPx = zoom * sFitPx;
 
     // deplacer le centre a l'oppose du drag (comme une carte)
@@ -202,8 +204,9 @@ inline void zoomedTranslation(
 inline float computeFitScalePx(const math::fvec2& worldMin, const math::fvec2& worldMax, const math::fvec2& viewportSize) {
     const float W = worldMax.x - worldMin.x;
     const float H = worldMax.y - worldMin.y;
-    if (W <= 0.0f || H <= 0.0f || viewportSize.x <= 0.0f || viewportSize.y <= 0.0f)
+    if (W <= 0.0f || H <= 0.0f || viewportSize.x <= 0.0f || viewportSize.y <= 0.0f) {
         return 0.0f;
+    }
     const math::fvec4 rc = getScreenRectWithSize({W, H}, viewportSize);  // {x,y,w,h}
     return rc.z / W;                                               // == rc.w / H
 }

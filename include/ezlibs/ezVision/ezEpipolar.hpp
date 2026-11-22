@@ -499,8 +499,12 @@ T computeMedianParallaxDegrees(
             continue;
         }
         T cosAngle = (r1x * r2x + r1y * r2y + r1z * r2z) / (norm1 * norm2);
-        if (cosAngle >  T(1)) cosAngle =  T(1);
-        if (cosAngle < -T(1)) cosAngle = -T(1);
+        if (cosAngle > T(1)) {
+            cosAngle = T(1);
+        }
+        if (cosAngle < -T(1)) {
+            cosAngle = -T(1);
+        }
         parallaxDegrees.push_back(std::acos(cosAngle) * radToDeg);
     }
 

@@ -421,20 +421,36 @@ public:
         if (m_PixelFormat == GL_FLOAT) {
             std::vector<float> buffer(pixelCount * m_ChannelsCount);
             for (size_t i = 0; i < buffer.size(); i += m_ChannelsCount) {
-                if (m_ChannelsCount >= 1) buffer[i] = vR;
-                if (m_ChannelsCount >= 2) buffer[i + 1] = vG;
-                if (m_ChannelsCount >= 3) buffer[i + 2] = vB;
-                if (m_ChannelsCount >= 4) buffer[i + 3] = vA;
+                if (m_ChannelsCount >= 1) {
+                    buffer[i] = vR;
+                }
+                if (m_ChannelsCount >= 2) {
+                    buffer[i + 1] = vG;
+                }
+                if (m_ChannelsCount >= 3) {
+                    buffer[i + 2] = vB;
+                }
+                if (m_ChannelsCount >= 4) {
+                    buffer[i + 3] = vA;
+                }
             }
             setPixels<float>(0, 0, m_Width, m_Height, buffer.data());
         } else {
             const auto toU8 = [](float v) -> uint8_t { return static_cast<uint8_t>(math::clamp(v, 0.0f, 1.0f) * 255.0f); };
             std::vector<uint8_t> buffer(pixelCount * m_ChannelsCount);
             for (size_t i = 0; i < buffer.size(); i += m_ChannelsCount) {
-                if (m_ChannelsCount >= 1) buffer[i] = toU8(vR);
-                if (m_ChannelsCount >= 2) buffer[i + 1] = toU8(vG);
-                if (m_ChannelsCount >= 3) buffer[i + 2] = toU8(vB);
-                if (m_ChannelsCount >= 4) buffer[i + 3] = toU8(vA);
+                if (m_ChannelsCount >= 1) {
+                    buffer[i] = toU8(vR);
+                }
+                if (m_ChannelsCount >= 2) {
+                    buffer[i + 1] = toU8(vG);
+                }
+                if (m_ChannelsCount >= 3) {
+                    buffer[i + 2] = toU8(vB);
+                }
+                if (m_ChannelsCount >= 4) {
+                    buffer[i + 3] = toU8(vA);
+                }
             }
             setPixels(0, 0, m_Width, m_Height, buffer.data());
         }

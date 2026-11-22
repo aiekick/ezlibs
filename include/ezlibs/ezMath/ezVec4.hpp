@@ -81,14 +81,18 @@ struct vec4 {
         }
         std::vector<T> result = str::stringToNumberVector<T>(vec, c);
         const size_t s = result.size();
-        if (s > 0)
+        if (s > 0) {
             x = result[0];
-        if (s > 1)
+        }
+        if (s > 1) {
             y = result[1];
-        if (s > 2)
+        }
+        if (s > 2) {
             z = result[2];
-        if (s > 3)
+        }
+        if (s > 3) {
             w = result[3];
+        }
     }
 
     // Alternate constructor from a string with size checking
@@ -113,14 +117,18 @@ struct vec4 {
                 z = result[2];
             }
         } else {
-            if (s > 0)
+            if (s > 0) {
                 x = result[0];
-            if (s > 1)
+            }
+            if (s > 1) {
                 y = result[1];
-            if (s > 2)
+            }
+            if (s > 2) {
                 z = result[2];
-            if (s > 3)
+            }
+            if (s > 3) {
                 w = result[3];
+            }
         }
     }
 
@@ -264,8 +272,9 @@ struct vec4 {
     // Normalize the vector
     T normalize() {
         T _length = length();
-        if (_length < std::numeric_limits<T>::epsilon())
+        if (_length < std::numeric_limits<T>::epsilon()) {
             return static_cast<T>(0);
+        }
         T _invLength = static_cast<T>(1) / _length;
         x *= _invLength;
         y *= _invLength;

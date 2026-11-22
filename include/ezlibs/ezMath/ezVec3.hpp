@@ -75,12 +75,15 @@ struct vec3 {
         }
         std::vector<T> result = str::stringToNumberVector<T>(vec, c);
         const size_t s = result.size();
-        if (s > 0)
+        if (s > 0) {
             x = result[0];
-        if (s > 1)
+        }
+        if (s > 1) {
             y = result[1];
-        if (s > 2)
+        }
+        if (s > 2) {
             z = result[2];
+        }
     }
 
     // Indexing operator
@@ -209,8 +212,9 @@ struct vec3 {
     // Normalize the vector
     T normalize() {
         T _length = length();
-        if (_length < std::numeric_limits<T>::epsilon())
+        if (_length < std::numeric_limits<T>::epsilon()) {
             return static_cast<T>(0);
+        }
         T _invLength = static_cast<T>(1) / _length;
         x *= _invLength;
         y *= _invLength;

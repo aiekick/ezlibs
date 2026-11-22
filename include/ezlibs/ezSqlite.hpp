@@ -355,16 +355,20 @@ private:
     static bool m_isAlnum(char c) { return m_isAlpha(c) || m_isDigit(c); }
     static char m_up(char c) { return (c >= 'a' && c <= 'z') ? static_cast<char>(c - 32) : c; }
     static bool m_ieq(const StringRef& a, const char* b) {
-        if (!b)
+        if (!b) {
             return false;
+        }
         size_t blen = 0u;
-        while (b[blen] != '\0')
+        while (b[blen] != '\0') {
             ++blen;
-        if (a.size != blen)
+        }
+        if (a.size != blen) {
             return false;
+        }
         for (size_t i = 0; i < a.size; ++i) {
-            if (m_up(a.data[i]) != m_up(b[i]))
+            if (m_up(a.data[i]) != m_up(b[i])) {
                 return false;
+            }
         }
         return true;
     }
@@ -388,8 +392,9 @@ public:
         vOut.ok = true;
         vOut.errors.clear();
         vOut.statements.clear();
-        if (m_options.trackAllTokens)
+        if (m_options.trackAllTokens) {
             vOut.tokens.clear();
+        }
 
         // 1) Lexing
         std::vector<Token> toks;
@@ -400,8 +405,9 @@ public:
             vOut.tokens = toks;
         }
         if (!lexErrs.empty()) {
-            for (size_t i = 0; i < lexErrs.size(); ++i)
+            for (size_t i = 0; i < lexErrs.size(); ++i) {
                 vOut.errors.push_back(lexErrs[i]);
+            }
         }
 
         // 2) Split statements
@@ -434,19 +440,22 @@ public:
     }
 
     bool computeLineColumn(uint32_t vOffset, uint32_t& vOutLine, uint32_t& vOutColumn) const {
-        if (m_lineStarts.empty())
+        if (m_lineStarts.empty()) {
             return false;
-        if (vOffset > m_sourceSize)
+        }
+        if (vOffset > m_sourceSize) {
             return false;
+        }
         // recherche binaire
         uint32_t lo = 0u;
         uint32_t hi = static_cast<uint32_t>(m_lineStarts.size());
         while (lo + 1u < hi) {
             uint32_t mid = lo + ((hi - lo) >> 1);
-            if (m_lineStarts[mid] <= vOffset)
+            if (m_lineStarts[mid] <= vOffset) {
                 lo = mid;
-            else
+            } else {
                 hi = mid;
+            }
         }
         vOutLine = lo + 1u;  // 1-based
         vOutColumn = vOffset - m_lineStarts[lo] + 1u;
@@ -525,8 +534,9 @@ private:
             if (c == '-') {
                 if (i + 1u < n && vSql[i + 1u] == '-') {
                     i += 2u;
-                    while (i < n && vSql[i] != '\n' && vSql[i] != '\r')
+                    while (i < n && vSql[i] != '\n' && vSql[i] != '\r') {
                         ++i;
+                    }
                     continue;
                 }
             }
@@ -619,11 +629,13 @@ private:
             if (c == '?' || c == ':' || c == '@' || c == '$') {
                 const uint32_t s = i++;
                 if (c == '?') {
-                    while (i < n && m_isDigit(vSql[i]))
+                    while (i < n && m_isDigit(vSql[i])) {
                         ++i;  // ?123
+                    }
                 } else {
-                    while (i < n && (m_isAlnum(vSql[i]) || vSql[i] == '_'))
+                    while (i < n && (m_isAlnum(vSql[i]) || vSql[i] == '_')) {
                         ++i;  // :name @name $name
+                    }
                 }
                 emit.emit(TokenKind::Parameter, s, i);
                 continue;
@@ -637,20 +649,24 @@ private:
                     hasDot = true;
                     ++i;
                 }
-                while (i < n && m_isDigit(vSql[i]))
+                while (i < n && m_isDigit(vSql[i])) {
                     ++i;
+                }
                 if (i < n && vSql[i] == '.' && !hasDot) {
                     hasDot = true;
                     ++i;
-                    while (i < n && m_isDigit(vSql[i]))
+                    while (i < n && m_isDigit(vSql[i])) {
                         ++i;
+                    }
                 }
                 if (i < n && (vSql[i] == 'e' || vSql[i] == 'E')) {
                     ++i;
-                    if (i < n && (vSql[i] == '+' || vSql[i] == '-'))
+                    if (i < n && (vSql[i] == '+' || vSql[i] == '-')) {
                         ++i;
-                    while (i < n && m_isDigit(vSql[i]))
+                    }
+                    while (i < n && m_isDigit(vSql[i])) {
                         ++i;
+                    }
                 }
                 emit.emit(TokenKind::Number, s, i);
                 continue;
@@ -705,42 +721,42 @@ private:
             // identifiers / mots-cl?s non quot?s
             if (m_isAlpha(c)) {
                 const uint32_t s = i++;
-                while (i<n && (m_isAlnum(vSql[i]) || vSql[i]=='$')) ++i;
+                while (i<n && (m_isAlnum(vSql[i]) || vSql[i]=='$')) { ++i; }
 
                 StringRef v(vSql.c_str() + s, (i >= s) ? (i - s) : 0u);
                 TokenKind k = TokenKind::Identifier;
 
-                if (m_ieq(v,"SELECT")) k = TokenKind::KwSelect;
-                else if (m_ieq(v,"FROM")) k = TokenKind::KwFrom;
-                else if (m_ieq(v,"WHERE")) k = TokenKind::KwWhere;
-                else if (m_ieq(v,"GROUP")) k = TokenKind::KwGroup;
-                else if (m_ieq(v,"BY")) k = TokenKind::KwBy;
-                else if (m_ieq(v,"HAVING")) k = TokenKind::KwHaving;
-                else if (m_ieq(v,"ORDER")) k = TokenKind::KwOrder;
-                else if (m_ieq(v,"LIMIT")) k = TokenKind::KwLimit;
-                else if (m_ieq(v,"OFFSET")) k = TokenKind::KwOffset;
-                else if (m_ieq(v,"WITH")) k = TokenKind::KwWith;
-                else if (m_ieq(v,"AS")) k = TokenKind::KwAs;
-                else if (m_ieq(v,"INSERT")) k = TokenKind::KwInsert;
-                else if (m_ieq(v,"INTO")) k = TokenKind::KwInto;
-                else if (m_ieq(v,"VALUES")) k = TokenKind::KwValues;
-                else if (m_ieq(v,"UPDATE")) k = TokenKind::KwUpdate;
-                else if (m_ieq(v,"SET")) k = TokenKind::KwSet;
-                else if (m_ieq(v,"DELETE")) k = TokenKind::KwDelete;
-                else if (m_ieq(v,"CREATE")) k = TokenKind::KwCreate;
-                else if (m_ieq(v,"TABLE")) k = TokenKind::KwTable;
-                else if (m_ieq(v,"IF")) k = TokenKind::KwIf;
-                else if (m_ieq(v,"NOT")) k = TokenKind::KwNot;
-                else if (m_ieq(v,"EXISTS")) k = TokenKind::KwExists;
-                else if (m_ieq(v,"PRIMARY")) k = TokenKind::KwPrimary;
-                else if (m_ieq(v,"KEY")) k = TokenKind::KwKey;
-                else if (m_ieq(v,"UNIQUE")) k = TokenKind::KwUnique;
-                else if (m_ieq(v,"CHECK")) k = TokenKind::KwCheck;
-                else if (m_ieq(v,"REFERENCES")) k = TokenKind::KwReferences;
-                else if (m_ieq(v,"WITHOUT")) k = TokenKind::KwWithout;
-                else if (m_ieq(v,"ROWID")) k = TokenKind::KwRowid;
-                else if (m_ieq(v,"ON")) k = TokenKind::KwOn;
-                else if (m_ieq(v,"CONFLICT")) k = TokenKind::KwConflict;
+                if (m_ieq(v,"SELECT")) { k = TokenKind::KwSelect; }
+                else if (m_ieq(v,"FROM")) { k = TokenKind::KwFrom; }
+                else if (m_ieq(v,"WHERE")) { k = TokenKind::KwWhere; }
+                else if (m_ieq(v,"GROUP")) { k = TokenKind::KwGroup; }
+                else if (m_ieq(v,"BY")) { k = TokenKind::KwBy; }
+                else if (m_ieq(v,"HAVING")) { k = TokenKind::KwHaving; }
+                else if (m_ieq(v,"ORDER")) { k = TokenKind::KwOrder; }
+                else if (m_ieq(v,"LIMIT")) { k = TokenKind::KwLimit; }
+                else if (m_ieq(v,"OFFSET")) { k = TokenKind::KwOffset; }
+                else if (m_ieq(v,"WITH")) { k = TokenKind::KwWith; }
+                else if (m_ieq(v,"AS")) { k = TokenKind::KwAs; }
+                else if (m_ieq(v,"INSERT")) { k = TokenKind::KwInsert; }
+                else if (m_ieq(v,"INTO")) { k = TokenKind::KwInto; }
+                else if (m_ieq(v,"VALUES")) { k = TokenKind::KwValues; }
+                else if (m_ieq(v,"UPDATE")) { k = TokenKind::KwUpdate; }
+                else if (m_ieq(v,"SET")) { k = TokenKind::KwSet; }
+                else if (m_ieq(v,"DELETE")) { k = TokenKind::KwDelete; }
+                else if (m_ieq(v,"CREATE")) { k = TokenKind::KwCreate; }
+                else if (m_ieq(v,"TABLE")) { k = TokenKind::KwTable; }
+                else if (m_ieq(v,"IF")) { k = TokenKind::KwIf; }
+                else if (m_ieq(v,"NOT")) { k = TokenKind::KwNot; }
+                else if (m_ieq(v,"EXISTS")) { k = TokenKind::KwExists; }
+                else if (m_ieq(v,"PRIMARY")) { k = TokenKind::KwPrimary; }
+                else if (m_ieq(v,"KEY")) { k = TokenKind::KwKey; }
+                else if (m_ieq(v,"UNIQUE")) { k = TokenKind::KwUnique; }
+                else if (m_ieq(v,"CHECK")) { k = TokenKind::KwCheck; }
+                else if (m_ieq(v,"REFERENCES")) { k = TokenKind::KwReferences; }
+                else if (m_ieq(v,"WITHOUT")) { k = TokenKind::KwWithout; }
+                else if (m_ieq(v,"ROWID")) { k = TokenKind::KwRowid; }
+                else if (m_ieq(v,"ON")) { k = TokenKind::KwOn; }
+                else if (m_ieq(v,"CONFLICT")) { k = TokenKind::KwConflict; }
 
                 emit.emit(k, s, i);
                 continue;
@@ -809,8 +825,9 @@ private:
                     StatementRange r;
                     r.beginOffset = curStart;
                     r.endOffset = lastNonSpace + 1u;
-                    if (r.endOffset <= r.beginOffset)
+                    if (r.endOffset <= r.beginOffset) {
                         r.endOffset = r.beginOffset;
+                    }
                     vOut.push_back(r);
                 }
                 break;
@@ -827,8 +844,9 @@ private:
                     StatementRange r;
                     r.beginOffset = curStart;
                     r.endOffset = t.start.offset;  // before le ';'
-                    if (r.endOffset < r.beginOffset)
+                    if (r.endOffset < r.beginOffset) {
                         r.endOffset = r.beginOffset;
+                    }
                     vOut.push_back(r);
                 }
                 hasContent = false;
@@ -839,10 +857,12 @@ private:
     StatementKind m_detectKind(const std::vector<Token>& vToks, const StatementRange& vRng) const {
         for (size_t i = 0; i < vToks.size(); ++i) {
             const Token& t = vToks[i];
-            if (t.start.offset < vRng.beginOffset)
+            if (t.start.offset < vRng.beginOffset) {
                 continue;
-            if (t.start.offset >= vRng.endOffset)
+            }
+            if (t.start.offset >= vRng.endOffset) {
                 break;
+            }
             switch (t.kind) {
                 case TokenKind::KwSelect: return StatementKind::Select;
                 case TokenKind::KwInsert: return StatementKind::Insert;
@@ -860,10 +880,12 @@ private:
         int32_t depth = 0;
         for (size_t i = 0; i < vToks.size(); ++i) {
             const Token& t = vToks[i];
-            if (t.start.offset < vRng.beginOffset)
+            if (t.start.offset < vRng.beginOffset) {
                 continue;
-            if (t.start.offset >= vRng.endOffset)
+            }
+            if (t.start.offset >= vRng.endOffset) {
                 break;
+            }
             if (t.kind == TokenKind::LParen) {
                 ++depth;
             } else if (t.kind == TokenKind::RParen) {
@@ -887,10 +909,12 @@ private:
 
         for (size_t i = 0; i < vToks.size(); ++i) {
             const Token& t = vToks[i];
-            if (t.start.offset < vRng.beginOffset)
+            if (t.start.offset < vRng.beginOffset) {
                 continue;
-            if (t.start.offset >= vRng.endOffset)
+            }
+            if (t.start.offset >= vRng.endOffset) {
                 break;
+            }
 
             if (!sawCreate) {
                 if (t.kind == TokenKind::KwCreate) {
@@ -911,12 +935,15 @@ private:
                     nameTok = &t;
                     continue;
                 }
-                if (t.kind == TokenKind::KwIf)
+                if (t.kind == TokenKind::KwIf) {
                     continue;
-                if (t.kind == TokenKind::KwNot)
+                }
+                if (t.kind == TokenKind::KwNot) {
                     continue;
-                if (t.kind == TokenKind::KwExists)
+                }
+                if (t.kind == TokenKind::KwExists) {
                     continue;
+                }
                 m_addError(vOut.errors, t.start.offset, "table name expected after CREATE TABLE", "identifier");
                 return;
             } else {
@@ -937,10 +964,12 @@ private:
         bool hasParen = false, hasAs = false;
         for (size_t i = 0; i < vToks.size(); ++i) {
             const Token& t = vToks[i];
-            if (t.start.offset < afterName->start.offset)
+            if (t.start.offset < afterName->start.offset) {
                 continue;
-            if (t.start.offset >= vRng.endOffset)
+            }
+            if (t.start.offset >= vRng.endOffset) {
                 break;
+            }
             if (t.kind == TokenKind::LParen) {
                 hasParen = true;
                 break;
@@ -961,10 +990,12 @@ private:
 
         for (size_t i = 0; i < vToks.size(); ++i) {
             const Token& t = vToks[i];
-            if (t.start.offset < vRng.beginOffset)
+            if (t.start.offset < vRng.beginOffset) {
                 continue;
-            if (t.start.offset >= vRng.endOffset)
+            }
+            if (t.start.offset >= vRng.endOffset) {
                 break;
+            }
 
             if (!sawInsert) {
                 if (t.kind == TokenKind::KwInsert) {
@@ -998,8 +1029,9 @@ private:
             }
         }
 
-        if (!sawInsert)
+        if (!sawInsert) {
             return;
+        }
         if (!sawInto) {
             m_addError(vOut.errors, vRng.beginOffset, "keyword INTO missing in INSERT", "INTO");
             return;
@@ -1013,17 +1045,20 @@ private:
             bool hasPar = false;
             for (size_t i = 0; i < vToks.size(); ++i) {
                 const Token& t = vToks[i];
-                if (t.start.offset < afterValues->start.offset)
+                if (t.start.offset < afterValues->start.offset) {
                     continue;
-                if (t.start.offset >= vRng.endOffset)
+                }
+                if (t.start.offset >= vRng.endOffset) {
                     break;
+                }
                 if (t.kind == TokenKind::LParen) {
                     ++depth;
                     hasPar = true;
                 } else if (t.kind == TokenKind::RParen) {
                     --depth;
-                    if (depth < 0)
+                    if (depth < 0) {
                         depth = 0;
+                    }
                 }
             }
             if (!hasPar) {
@@ -1036,10 +1071,12 @@ private:
         bool sawUpdate = false, sawSet = false;
         for (size_t i = 0; i < vToks.size(); ++i) {
             const Token& t = vToks[i];
-            if (t.start.offset < vRng.beginOffset)
+            if (t.start.offset < vRng.beginOffset) {
                 continue;
-            if (t.start.offset >= vRng.endOffset)
+            }
+            if (t.start.offset >= vRng.endOffset) {
                 break;
+            }
             if (!sawUpdate) {
                 if (t.kind == TokenKind::KwUpdate) {
                     sawUpdate = true;
@@ -1055,8 +1092,9 @@ private:
                 }
             }
         }
-        if (!sawUpdate)
+        if (!sawUpdate) {
             return;
+        }
         if (!sawSet) {
             m_addError(vOut.errors, vRng.beginOffset, "UPDATE without SET", "SET");
         }
@@ -1066,10 +1104,12 @@ private:
         bool sawDelete = false, sawFrom = false;
         for (size_t i = 0; i < vToks.size(); ++i) {
             const Token& t = vToks[i];
-            if (t.start.offset < vRng.beginOffset)
+            if (t.start.offset < vRng.beginOffset) {
                 continue;
-            if (t.start.offset >= vRng.endOffset)
+            }
+            if (t.start.offset >= vRng.endOffset) {
                 break;
+            }
             if (!sawDelete) {
                 if (t.kind == TokenKind::KwDelete) {
                     sawDelete = true;
@@ -1085,8 +1125,9 @@ private:
                 }
             }
         }
-        if (!sawDelete)
+        if (!sawDelete) {
             return;
+        }
         if (!sawFrom) {
             m_addError(vOut.errors, vRng.beginOffset, "DELETE without FROM", "FROM");
         }
