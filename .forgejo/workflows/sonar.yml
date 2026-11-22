@@ -9,6 +9,10 @@ on:
         description: "Branch to analyze"
         required: true
         default: master
+      lint_tests:
+        description: "clang-tidy also reads the tests folders (slow)"
+        type: boolean
+        default: false
 
 jobs:
   sonar:
@@ -37,6 +41,8 @@ jobs:
 
       # the lint reads the tree as configured, before the coverage lane rewrites it over its mirror
       - uses: ./.ci/sonar-lint
+        with:
+          lint_tests: ${{ inputs.lint_tests || 'false' }}
 
       # ezlibs-specific: the coverage lane, same sequence as the GitHub workflow
       - name: Coverage
