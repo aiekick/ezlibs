@@ -85,14 +85,14 @@ bool TestEzLog_CustomLogFunctor() {
         receivedMessage = msg;
     };
 
-    ez::Log::ref().setStandardLogMessageFunctor(functor);
+    ez::Log::ref().pushStandardLogMessageFunctor(functor);
     ez::Log::ref().logSimpleStringByType(ez::Log::LOGGING_MESSAGE_TYPE_WARNING, "Test functor");
 
     CTEST_ASSERT(functorCalled);
     CTEST_ASSERT(receivedType == ez::Log::LOGGING_MESSAGE_TYPE_WARNING);
     CTEST_ASSERT(receivedMessage.find("Test functor") != std::string::npos);
 
-    ez::Log::ref().setStandardLogMessageFunctor(nullptr);
+    ez::Log::ref().popStandardLogMessageFunctor();
     return true;
 }
 

@@ -31,6 +31,9 @@ endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/coverage/EzCoverage.cmake)
 
+# Every suite below compiles against the ezlibs headers
+link_libraries(ezlibs)
+
 if (USE_CODE_COVERAGE)
     ezCoverage_enableFlags()
 endif()
