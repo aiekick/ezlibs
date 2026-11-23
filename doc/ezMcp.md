@@ -11,6 +11,9 @@ declares tools; the client lists them and calls them.
   `2025-03-26`.
 - A request that carries an `Origin` header (sent by a web page) is refused
   with 403. A `GET` gets 405: there is no event stream.
+- An optional **bearer token**: with one, every request without
+  `Authorization: Bearer <token>` gets 401, so no other process of the machine
+  can call the tools.
 - Tool calls run **on the application thread**: they wait in a queue until
   the application calls `poll()`, typically once per frame.
 - No exceptions, no dependency beyond the standard library and the system
@@ -92,7 +95,8 @@ aoResult.addImagePng(ez::mcp::Png::encodeRgba(rgba, width, height));
   empty or taken name, no functor, a schema that is not a JSON object. A tool
   without schema is listed with `{"type":"object"}`.
 - `start(config)` listens and starts the server thread; false when the port
-  is taken or the server already runs.
+  is taken, the token is refused or the server already runs, and
+  `getStartError()` says which.
 - `poll()` runs the waiting tool calls on the calling thread and returns how
   many ran.
 - `stop()` stops the thread and closes the port; a client still waiting gets
@@ -117,9 +121,31 @@ The answers:
 |Unknown tool, no tool name, arguments not an object|200|-32602|
 |No `poll()` in time, server stopping|200|-32603|
 |A tool that sets `setError(true)`|200|a result with `"isError":true`|
+|No or wrong bearer token, when the config has one|401||
 |An `Origin` header|403||
 |Another path than `/mcp`|404||
 |Another method than `POST`|405||
+
+## The token
+
+Anything that runs on the machine can reach a port of 127.0.0.1, and through
+an SSH tunnel so can anything on the other machine. A token closes that door:
+
+```cpp
+config.token = ez::mcp::Server::makeToken();  // 64 hexadecimal characters, 256 bits
+printf("Authorization: Bearer %s\n", config.token.c_str());  // handed to the client
+```
+
+- Empty (the default), there is no check.
+- Set, every request must carry `Authorization: Bearer <token>` (the scheme in
+  any case); anything else gets 401 with `WWW-Authenticate: Bearer`, before any
+  other check. The comparison takes the same time wherever the tokens differ.
+- `start()` refuses a token under 32 characters, or with anything else than
+  visible ASCII characters (no space): it travels in a header and must not be
+  guessed.
+- The token comes from the application (made at start, or read from its
+  settings), never written in the sources. The client sends it as a fixed
+  header of the HTTP MCP server it declares.
 
 ## Connecting a client
 
@@ -133,8 +159,9 @@ ssh -R <port>:127.0.0.1:<port> <client machine>
 ```
 
 The test executable has a serve mode to try a client or a tunnel without an
-application: `EzLibs_TestMcp serve <port> <seconds>` serves two tools, `echo`
-and `gradient` (a 64x32 PNG).
+application: `EzLibs_TestMcp serve <port> <seconds> [token | auto]` serves two
+tools, `echo` and `gradient` (a 64x32 PNG); with `auto` it makes a token and
+prints the header to send.
 
 ```
 curl -s http://127.0.0.1:7810/mcp -H "Content-Type: application/json" \

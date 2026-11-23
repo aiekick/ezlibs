@@ -312,6 +312,93 @@ bool TestEzMcpServer_EndToEnd() {
     return true;
 }
 
+static HttpAnswer serveWithAuth(Server& aoServer, const char* apAuthorization, const char* apOrigin) {
+    HttpRequest request;
+    request.method = "POST";
+    request.path = "/mcp";
+    request.body = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}";
+    if (apAuthorization != nullptr) {
+        request.headers.emplace_back("authorization", apAuthorization);
+    }
+    if (apOrigin != nullptr) {
+        request.headers.emplace_back("origin", apOrigin);
+    }
+    return readAnswer(aoServer.handleRequest(request));
+}
+
+bool TestEzMcpServer_MakeToken() {
+    const std::string first = Server::makeToken();
+    const std::string second = Server::makeToken();
+    CTEST_ASSERT(first.size() == 64U);
+    CTEST_ASSERT_MESSAGE(first.find_first_not_of("0123456789abcdef") == std::string::npos, "hexadecimal only");
+    CTEST_ASSERT_MESSAGE(first != second, "two tokens differ");
+    ServerConfig config;
+    config.token = first;
+    Server server;
+    CTEST_ASSERT_MESSAGE(server.start(config), "a made token is accepted");
+    CTEST_ASSERT(server.getStartError().empty());
+    return true;
+}
+
+bool TestEzMcpServer_TokenRefusedAtStart() {
+    Server server;
+    ServerConfig config;
+    config.token = "short";
+    CTEST_ASSERT_MESSAGE(!server.start(config), "a token under 32 characters");
+    CTEST_ASSERT(server.getStartError().find("token") != std::string::npos);
+    CTEST_ASSERT(!server.isRunning());
+    config.token = std::string(31U, 'a');
+    CTEST_ASSERT(!server.start(config));
+    config.token = std::string(20U, 'a') + " " + std::string(20U, 'b');
+    CTEST_ASSERT_MESSAGE(!server.start(config), "a space");
+    config.token = std::string(40U, 'a') + "\n";
+    CTEST_ASSERT_MESSAGE(!server.start(config), "a control character");
+    config.token = std::string(40U, 'a') + "\xC3\xA9";
+    CTEST_ASSERT_MESSAGE(!server.start(config), "a byte beyond ASCII");
+    config.token = std::string(32U, 'a');
+    CTEST_ASSERT_MESSAGE(server.start(config), "32 visible characters");
+    CTEST_ASSERT(server.getStartError().empty());
+    CTEST_ASSERT(!server.start(config));
+    CTEST_ASSERT(server.getStartError() == "the server already runs");
+    ServerConfig taken;
+    taken.port = server.getPort();
+    Server second;
+    CTEST_ASSERT(!second.start(taken));
+    CTEST_ASSERT(second.getStartError().find("cannot listen") != std::string::npos);
+    return true;
+}
+
+bool TestEzMcpServer_Token() {
+    const std::string token = Server::makeToken();
+    const std::string bearer = "Bearer " + token;
+    Server server;
+    ServerConfig config;
+    config.token = token;
+    CTEST_ASSERT(server.start(config));
+    HttpAnswer answer = serveWithAuth(server, nullptr, nullptr);
+    CTEST_ASSERT_MESSAGE(answer.status == 401, "no header");
+    CTEST_ASSERT(server.handleRequest(HttpRequest()).find("\r\nWWW-Authenticate: Bearer\r\n") != std::string::npos);
+    CTEST_ASSERT_MESSAGE(serveWithAuth(server, ("Bearer " + Server::makeToken()).c_str(), nullptr).status == 401, "another token");
+    CTEST_ASSERT_MESSAGE(serveWithAuth(server, ("Bearer " + token.substr(0U, 63U)).c_str(), nullptr).status == 401, "a token cut short");
+    CTEST_ASSERT_MESSAGE(serveWithAuth(server, (bearer + "x").c_str(), nullptr).status == 401, "a token too long");
+    CTEST_ASSERT_MESSAGE(serveWithAuth(server, ("Basic " + token).c_str(), nullptr).status == 401, "another scheme");
+    CTEST_ASSERT_MESSAGE(serveWithAuth(server, token.c_str(), nullptr).status == 401, "no scheme");
+    CTEST_ASSERT(serveWithAuth(server, "Bearer", nullptr).status == 401);
+    CTEST_ASSERT(serveWithAuth(server, "Bearer ", nullptr).status == 401);
+    answer = serveWithAuth(server, bearer.c_str(), nullptr);
+    CTEST_ASSERT_MESSAGE((answer.status == 200) && (answer.json.find("id")->asInteger() == 1), "the right token");
+    CTEST_ASSERT_MESSAGE(serveWithAuth(server, ("bEaReR   " + token).c_str(), nullptr).status == 200, "the scheme in any case, spaces after it");
+    CTEST_ASSERT_MESSAGE(serveWithAuth(server, nullptr, "http://evil").status == 401, "the token is checked first");
+    CTEST_ASSERT_MESSAGE(serveWithAuth(server, bearer.c_str(), "http://evil").status == 403, "a web page is still refused with the token");
+    // Over a real connection.
+    const std::string body = "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}";
+    const std::string raw =
+        "POST /mcp HTTP/1.1\r\nAuthorization: " + bearer + "\r\nContent-Length: " + std::to_string(body.size()) + "\r\n\r\n" + body;
+    CTEST_ASSERT(httpExchange(server.getPort(), raw).status == 200);
+    CTEST_ASSERT(httpExchange(server.getPort(), makePost(body)).status == 401);
+    return true;
+}
+
 // A tool picked up by poll() is waited for to its end, whatever the call timeout.
 bool TestEzMcpServer_SlowToolOutlivesTimeout() {
     Server server;
@@ -414,6 +501,9 @@ bool TestEzMcpServer(const std::string& vTest) {
     else IfTestExist(TestEzMcpServer_CallErrors);
     else IfTestExist(TestEzMcpServer_CallTimeout);
     else IfTestExist(TestEzMcpServer_EndToEnd);
+    else IfTestExist(TestEzMcpServer_MakeToken);
+    else IfTestExist(TestEzMcpServer_TokenRefusedAtStart);
+    else IfTestExist(TestEzMcpServer_Token);
     else IfTestExist(TestEzMcpServer_SlowToolOutlivesTimeout);
     else IfTestExist(TestEzMcpServer_StopWhileWaiting);
     else IfTestExist(TestEzMcpServer_MalformedHttp);

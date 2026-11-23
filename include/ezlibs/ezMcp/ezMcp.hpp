@@ -30,6 +30,9 @@ SOFTWARE.
 // seen and driven by an MCP client. It listens on 127.0.0.1 only and speaks
 // the "streamable HTTP" transport with JSON answers : one POST /mcp per
 // message, a request carrying an Origin header (a web page) is refused.
+// With a token in the config, every request must carry
+// "Authorization: Bearer <token>" : another process of the machine that
+// reaches the port (through a tunnel, say) can call nothing.
 //
 // The application registers tools (name, description, JSON schema of the
 // arguments, a function). The protocol messages are answered on the server
@@ -57,6 +60,7 @@ SOFTWARE.
 #include "png.hpp"
 #include "socket.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -64,6 +68,7 @@ SOFTWARE.
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <random>
 #include <string>
 #include <thread>
 #include <vector>
@@ -124,6 +129,7 @@ struct ServerConfig {
     std::string instructions;     // told to the client at initialize, omitted when empty
     std::string name;             // serverInfo.name
     uint16_t port{};              // 0 : the system picks a free port, read back by getPort()
+    std::string token;            // empty : no check ; else at least 32 visible characters, see Server::makeToken()
     std::string version;          // serverInfo.version
 };
 
@@ -133,6 +139,21 @@ public:
     static const std::vector<std::string>& getProtocolVersions() {
         static const std::vector<std::string> sVersions = {"2025-11-25", "2025-06-18", "2025-03-26"};
         return sVersions;
+    }
+
+    // A fresh token : 64 hexadecimal characters, 256 bits from std::random_device.
+    static std::string makeToken() {
+        static const char* const sHex = "0123456789abcdef";
+        std::random_device device;
+        std::string token;
+        token.reserve(64U);
+        for (size_t word = 0U; word < 8U; ++word) {
+            const auto bits = static_cast<uint32_t>(device());
+            for (uint32_t shift = 0U; shift < 32U; shift += 4U) {
+                token += sHex[(bits >> shift) & 0x0FU];
+            }
+        }
+        return token;
     }
 
 private:
@@ -152,6 +173,7 @@ private:
     std::mutex m_mutex;
     std::vector<std::shared_ptr<PendingCall>> m_pending;
     std::atomic<bool> m_running{false};
+    std::string m_startError;
     std::thread m_thread;
     std::vector<Tool> m_tools;
 
@@ -181,16 +203,24 @@ public:
         return true;
     }
 
-    // Listens on 127.0.0.1:port and starts the server thread.
+    // Listens on 127.0.0.1:port and starts the server thread. On failure,
+    // getStartError() says why.
     bool start(const ServerConfig& aConfig) {
         if (m_running) {
+            m_startError = "the server already runs";
+            return false;
+        }
+        if (!aConfig.token.empty() && !isTokenAccepted(aConfig.token)) {
+            m_startError = "the token is refused : at least 32 visible characters, no space";
             return false;
         }
         m_config = aConfig;
         m_callTimeoutMs = clampTimeout(aConfig.callTimeoutMs);
         if (!m_listener.listenLocal(aConfig.port)) {
+            m_startError = "cannot listen on 127.0.0.1:" + std::to_string(aConfig.port);
             return false;
         }
+        m_startError.clear();
         m_running = true;
         m_thread = std::thread(&Server::run, this);
         return true;
@@ -212,6 +242,11 @@ public:
         m_listener.close();
         std::lock_guard<std::mutex> lock(m_mutex);
         m_pending.clear();
+    }
+
+    // Why the last start() failed ; empty after a success.
+    const std::string& getStartError() const {
+        return m_startError;
     }
 
     bool isRunning() const {
@@ -251,6 +286,9 @@ public:
     // The whole HTTP answer to one request : what the server thread sends
     // back. Public so a request can be served without a socket.
     std::string handleRequest(const HttpRequest& aRequest) {
+        if (!m_config.token.empty() && !isAuthorized(aRequest)) {
+            return Http::makeResponse(401, "text/plain", "a bearer token is required");
+        }
         if (aRequest.findHeader("origin") != nullptr) {
             return Http::makeResponse(403, "text/plain", "a request from a web page is refused");
         }
@@ -278,6 +316,49 @@ public:
     }
 
 private:
+    // A token travels in a header : visible ASCII only, no space, and long
+    // enough not to be guessed.
+    static bool isTokenAccepted(const std::string& aToken) {
+        if (aToken.size() < 32U) {
+            return false;
+        }
+        return std::all_of(aToken.begin(), aToken.end(), [](char aChr) { return (aChr > ' ') && (aChr <= '~'); });
+    }
+
+    // The time taken never depends on where the strings differ.
+    static bool isSameSecret(const std::string& aLeft, const std::string& aRight) {
+        const size_t len = (aLeft.size() > aRight.size()) ? aLeft.size() : aRight.size();
+        uint32_t diff = (aLeft.size() == aRight.size()) ? 0U : 1U;
+        for (size_t idx = 0U; idx < len; ++idx) {
+            const auto left = static_cast<uint8_t>((idx < aLeft.size()) ? aLeft[idx] : 0);
+            const auto right = static_cast<uint8_t>((idx < aRight.size()) ? aRight[idx] : 0);
+            diff |= static_cast<uint32_t>(left ^ right);
+        }
+        return diff == 0U;
+    }
+
+    // "Authorization: Bearer <token>", the scheme in any case.
+    bool isAuthorized(const HttpRequest& aRequest) const {
+        const std::string* pValue = aRequest.findHeader("authorization");
+        if ((pValue == nullptr) || (pValue->size() < 7U)) {
+            return false;
+        }
+        std::string scheme = pValue->substr(0U, 7U);
+        for (auto& chr : scheme) {
+            if ((chr >= 'A') && (chr <= 'Z')) {
+                chr = static_cast<char>(chr - 'A' + 'a');
+            }
+        }
+        if (scheme != "bearer ") {
+            return false;
+        }
+        size_t begin = 7U;
+        while ((begin < pValue->size()) && ((*pValue)[begin] == ' ')) {
+            ++begin;
+        }
+        return isSameSecret(pValue->substr(begin), m_config.token);
+    }
+
     static int32_t clampTimeout(int32_t aTimeoutMs) {
         if (aTimeoutMs < 10) {
             return 10;

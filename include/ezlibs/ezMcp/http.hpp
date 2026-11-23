@@ -125,11 +125,14 @@ public:
         return HttpParseStatus_Complete;
     }
 
-    // A whole response that closes the connection. A 405 says which method is allowed.
+    // A whole response that closes the connection. A 401 names its scheme, a 405 says which method is allowed.
     static std::string makeResponse(int32_t aStatus, const std::string& aContentType, const std::string& aBody) {
         std::string out = "HTTP/1.1 " + std::to_string(aStatus) + " " + reason(aStatus) + "\r\n";
         if (!aBody.empty()) {
             out += "Content-Type: " + aContentType + "\r\n";
+        }
+        if (aStatus == 401) {
+            out += "WWW-Authenticate: Bearer\r\n";
         }
         if (aStatus == 405) {
             out += "Allow: POST\r\n";
@@ -149,6 +152,8 @@ private:
                 return "Accepted";
             case 400:
                 return "Bad Request";
+            case 401:
+                return "Unauthorized";
             case 403:
                 return "Forbidden";
             case 404:

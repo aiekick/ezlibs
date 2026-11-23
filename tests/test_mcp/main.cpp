@@ -56,8 +56,9 @@ static void gradientTool(const ez::mcp::JsonValue& /*aArguments*/, ez::mcp::Tool
     aoResult.addImagePng(ez::mcp::Png::encodeRgba(rgba, width, height));
 }
 
-// Serves on 127.0.0.1:aPort for aSeconds, polling like a frame loop.
-static int serve(uint16_t aPort, int32_t aSeconds) {
+// Serves on 127.0.0.1:aPort for aSeconds, polling like a frame loop. A non
+// empty aToken is required as a bearer token ; "auto" makes one and prints it.
+static int serve(uint16_t aPort, int32_t aSeconds, const std::string& aToken) {
     ez::mcp::Server server;
     ez::mcp::Tool echo;
     echo.name = "echo";
@@ -76,11 +77,15 @@ static int serve(uint16_t aPort, int32_t aSeconds) {
     config.name = "EzLibs_TestMcp";
     config.version = "1.0";
     config.port = aPort;
+    config.token = (aToken == "auto") ? ez::mcp::Server::makeToken() : aToken;
     if (!server.start(config)) {
-        printf("cannot listen on 127.0.0.1:%u\n", static_cast<unsigned>(aPort));
+        printf("cannot start : %s\n", server.getStartError().c_str());
         return 1;
     }
     printf("serving on http://127.0.0.1:%u/mcp for %d s\n", static_cast<unsigned>(server.getPort()), static_cast<int>(aSeconds));
+    if (!config.token.empty()) {
+        printf("header : Authorization: Bearer %s\n", config.token.c_str());
+    }
     fflush(stdout);
     const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now() + std::chrono::seconds(aSeconds);
     while (std::chrono::steady_clock::now() < end) {
@@ -98,7 +103,9 @@ static int serve(uint16_t aPort, int32_t aSeconds) {
 int main(int argc, char** argv) {
     ez::Log::initSingleton();
     if ((argc > 3) && (std::string(argv[1]) == "serve")) {
-        return serve(static_cast<uint16_t>(std::atoi(argv[2])), static_cast<int32_t>(std::atoi(argv[3])));
+        // serve <port> <seconds> [token | auto]
+        return serve(static_cast<uint16_t>(std::atoi(argv[2])), static_cast<int32_t>(std::atoi(argv[3])),
+            (argc > 4) ? std::string(argv[4]) : std::string());
     }
     if (argc > 1) {
         printf("Exec test : %s\n", argv[1]);

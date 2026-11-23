@@ -112,6 +112,9 @@ bool TestEzMcpHttp_Response() {
     CTEST_ASSERT_MESSAGE(notAllowed.find("HTTP/1.1 405 Method Not Allowed\r\n") == 0U, "the status line");
     CTEST_ASSERT_MESSAGE(notAllowed.find("\r\nAllow: POST\r\n") != std::string::npos, "a 405 says what is allowed");
     CTEST_ASSERT(Http::makeResponse(400, "text/plain", "").find(" 400 Bad Request\r\n") != std::string::npos);
+    const std::string unauthorized = Http::makeResponse(401, "text/plain", "");
+    CTEST_ASSERT(unauthorized.find(" 401 Unauthorized\r\n") != std::string::npos);
+    CTEST_ASSERT_MESSAGE(unauthorized.find("\r\nWWW-Authenticate: Bearer\r\n") != std::string::npos, "a 401 names its scheme");
     CTEST_ASSERT(Http::makeResponse(403, "text/plain", "").find(" 403 Forbidden\r\n") != std::string::npos);
     CTEST_ASSERT(Http::makeResponse(404, "text/plain", "").find(" 404 Not Found\r\n") != std::string::npos);
     CTEST_ASSERT(Http::makeResponse(500, "text/plain", "").find(" 500 Internal Server Error\r\n") != std::string::npos);
