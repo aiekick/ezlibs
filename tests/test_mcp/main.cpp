@@ -4,6 +4,7 @@
 #include <TestEzMcpPng.h>
 #include <TestEzMcpRpc.h>
 #include <TestEzMcpServer.h>
+#include <TestEzMcpSingle.h>
 #include <TestEzMcpSocket.h>
 
 #include <ezlibs/ezCTest.hpp>
@@ -22,6 +23,7 @@ bool TestMcp(const std::string& vTest) {
     else IfTestCollectionExist(TestEzMcpPng);
     else IfTestCollectionExist(TestEzMcpRpc);
     else IfTestCollectionExist(TestEzMcpServer);
+    else IfTestCollectionExist(TestEzMcpSingle);
     else IfTestCollectionExist(TestEzMcpSocket);
     return false;
 }

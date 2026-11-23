@@ -35,6 +35,20 @@ declares tools; the client lists them and calls them.
 
 `socket.hpp` includes `ezOS.hpp` for the platform defines.
 
+### One header
+
+`single_include/ezMcp.hpp` is the same library in ONE self-contained header
+(`ezOS.hpp` inside): the file to copy into a project that does not take the
+whole ezLibs. It is generated, never edited by hand:
+
+```
+cmake -DEZ_MCP_MODE=write -P single_include/amalgamate_ezmcp.cmake
+```
+
+The test `TestEzMcpSingle_IsUpToDate` runs the same script with
+`-DEZ_MCP_MODE=check` and fails when the committed file lags behind the
+sources: regenerate it in the change that touches `include/ezlibs/ezMcp/`.
+
 ## How to use
 
 ```cpp

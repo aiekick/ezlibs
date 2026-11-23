@@ -32,6 +32,7 @@ set_target_properties(${PROJECT} PROPERTIES FOLDER tests/ezlibs)
 
 target_include_directories(${PROJECT} PRIVATE 
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${EZ_LIBS_INCLUDE_DIR}/../single_include
 )
 
 target_link_libraries(${PROJECT} PRIVATE Threads::Threads)
@@ -130,3 +131,13 @@ AddTest(TestEzMcpServer_HasQueuedCalls)
 AddTest(TestEzMcpServer_SlowToolOutlivesTimeout)
 AddTest(TestEzMcpServer_StopWhileWaiting)
 AddTest(TestEzMcpServer_MalformedHttp)
+
+##########################################################
+## TESTS MCP SINGLE HEADER ###############################
+##########################################################
+
+AddTest(TestEzMcpSingle_StandsAlone)
+# the amalgamation committed in single_include/ is the one the sources make
+add_test(NAME TestEzMcpSingle_IsUpToDate
+	COMMAND ${CMAKE_COMMAND} -DEZ_MCP_MODE=check -P ${EZ_LIBS_INCLUDE_DIR}/../single_include/amalgamate_ezmcp.cmake)
+set_tests_properties(TestEzMcpSingle_IsUpToDate PROPERTIES LABELS ezlibs)
