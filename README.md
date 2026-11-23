@@ -52,6 +52,7 @@ Some libs are in inter dependencies, so you may need to include the EzLibs dir i
 |[ezMat3](doc/ezMat3.md)|:construction:|:heavy_check_mark:|:heavy_check_mark:|Mat3 manipulation|
 |[ezMat4](doc/ezMat4.md)|:construction:|:heavy_check_mark:|:heavy_check_mark:|Mat4 manipulation|
 |[ezMath](doc/ezMath.md)|:construction:|:heavy_check_mark:|:heavy_check_mark:|Math methods|
+|[ezMcp](doc/ezMcp.md)|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|MCP server (Model Context Protocol) on 127.0.0.1 : tools an MCP client lists and calls, run on the app thread|
 |[ezNamedPipe](doc/ezNamedPipe.md)|:construction:|:heavy_check_mark:|:heavy_check_mark:|ezNamedPipe|
 |[ezNet](doc/ezNet.md)|:construction:|:no_entry:|:construction:|ezNet|
 |[ezGL](doc/ezGL.md)|:construction:|:heavy_check_mark:|:construction:|Opengl manipulation|

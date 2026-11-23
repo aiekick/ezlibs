@@ -12,6 +12,7 @@ option(TESTING_COMMUNICATION "Enable testing of Communication related libs" ${EZ
 option(TESTING_COMPRESSION "Enable testing of Compression related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_FILE "Enable testing of File related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_MATH "Enable testing of Math related libs" ${EZ_LIBS_LOCAL_DEV})
+option(TESTING_MCP "Enable testing of the MCP server lib" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_MISC "Enable testing of Misc related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_OPENGL "Enable testing of Opengl related libs" ${EZ_LIBS_LOCAL_DEV})
 option(TESTING_TIME "Enable testing of Time related libs" ${EZ_LIBS_LOCAL_DEV})
@@ -97,6 +98,10 @@ endif()
 
 if (TESTING_MATH)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_math)
+endif()
+
+if (TESTING_MCP)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test_mcp)
 endif()
 
 if (TESTING_MISC)
