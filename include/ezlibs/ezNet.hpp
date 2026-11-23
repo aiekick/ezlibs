@@ -35,11 +35,13 @@ SOFTWARE.
 #include <cmath>
 
 #ifdef WINDOWS_OS
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <Windows.h>
 #include <stdio.h>
-#define WIN32_LEAN_AND_MEAN
 #pragma comment(lib, "Ws2_32")
 #else
 #include <sys/socket.h>

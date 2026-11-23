@@ -37,7 +37,9 @@ this fill is in charge of manage resources embedded inside app binary
 
 #ifdef WINDOWS_OS 
 #define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #include <wincodec.h>
 #pragma comment(lib, "windowscodecs.lib")

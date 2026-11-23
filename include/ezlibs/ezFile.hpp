@@ -55,6 +55,9 @@ SOFTWARE.
 #ifndef EZ_FILE_SLASH_TYPE
 #define EZ_FILE_SLASH_TYPE "\\"
 #endif  // EZ_FILE_SLASH_TYPE
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
 #include <shellapi.h>  // ShellExecute
 #define stat _stat

@@ -53,6 +53,9 @@ SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////
 
 #ifdef _MSC_VER
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
 #define EZ_TOOLS_DEBUG_BREAK \
     if (IsDebuggerPresent()) \
