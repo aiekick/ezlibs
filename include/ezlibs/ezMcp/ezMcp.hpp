@@ -44,7 +44,7 @@ SOFTWARE.
 //   ez::mcp::Tool tool;
 //   tool.name = "hello";
 //   tool.description = "says hello";
-//   tool.functor = &sayHello;  // void sayHello(const JsonValue&, ToolResult&, void*)
+//   tool.functor = [](const ez::mcp::JsonValue& aArgs, ez::mcp::ToolResult& aoResult) { aoResult.addText("hello"); };
 //   server.addTool(tool);
 //   ez::mcp::ServerConfig config;
 //   config.name = "myApp";
@@ -64,8 +64,11 @@ SOFTWARE.
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstdio>
+#include <ctime>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -114,23 +117,35 @@ public:
     }
 };
 
-typedef void (*ToolFunctor)(const JsonValue& aArguments, ToolResult& aoResult, void* apUserData);
+// The journal : one line of JSON per exchange, handed to the application.
+enum LogLevel {
+    LogLevel_None = 0,
+    LogLevel_Bodies,    // the exchanges with their request and response bodies
+    LogLevel_Exchanges  // one line per exchange : status, method, id, tool, duration, error
+};
+
+// Called on the thread that served the request (the server thread) : the
+// application guards what it touches. Lines never interleave.
+typedef std::function<void(const std::string& aLine)> LogFunctor;
+
+typedef std::function<void(const JsonValue& aArguments, ToolResult& aoResult)> ToolFunctor;
 
 struct Tool {
     std::string description;
     ToolFunctor functor{};
     JsonValue inputSchema;  // a JSON schema object ; null means an object with no declared property
     std::string name;
-    void* userData{};
 };
 
 struct ServerConfig {
     int32_t callTimeoutMs{5000};  // how long a tools/call waits for a poll(), clamped to [10, 600000]
     std::string instructions;     // told to the client at initialize, omitted when empty
-    std::string name;             // serverInfo.name
-    uint16_t port{};              // 0 : the system picks a free port, read back by getPort()
-    std::string token;            // empty : no check ; else at least 32 visible characters, see Server::makeToken()
-    std::string version;          // serverInfo.version
+    LogFunctor logFunctor{};      // the journal ; empty : no journal
+    LogLevel logLevel{LogLevel_None};
+    std::string name;     // serverInfo.name
+    uint16_t port{};      // 0 : the system picks a free port, read back by getPort()
+    std::string token;    // empty : no check ; else at least 32 visible characters, see Server::makeToken()
+    std::string version;  // serverInfo.version
 };
 
 class Server {
@@ -166,10 +181,24 @@ private:
         Tool tool;
     };
 
+    // What one request became, for the journal.
+    struct Exchange {
+        std::string error;  // why it was refused or failed
+        JsonRpcErrorCode errorCode{JsonRpcErrorCode_None};
+        JsonValue id;
+        bool isError{};        // a tool that ran and said it failed
+        std::string response;  // the HTTP body sent back
+        JsonValue result;
+        std::string rpc;  // the JSON-RPC method
+        int32_t status{};
+        std::string tool;
+    };
+
     std::condition_variable m_callChanged;
     int32_t m_callTimeoutMs{5000};
     ServerConfig m_config;
     Socket m_listener;
+    std::mutex m_logMutex;
     std::mutex m_mutex;
     std::vector<std::shared_ptr<PendingCall>> m_pending;
     std::atomic<bool> m_running{false};
@@ -273,7 +302,7 @@ public:
         }
         for (const auto& pCall : calls) {
             PendingCall& call = *pCall;
-            call.tool.functor(call.arguments, call.result, call.tool.userData);
+            call.tool.functor(call.arguments, call.result);
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
                 call.state = CallState_Done;
@@ -286,33 +315,11 @@ public:
     // The whole HTTP answer to one request : what the server thread sends
     // back. Public so a request can be served without a socket.
     std::string handleRequest(const HttpRequest& aRequest) {
-        if (!m_config.token.empty() && !isAuthorized(aRequest)) {
-            return Http::makeResponse(401, "text/plain", "a bearer token is required");
-        }
-        if (aRequest.findHeader("origin") != nullptr) {
-            return Http::makeResponse(403, "text/plain", "a request from a web page is refused");
-        }
-        if (aRequest.path != "/mcp") {
-            return Http::makeResponse(404, "text/plain", "the only path is /mcp");
-        }
-        if (aRequest.method != "POST") {
-            return Http::makeResponse(405, "text/plain", "the only method is POST");
-        }
-        const JsonRpcMessage message = JsonRpc::read(aRequest.body);
-        if (message.kind == JsonRpcKind_Invalid) {
-            return Http::makeResponse(400, "application/json", JsonRpc::makeError(message.id, message.errorCode, message.errorMessage));
-        }
-        if (message.kind != JsonRpcKind_Request) {
-            return Http::makeResponse(202, std::string(), std::string());  // notifications and responses need no answer
-        }
-        JsonValue result;
-        JsonRpcErrorCode errorCode = JsonRpcErrorCode_None;
-        std::string errorMessage;
-        dispatch(message, result, errorCode, errorMessage);
-        if (errorCode != JsonRpcErrorCode_None) {
-            return Http::makeResponse(200, "application/json", JsonRpc::makeError(message.id, errorCode, errorMessage));
-        }
-        return Http::makeResponse(200, "application/json", JsonRpc::makeResult(message.id, result));
+        const std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        Exchange exchange;
+        const std::string answer = answerRequest(aRequest, exchange);
+        writeLog(aRequest.body, exchange, begin);
+        return answer;
     }
 
 private:
@@ -359,6 +366,136 @@ private:
         return isSameSecret(pValue->substr(begin), m_config.token);
     }
 
+    static std::string reply(Exchange& aoExchange, int32_t aStatus, const char* aContentType, const std::string& aBody) {
+        aoExchange.status = aStatus;
+        aoExchange.response = aBody;
+        return Http::makeResponse(aStatus, aContentType, aBody);
+    }
+
+    // The UTC time to the millisecond, ISO 8601.
+    static std::string utcNow() {
+        const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        const std::time_t seconds = std::chrono::system_clock::to_time_t(now);
+        const auto millis = static_cast<int32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000);
+        std::tm parts{};
+#ifdef WINDOWS_OS
+        gmtime_s(&parts, &seconds);
+#else
+        gmtime_r(&seconds, &parts);
+#endif
+        char text[32];
+        const size_t len = std::strftime(text, sizeof(text), "%Y-%m-%dT%H:%M:%S", &parts);
+        std::snprintf(text + len, sizeof(text) - len, ".%03dZ", static_cast<int>(millis));
+        return text;
+    }
+
+    // An image or a sound inside a body is replaced by its size.
+    static JsonValue elideMedia(const JsonValue& aValue) {
+        if (aValue.isArray()) {
+            JsonValue items = JsonValue::makeArray();
+            for (size_t idx = 0U; idx < aValue.size(); ++idx) {
+                items.push(elideMedia(aValue.at(idx)));
+            }
+            return items;
+        }
+        if (!aValue.isObject()) {
+            return aValue;
+        }
+        JsonValue members = JsonValue::makeObject();
+        for (size_t idx = 0U; idx < aValue.size(); ++idx) {
+            members.set(aValue.keyAt(idx), elideMedia(aValue.at(idx)));
+        }
+        const JsonValue* pType = aValue.find("type");
+        const JsonValue* pData = aValue.find("data");
+        if ((pType != nullptr) && ((pType->asString() == "image") || (pType->asString() == "audio")) && (pData != nullptr) && pData->isString()) {
+            members.set("data", JsonValue::makeString("<base64, " + std::to_string(pData->asString().size()) + " chars>"));
+        }
+        return members;
+    }
+
+    // A body as the journal keeps it : media elided, cut beyond 4096 bytes.
+    static JsonValue logBody(const std::string& aBody) {
+        const size_t maxSize = 4096U;
+        std::string text = aBody;
+        JsonValue parsed;
+        JsonError error;
+        if (JsonValue::parse(aBody, parsed, error)) {
+            text = elideMedia(parsed).dump();
+        }
+        if (text.size() > maxSize) {
+            text = text.substr(0U, maxSize) + "...(+" + std::to_string(text.size() - maxSize) + " bytes)";
+        }
+        return JsonValue::makeString(text);
+    }
+
+    // One line of JSON for the exchange. Headers are never written : the token stays out.
+    void writeLog(const std::string& aRequestBody, const Exchange& aExchange, std::chrono::steady_clock::time_point aBegin) {
+        const LogLevel level = m_config.logLevel;
+        if ((m_config.logFunctor == nullptr) || ((level != LogLevel_Exchanges) && (level != LogLevel_Bodies))) {
+            return;
+        }
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - aBegin).count();
+        JsonValue line = JsonValue::makeObject();
+        line.set("time", JsonValue::makeString(utcNow()));
+        line.set("status", JsonValue::makeInteger(aExchange.status));
+        if (!aExchange.rpc.empty()) {
+            line.set("rpc", JsonValue::makeString(aExchange.rpc));
+        }
+        if (!aExchange.id.isNull()) {
+            line.set("id", aExchange.id);
+        }
+        if (!aExchange.tool.empty()) {
+            line.set("tool", JsonValue::makeString(aExchange.tool));
+            if (aExchange.errorCode == JsonRpcErrorCode_None) {
+                line.set("isError", JsonValue::makeBool(aExchange.isError));
+            }
+        }
+        line.set("ms", JsonValue::makeInteger(static_cast<int64_t>(elapsed)));
+        if (!aExchange.error.empty()) {
+            line.set("error", JsonValue::makeString(aExchange.error));
+        }
+        if (level == LogLevel_Bodies) {
+            line.set("request", logBody(aRequestBody));
+            line.set("response", logBody(aExchange.response));
+        }
+        std::lock_guard<std::mutex> lock(m_logMutex);
+        m_config.logFunctor(line.dump());
+    }
+
+    std::string answerRequest(const HttpRequest& aRequest, Exchange& aoExchange) {
+        if (!m_config.token.empty() && !isAuthorized(aRequest)) {
+            aoExchange.error = "a bearer token is required";
+            return reply(aoExchange, 401, "text/plain", aoExchange.error);
+        }
+        if (aRequest.findHeader("origin") != nullptr) {
+            aoExchange.error = "a request from a web page is refused";
+            return reply(aoExchange, 403, "text/plain", aoExchange.error);
+        }
+        if (aRequest.path != "/mcp") {
+            aoExchange.error = "the only path is /mcp";
+            return reply(aoExchange, 404, "text/plain", aoExchange.error);
+        }
+        if (aRequest.method != "POST") {
+            aoExchange.error = "the only method is POST";
+            return reply(aoExchange, 405, "text/plain", aoExchange.error);
+        }
+        const JsonRpcMessage message = JsonRpc::read(aRequest.body);
+        aoExchange.rpc = message.method;
+        aoExchange.id = message.id;
+        if (message.kind == JsonRpcKind_Invalid) {
+            aoExchange.error = message.errorMessage;
+            return reply(aoExchange, 400, "application/json", JsonRpc::makeError(message.id, message.errorCode, message.errorMessage));
+        }
+        if (message.kind != JsonRpcKind_Request) {
+            return reply(aoExchange, 202, "", std::string());  // notifications and responses need no answer
+        }
+        dispatch(message, aoExchange);
+        if (aoExchange.errorCode != JsonRpcErrorCode_None) {
+            return reply(aoExchange, 200, "application/json", JsonRpc::makeError(message.id, aoExchange.errorCode, aoExchange.error));
+        }
+        return reply(aoExchange, 200, "application/json", JsonRpc::makeResult(message.id, aoExchange.result));
+    }
+
     static int32_t clampTimeout(int32_t aTimeoutMs) {
         if (aTimeoutMs < 10) {
             return 10;
@@ -393,7 +530,10 @@ private:
                 continue;
             }
             if (parse == HttpParseStatus_Invalid) {
-                aoClient.sendAll(Http::makeResponse(400, "text/plain", "malformed HTTP request"));
+                Exchange exchange;
+                exchange.error = "malformed HTTP request";
+                aoClient.sendAll(reply(exchange, 400, "text/plain", exchange.error));
+                writeLog(std::string(), exchange, std::chrono::steady_clock::now());
                 return;
             }
             aoClient.sendAll(handleRequest(request));
@@ -401,18 +541,18 @@ private:
         }
     }
 
-    void dispatch(const JsonRpcMessage& aMessage, JsonValue& aoResult, JsonRpcErrorCode& aoErrorCode, std::string& aoErrorMessage) {
+    void dispatch(const JsonRpcMessage& aMessage, Exchange& aoExchange) {
         if (aMessage.method == "initialize") {
-            aoResult = makeInitializeResult(aMessage.params);
+            aoExchange.result = makeInitializeResult(aMessage.params);
         } else if (aMessage.method == "ping") {
-            aoResult = JsonValue::makeObject();
+            aoExchange.result = JsonValue::makeObject();
         } else if (aMessage.method == "tools/list") {
-            aoResult = makeToolsList();
+            aoExchange.result = makeToolsList();
         } else if (aMessage.method == "tools/call") {
-            callTool(aMessage.params, aoResult, aoErrorCode, aoErrorMessage);
+            callTool(aMessage.params, aoExchange);
         } else {
-            aoErrorCode = JsonRpcErrorCode_MethodNotFound;
-            aoErrorMessage = "unknown method : " + aMessage.method;
+            aoExchange.errorCode = JsonRpcErrorCode_MethodNotFound;
+            aoExchange.error = "unknown method : " + aMessage.method;
         }
     }
 
@@ -466,17 +606,18 @@ private:
 
     // Queues the call for poll() and waits : until it is done, until the
     // timeout when no poll() picked it up, or until the server stops.
-    void callTool(const JsonValue& aParams, JsonValue& aoResult, JsonRpcErrorCode& aoErrorCode, std::string& aoErrorMessage) {
+    void callTool(const JsonValue& aParams, Exchange& aoExchange) {
         const JsonValue* pName = aParams.find("name");
         if ((pName == nullptr) || !pName->isString()) {
-            aoErrorCode = JsonRpcErrorCode_InvalidParams;
-            aoErrorMessage = "tools/call needs a tool name";
+            aoExchange.errorCode = JsonRpcErrorCode_InvalidParams;
+            aoExchange.error = "tools/call needs a tool name";
             return;
         }
+        aoExchange.tool = pName->asString();
         const JsonValue* pArguments = aParams.find("arguments");
         if ((pArguments != nullptr) && !pArguments->isObject()) {
-            aoErrorCode = JsonRpcErrorCode_InvalidParams;
-            aoErrorMessage = "the arguments of a tool are an object";
+            aoExchange.errorCode = JsonRpcErrorCode_InvalidParams;
+            aoExchange.error = "the arguments of a tool are an object";
             return;
         }
         std::shared_ptr<PendingCall> call = std::make_shared<PendingCall>();
@@ -491,8 +632,8 @@ private:
             }
         }
         if (!found) {
-            aoErrorCode = JsonRpcErrorCode_InvalidParams;
-            aoErrorMessage = "unknown tool : " + pName->asString();
+            aoExchange.errorCode = JsonRpcErrorCode_InvalidParams;
+            aoExchange.error = "unknown tool : " + pName->asString();
             return;
         }
         m_pending.push_back(call);
@@ -500,15 +641,15 @@ private:
         while (call->state != CallState_Done) {
             if (!m_running) {
                 call->state = CallState_Cancelled;
-                aoErrorCode = JsonRpcErrorCode_InternalError;
-                aoErrorMessage = "the server stops";
+                aoExchange.errorCode = JsonRpcErrorCode_InternalError;
+                aoExchange.error = "the server stops";
                 return;
             }
             if (call->state == CallState_Queued) {
                 if ((m_callChanged.wait_until(lock, deadline) == std::cv_status::timeout) && (call->state == CallState_Queued)) {
                     call->state = CallState_Cancelled;
-                    aoErrorCode = JsonRpcErrorCode_InternalError;
-                    aoErrorMessage = "the application did not poll within " + std::to_string(m_callTimeoutMs) + " ms";
+                    aoExchange.errorCode = JsonRpcErrorCode_InternalError;
+                    aoExchange.error = "the application did not poll within " + std::to_string(m_callTimeoutMs) + " ms";
                     return;
                 }
             } else {
@@ -516,7 +657,8 @@ private:
                 m_callChanged.wait(lock);
             }
         }
-        aoResult = call->result.toJson();
+        aoExchange.result = call->result.toJson();
+        aoExchange.isError = aoExchange.result.find("isError")->asBool();
     }
 };
 

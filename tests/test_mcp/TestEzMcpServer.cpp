@@ -6,6 +6,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -89,8 +90,8 @@ static const JsonValue& result(const HttpAnswer& aAnswer) {
     return (pResult != nullptr) ? *pResult : sNull;
 }
 
-static void echoTool(const JsonValue& aArguments, ToolResult& aoResult, void* apUserData) {
-    *static_cast<std::thread::id*>(apUserData) = std::this_thread::get_id();
+static void echoTool(const JsonValue& aArguments, ToolResult& aoResult, std::thread::id& aoCaller) {
+    aoCaller = std::this_thread::get_id();
     const JsonValue* pText = aArguments.find("text");
     if ((pText == nullptr) || !pText->isString()) {
         aoResult.addText("echo needs a text");
@@ -102,22 +103,26 @@ static void echoTool(const JsonValue& aArguments, ToolResult& aoResult, void* ap
     aoResult.addImagePng(ez::mcp::Png::encodeRgba(std::vector<uint8_t>(pixels, pixels + 16), 2U, 2U));
 }
 
-static void slowTool(const JsonValue& /*aArguments*/, ToolResult& aoResult, void* /*apUserData*/) {
+static void slowTool(const JsonValue& /*aArguments*/, ToolResult& aoResult) {
     std::this_thread::sleep_for(std::chrono::milliseconds(400));
     aoResult.addText("slow done");
 }
 
-static void noopTool(const JsonValue& /*aArguments*/, ToolResult& aoResult, void* /*apUserData*/) {
+static void noopTool(const JsonValue& /*aArguments*/, ToolResult& aoResult) {
     aoResult.addText("done");
 }
 
-static Tool makeTool(const std::string& aName, ez::mcp::ToolFunctor aFunctor, void* apUserData) {
+static Tool makeTool(const std::string& aName, const ez::mcp::ToolFunctor& aFunctor) {
     Tool tool;
     tool.name = aName;
     tool.description = "the tool " + aName;
     tool.functor = aFunctor;
-    tool.userData = apUserData;
     return tool;
+}
+
+// The echo tool, noting in aoCaller the thread it ran on : a lambda that captures.
+static Tool makeEcho(std::thread::id& aoCaller) {
+    return makeTool("echo", [&aoCaller](const JsonValue& aArguments, ToolResult& aoResult) { echoTool(aArguments, aoResult, aoCaller); });
 }
 
 static const char* const sCallEcho =
@@ -165,11 +170,11 @@ bool TestEzMcpServer_Ping() {
 
 bool TestEzMcpServer_ToolsList() {
     Server server;
-    Tool second = makeTool("second", &noopTool, nullptr);
+    Tool second = makeTool("second", &noopTool);
     JsonError error;
     CTEST_ASSERT(
         JsonValue::parse("{\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"}},\"required\":[\"x\"]}", second.inputSchema, error));
-    CTEST_ASSERT(server.addTool(makeTool("first", &noopTool, nullptr)));
+    CTEST_ASSERT(server.addTool(makeTool("first", &noopTool)));
     CTEST_ASSERT(server.addTool(second));
     const HttpAnswer answer = post(server, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}");
     const JsonValue* pTools = result(answer).find("tools");
@@ -183,13 +188,13 @@ bool TestEzMcpServer_ToolsList() {
 
 bool TestEzMcpServer_AddToolRefusals() {
     Server server;
-    CTEST_ASSERT_MESSAGE(!server.addTool(makeTool("", &noopTool, nullptr)), "an empty name");
-    CTEST_ASSERT_MESSAGE(!server.addTool(makeTool("x", nullptr, nullptr)), "no functor");
-    Tool arraySchema = makeTool("x", &noopTool, nullptr);
+    CTEST_ASSERT_MESSAGE(!server.addTool(makeTool("", &noopTool)), "an empty name");
+    CTEST_ASSERT_MESSAGE(!server.addTool(makeTool("x", ez::mcp::ToolFunctor())), "no functor");
+    Tool arraySchema = makeTool("x", &noopTool);
     arraySchema.inputSchema = JsonValue::makeArray();
     CTEST_ASSERT_MESSAGE(!server.addTool(arraySchema), "a schema that is not an object");
-    CTEST_ASSERT(server.addTool(makeTool("x", &noopTool, nullptr)));
-    CTEST_ASSERT_MESSAGE(!server.addTool(makeTool("x", &noopTool, nullptr)), "a taken name");
+    CTEST_ASSERT(server.addTool(makeTool("x", &noopTool)));
+    CTEST_ASSERT_MESSAGE(!server.addTool(makeTool("x", &noopTool)), "a taken name");
     return true;
 }
 
@@ -222,7 +227,7 @@ bool TestEzMcpServer_Routing() {
 bool TestEzMcpServer_CallErrors() {
     Server server;
     std::thread::id caller;
-    CTEST_ASSERT(server.addTool(makeTool("echo", &echoTool, &caller)));
+    CTEST_ASSERT(server.addTool(makeEcho(caller)));
     CTEST_ASSERT(server.start(ServerConfig()));
     HttpAnswer answer = post(server, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"nope\"}}");
     CTEST_ASSERT_MESSAGE(errorCode(answer) == -32602, "an unknown tool");
@@ -244,7 +249,7 @@ bool TestEzMcpServer_CallErrors() {
 bool TestEzMcpServer_CallTimeout() {
     Server server;
     std::thread::id caller;
-    CTEST_ASSERT(server.addTool(makeTool("echo", &echoTool, &caller)));
+    CTEST_ASSERT(server.addTool(makeEcho(caller)));
     ServerConfig config;
     config.callTimeoutMs = 1;  // clamped to 10
     CTEST_ASSERT(server.start(config));
@@ -263,7 +268,7 @@ bool TestEzMcpServer_CallTimeout() {
 bool TestEzMcpServer_EndToEnd() {
     Server server;
     std::thread::id toolThread;
-    CTEST_ASSERT(server.addTool(makeTool("echo", &echoTool, &toolThread)));
+    CTEST_ASSERT(server.addTool(makeEcho(toolThread)));
     ServerConfig config;
     config.name = "endToEnd";
     CTEST_ASSERT(server.start(config));
@@ -399,10 +404,181 @@ bool TestEzMcpServer_Token() {
     return true;
 }
 
+// What the journal received, and on which threads.
+struct LogSink {
+    std::vector<std::string> lines;
+    std::mutex mutex;
+    std::vector<std::thread::id> threads;
+    ez::mcp::LogFunctor functor() {
+        return [this](const std::string& aLine) {
+            std::lock_guard<std::mutex> lock(mutex);
+            lines.push_back(aLine);
+            threads.push_back(std::this_thread::get_id());
+        };
+    }
+    JsonValue last() {
+        std::lock_guard<std::mutex> lock(mutex);
+        JsonValue line;
+        JsonError error;
+        if (!lines.empty()) {
+            JsonValue::parse(lines.back(), line, error);
+        }
+        return line;
+    }
+    size_t count() {
+        std::lock_guard<std::mutex> lock(mutex);
+        return lines.size();
+    }
+};
+
+// One POST over a real connection while this thread polls, like an application frame loop.
+static HttpAnswer postWhilePolling(Server& aoServer, const std::string& aRaw) {
+    HttpAnswer answer;
+    std::atomic<bool> done{false};
+    const uint16_t port = aoServer.getPort();
+    std::thread client([port, &aRaw, &answer, &done]() {
+        answer = httpExchange(port, aRaw);
+        done = true;
+    });
+    for (size_t frame = 0U; (frame < 5000U) && !done; ++frame) {
+        aoServer.poll();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    client.join();
+    return answer;
+}
+
+static ServerConfig makeLogConfig(LogSink& aoSink, ez::mcp::LogLevel aLevel) {
+    ServerConfig config;
+    config.logFunctor = aoSink.functor();
+    config.logLevel = aLevel;
+    return config;
+}
+
+bool TestEzMcpServer_LogOff() {
+    const std::string ping = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}";
+    LogSink sink;
+    Server silent;
+    CTEST_ASSERT(silent.start(makeLogConfig(sink, ez::mcp::LogLevel_None)));
+    post(silent, ping);
+    CTEST_ASSERT_MESSAGE(sink.count() == 0U, "level none : nothing");
+    Server unknown;
+    CTEST_ASSERT(unknown.start(makeLogConfig(sink, static_cast<ez::mcp::LogLevel>(7))));
+    post(unknown, ping);
+    CTEST_ASSERT_MESSAGE(sink.count() == 0U, "a level out of the enum counts as none");
+    ServerConfig noFunctor;
+    noFunctor.logLevel = ez::mcp::LogLevel_Bodies;
+    Server orphan;
+    CTEST_ASSERT(orphan.start(noFunctor));
+    CTEST_ASSERT_MESSAGE(post(orphan, ping).status == 200, "a level without functor serves as usual");
+    return true;
+}
+
+bool TestEzMcpServer_LogExchanges() {
+    LogSink sink;
+    Server server;
+    CTEST_ASSERT(server.start(makeLogConfig(sink, ez::mcp::LogLevel_Exchanges)));
+    post(server, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}");
+    CTEST_ASSERT(sink.count() == 1U);
+    JsonValue line = sink.last();
+    CTEST_ASSERT_MESSAGE(line.isObject(), "one line of JSON");
+    const std::string time = line.find("time")->asString();
+    CTEST_ASSERT_MESSAGE((time.size() == 24U) && (time[10] == 'T') && (time[19] == '.') && (time[23] == 'Z'), "ISO 8601 UTC to the millisecond");
+    CTEST_ASSERT(line.find("status")->asInteger() == 200);
+    CTEST_ASSERT(line.find("rpc")->asString() == "ping");
+    CTEST_ASSERT(line.find("id")->asInteger() == 1);
+    CTEST_ASSERT(line.find("ms")->isInteger() && (line.find("ms")->asInteger() >= 0));
+    CTEST_ASSERT_MESSAGE((line.find("error") == nullptr) && (line.find("tool") == nullptr), "nothing that did not happen");
+    CTEST_ASSERT_MESSAGE((line.find("request") == nullptr) && (line.find("response") == nullptr), "no body at this level");
+    post(server, "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}");
+    line = sink.last();
+    CTEST_ASSERT(
+        (line.find("status")->asInteger() == 202) && (line.find("rpc")->asString() == "notifications/initialized") && (line.find("id") == nullptr));
+    post(server, "{\"jsonrpc\":\"2.0\",\"id\":\"a\",\"method\":\"resources/list\"}");
+    line = sink.last();
+    CTEST_ASSERT((line.find("status")->asInteger() == 200) && (line.find("id")->asString() == "a"));
+    CTEST_ASSERT(line.find("error")->asString() == "unknown method : resources/list");
+    post(server, "{oops");
+    line = sink.last();
+    CTEST_ASSERT((line.find("status")->asInteger() == 400) && (line.find("rpc") == nullptr));
+    CTEST_ASSERT(line.find("error")->asString().find("parse error") == 0U);
+    serve(server, "GET", "/mcp", "");
+    CTEST_ASSERT((sink.last().find("status")->asInteger() == 405) && (sink.last().find("error")->asString() == "the only method is POST"));
+    serve(server, "POST", "/x", "");
+    CTEST_ASSERT(sink.last().find("status")->asInteger() == 404);
+    post(server, "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"nope\"}}");
+    line = sink.last();
+    CTEST_ASSERT_MESSAGE((line.find("tool")->asString() == "nope") && (line.find("isError") == nullptr), "a refused call has no isError");
+    CTEST_ASSERT(line.find("error")->asString() == "unknown tool : nope");
+    CTEST_ASSERT(sink.count() == 7U);
+    return true;
+}
+
+bool TestEzMcpServer_LogToolCalls() {
+    LogSink sink;
+    Server server;
+    std::thread::id caller;
+    CTEST_ASSERT(server.addTool(makeEcho(caller)));
+    CTEST_ASSERT(server.start(makeLogConfig(sink, ez::mcp::LogLevel_Exchanges)));
+    CTEST_ASSERT(postWhilePolling(server, makePost(sCallEcho)).status == 200);
+    JsonValue line = sink.last();
+    CTEST_ASSERT((line.find("tool")->asString() == "echo") && !line.find("isError")->asBool());
+    CTEST_ASSERT(line.find("rpc")->asString() == "tools/call");
+    CTEST_ASSERT(
+        postWhilePolling(server, makePost("{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"echo\"}}")).status == 200);
+    CTEST_ASSERT_MESSAGE(sink.last().find("isError")->asBool(), "a tool that failed says so");
+    CTEST_ASSERT(httpExchange(server.getPort(), "NONSENSE\r\n\r\n").status == 400);
+    for (size_t round = 0U; (round < 100U) && (sink.count() < 3U); ++round) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    line = sink.last();
+    CTEST_ASSERT_MESSAGE((line.find("status")->asInteger() == 400) && (line.find("error")->asString() == "malformed HTTP request"),
+        "a malformed request is journaled too");
+    server.stop();
+    CTEST_ASSERT(sink.count() == 3U);
+    for (const auto& thread : sink.threads) {
+        CTEST_ASSERT_MESSAGE(thread != std::this_thread::get_id(), "called on the server thread, not the polling one");
+    }
+    return true;
+}
+
+bool TestEzMcpServer_LogBodies() {
+    LogSink sink;
+    Server server;
+    std::thread::id caller;
+    CTEST_ASSERT(server.addTool(makeEcho(caller)));
+    ServerConfig config = makeLogConfig(sink, ez::mcp::LogLevel_Bodies);
+    config.token = Server::makeToken();
+    CTEST_ASSERT(server.start(config));
+    const std::string authorized = "POST /mcp HTTP/1.1\r\nAuthorization: Bearer " + config.token + "\r\nContent-Length: ";
+    const std::string body = sCallEcho;
+    CTEST_ASSERT(postWhilePolling(server, authorized + std::to_string(body.size()) + "\r\n\r\n" + body).status == 200);
+    JsonValue line = sink.last();
+    CTEST_ASSERT_MESSAGE(line.find("request")->asString().find("bonjour") != std::string::npos, "the request body");
+    const std::string response = line.find("response")->asString();
+    CTEST_ASSERT_MESSAGE(response.find("bonjour") != std::string::npos, "the response body");
+    CTEST_ASSERT_MESSAGE(response.find("<base64, ") != std::string::npos, "the image replaced by its size");
+    CTEST_ASSERT_MESSAGE(response.find("iVBOR") == std::string::npos, "no image data");
+    CTEST_ASSERT_MESSAGE(response.find("\"mimeType\":\"image/png\"") != std::string::npos, "the rest of the image item stays");
+    const std::string longBody = "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"echo\",\"arguments\":{\"text\":\"" +
+        std::string(10000U, 'z') + "\"}}}";
+    CTEST_ASSERT(postWhilePolling(server, authorized + std::to_string(longBody.size()) + "\r\n\r\n" + longBody).status == 200);
+    line = sink.last();
+    const std::string cut = line.find("request")->asString();
+    CTEST_ASSERT_MESSAGE((cut.size() < 4200U) && (cut.find("...(+") != std::string::npos), "a long body is cut and says how much");
+    CTEST_ASSERT(httpExchange(server.getPort(), makePost(body)).status == 401);
+    CTEST_ASSERT(sink.last().find("status")->asInteger() == 401);
+    CTEST_ASSERT(sink.last().find("error")->asString() == "a bearer token is required");
+    for (const auto& text : sink.lines) {
+        CTEST_ASSERT_MESSAGE(text.find(config.token) == std::string::npos, "the token is never journaled");
+    }
+    return true;
+}
+
 // A tool picked up by poll() is waited for to its end, whatever the call timeout.
 bool TestEzMcpServer_SlowToolOutlivesTimeout() {
     Server server;
-    CTEST_ASSERT(server.addTool(makeTool("slow", &slowTool, nullptr)));
+    CTEST_ASSERT(server.addTool(makeTool("slow", &slowTool)));
     ServerConfig config;
     config.callTimeoutMs = 100;
     CTEST_ASSERT(server.start(config));
@@ -428,7 +604,7 @@ bool TestEzMcpServer_SlowToolOutlivesTimeout() {
 bool TestEzMcpServer_StopWhileWaiting() {
     Server server;
     std::thread::id caller;
-    CTEST_ASSERT(server.addTool(makeTool("echo", &echoTool, &caller)));
+    CTEST_ASSERT(server.addTool(makeEcho(caller)));
     ServerConfig config;
     config.callTimeoutMs = 60000;
     CTEST_ASSERT(server.start(config));
@@ -504,6 +680,10 @@ bool TestEzMcpServer(const std::string& vTest) {
     else IfTestExist(TestEzMcpServer_MakeToken);
     else IfTestExist(TestEzMcpServer_TokenRefusedAtStart);
     else IfTestExist(TestEzMcpServer_Token);
+    else IfTestExist(TestEzMcpServer_LogOff);
+    else IfTestExist(TestEzMcpServer_LogExchanges);
+    else IfTestExist(TestEzMcpServer_LogToolCalls);
+    else IfTestExist(TestEzMcpServer_LogBodies);
     else IfTestExist(TestEzMcpServer_SlowToolOutlivesTimeout);
     else IfTestExist(TestEzMcpServer_StopWhileWaiting);
     else IfTestExist(TestEzMcpServer_MalformedHttp);

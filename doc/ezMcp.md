@@ -40,17 +40,6 @@ declares tools; the client lists them and calls them.
 ```cpp
 #include <ezlibs/ezMcp/ezMcp.hpp>
 
-// A tool : reads its arguments, fills its result.
-static void echo(const ez::mcp::JsonValue& aArguments, ez::mcp::ToolResult& aoResult, void* apUserData) {
-    const ez::mcp::JsonValue* pText = aArguments.find("text");
-    if ((pText == nullptr) || !pText->isString()) {
-        aoResult.addText("echo needs a text");
-        aoResult.setError(true);  // the tool ran and failed : not a protocol error
-        return;
-    }
-    aoResult.addText(pText->asString());
-}
-
 int main() {
     ez::mcp::Server server;
 
@@ -61,8 +50,16 @@ int main() {
     ez::mcp::JsonValue::parse(
         R"({"type":"object","properties":{"text":{"type":"string"}},"required":["text"]})",
         tool.inputSchema, error);
-    tool.functor = &echo;
-    tool.userData = nullptr;  // handed back to the functor
+    // A tool : a std::function (a lambda may capture), run by poll() on the app thread.
+    tool.functor = [](const ez::mcp::JsonValue& aArguments, ez::mcp::ToolResult& aoResult) {
+        const ez::mcp::JsonValue* pText = aArguments.find("text");
+        if ((pText == nullptr) || !pText->isString()) {
+            aoResult.addText("echo needs a text");
+            aoResult.setError(true);  // the tool ran and failed : not a protocol error
+            return;
+        }
+        aoResult.addText(pText->asString());
+    };
     server.addTool(tool);
 
     ez::mcp::ServerConfig config;
@@ -126,6 +123,35 @@ The answers:
 |Another path than `/mcp`|404||
 |Another method than `POST`|405||
 
+## The journal
+
+Optional, off by default. The application hands a `std::function` that
+receives one line of JSON per exchange:
+
+```cpp
+std::ofstream journal("mcp.jsonl", std::ios::app);
+config.logLevel = ez::mcp::LogLevel_Exchanges;  // or LogLevel_Bodies
+config.logFunctor = [&journal](const std::string& aLine) { journal << aLine << std::endl; };
+```
+
+```
+{"time":"2026-11-23T06:12:04.518Z","status":200,"rpc":"tools/call","id":3,"tool":"echo","isError":false,"ms":12}
+{"time":"2026-11-23T06:12:09.002Z","status":401,"ms":0,"error":"a bearer token is required"}
+```
+
+- `time` (UTC, ISO 8601 to the millisecond), `status` (HTTP) and `ms` are
+  always there; `rpc` (the JSON-RPC method), `id`, `tool`, `isError` (a tool
+  that ran and said it failed) and `error` (why it was refused or failed)
+  when they apply. A malformed HTTP request is journaled too.
+- `LogLevel_Bodies` adds `request` and `response`, the bodies as text: an
+  image or a sound has its `data` replaced by its size, and a body is cut
+  beyond 4096 bytes with the count of what was cut.
+- Headers are never written: the token never reaches the journal.
+- The functor is called on the thread that served the request (the server
+  thread), even while the application does not poll: it guards what it
+  touches. Lines never interleave.
+- A level out of the enum counts as `LogLevel_None`; no functor, no journal.
+
 ## The token
 
 Anything that runs on the machine can reach a port of 127.0.0.1, and through
@@ -160,8 +186,8 @@ ssh -R <port>:127.0.0.1:<port> <client machine>
 
 The test executable has a serve mode to try a client or a tunnel without an
 application: `EzLibs_TestMcp serve <port> <seconds> [token | auto]` serves two
-tools, `echo` and `gradient` (a 64x32 PNG); with `auto` it makes a token and
-prints the header to send.
+tools, `echo` and `gradient` (a 64x32 PNG), and prints its journal; with
+`auto` it makes a token and prints the header to send.
 
 ```
 curl -s http://127.0.0.1:7810/mcp -H "Content-Type: application/json" \

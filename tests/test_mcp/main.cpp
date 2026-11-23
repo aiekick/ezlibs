@@ -30,7 +30,7 @@ bool TestMcp(const std::string& vTest) {
 //// SERVE MODE : a live server to try by hand (curl, an MCP client, a tunnel)
 ////////////////////////////////////////////////////////////////////////////
 
-static void echoTool(const ez::mcp::JsonValue& aArguments, ez::mcp::ToolResult& aoResult, void* /*apUserData*/) {
+static void echoTool(const ez::mcp::JsonValue& aArguments, ez::mcp::ToolResult& aoResult) {
     const ez::mcp::JsonValue* pText = aArguments.find("text");
     if ((pText == nullptr) || !pText->isString()) {
         aoResult.addText("echo needs a text");
@@ -40,7 +40,7 @@ static void echoTool(const ez::mcp::JsonValue& aArguments, ez::mcp::ToolResult& 
     aoResult.addText(pText->asString());
 }
 
-static void gradientTool(const ez::mcp::JsonValue& /*aArguments*/, ez::mcp::ToolResult& aoResult, void* /*apUserData*/) {
+static void gradientTool(const ez::mcp::JsonValue& /*aArguments*/, ez::mcp::ToolResult& aoResult) {
     const uint32_t width = 64U;
     const uint32_t height = 32U;
     std::vector<uint8_t> rgba(static_cast<size_t>(width) * height * 4U);
@@ -78,6 +78,12 @@ static int serve(uint16_t aPort, int32_t aSeconds, const std::string& aToken) {
     config.version = "1.0";
     config.port = aPort;
     config.token = (aToken == "auto") ? ez::mcp::Server::makeToken() : aToken;
+    // The journal : one line of JSON per exchange on the standard output.
+    config.logLevel = ez::mcp::LogLevel_Exchanges;
+    config.logFunctor = [](const std::string& aLine) {
+        printf("%s\n", aLine.c_str());
+        fflush(stdout);
+    };
     if (!server.start(config)) {
         printf("cannot start : %s\n", server.getStartError().c_str());
         return 1;
