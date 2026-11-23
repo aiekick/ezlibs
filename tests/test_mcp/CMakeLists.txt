@@ -70,7 +70,9 @@ AddTest(TestEzMcpBase64_Binary)
 AddTest(TestEzMcpPng_Checksums)
 AddTest(TestEzMcpPng_Refusals)
 AddTest(TestEzMcpPng_OnePixel)
-AddTest(TestEzMcpPng_MultiBlock)
+AddTest(TestEzMcpPng_LargeImages)
+AddTest(TestEzMcpPng_CompressesAUi)
+AddTest(TestEzMcpPng_NoiseReadsBack)
 
 ##########################################################
 ## TESTS MCP JSON-RPC ####################################
