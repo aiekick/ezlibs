@@ -123,6 +123,37 @@ The answers:
 |Another path than `/mcp`|404||
 |Another method than `POST`|405||
 
+## Answering later
+
+A tool may need more than one turn of the application loop: a click that is
+a press in one frame and a release in the next, a capture that needs the
+next rendered frame, a long computation. It then answers later, per call:
+
+```cpp
+std::vector<ez::mcp::CallToken> waiting;
+tool.functor = [&waiting](const ez::mcp::JsonValue& aArguments, ez::mcp::ToolResult& aoResult) {
+    waiting.push_back(aoResult.defer());  // poll() will not answer this call
+};
+
+// later, from the application thread, when the answer is ready
+ez::mcp::ToolResult answer;
+answer.addText("done");
+server.complete(waiting.front(), answer);
+```
+
+- `defer()` inside a tool run by `poll()` hands back the token of the call;
+  outside a `poll()` it does nothing and gives 0. A tool that does not call it
+  answers at once, as before: the mode is chosen per call.
+- `complete(token, result)` answers the client and says what became of it:
+  `CompleteResult_Completed`; `CompleteResult_Cancelled` when the server
+  stopped meanwhile (the client was told); `CompleteResult_UnknownToken` for
+  a token never handed out or already completed.
+- The client waits as for any running tool: the call timeout only covers the
+  wait for `poll()`. An application that defers must complete, or stop the
+  server. While a call waits, the server serves no other request.
+- `hasQueuedCalls()` says a call waits for the next `poll()`: an application
+  that sleeps between frames wakes up for it.
+
 ## The journal
 
 Optional, off by default. The application hands a `std::function` that

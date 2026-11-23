@@ -52,6 +52,12 @@ SOFTWARE.
 //   server.start(config);
 //   while (running) { server.poll(); ...frame... }
 //   server.stop();
+//
+// A tool may also answer LATER : inside its functor, aoResult.defer() hands
+// back the token of the call, poll() does not answer it, and the application
+// answers when it wants with server.complete(token, result), from its own
+// thread (a few frames later, after a computation...). The client waits, as
+// for any running tool.
 
 #include "base64.hpp"
 #include "http.hpp"
@@ -69,6 +75,7 @@ SOFTWARE.
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -79,15 +86,31 @@ SOFTWARE.
 namespace ez {
 namespace mcp {
 
+class Server;
+
+// Names one call answered later (0 = none).
+typedef uint64_t CallToken;
+
 // What a tool answers : text and images, in the order they were added. An
 // error result tells the client the tool ran and failed (bad arguments, a
 // state that does not allow it).
 class ToolResult {
+    friend class Server;
+
 private:
     std::vector<JsonValue> m_content;
+    CallToken m_callToken{};  // the call this result answers, set by poll()
+    bool m_deferred{};
     bool m_isError{};
 
 public:
+    // Inside a tool run by poll() : the answer comes later, by
+    // Server::complete(token, result). Outside a poll(), nothing happens and
+    // the token is 0.
+    CallToken defer() {
+        m_deferred = (m_callToken != 0U);
+        return m_callToken;
+    }
     void addText(const std::string& aText) {
         JsonValue item = JsonValue::makeObject();
         item.set("type", JsonValue::makeString("text"));
@@ -129,6 +152,13 @@ enum LogLevel {
 typedef std::function<void(const std::string& aLine)> LogFunctor;
 
 typedef std::function<void(const JsonValue& aArguments, ToolResult& aoResult)> ToolFunctor;
+
+// What became of a Server::complete().
+enum CompleteResult {
+    CompleteResult_Cancelled = 0,  // the server stopped meanwhile : the client was told
+    CompleteResult_Completed,      // the answer went to the client
+    CompleteResult_UnknownToken    // never handed out, or already completed
+};
 
 struct Tool {
     std::string description;
@@ -195,11 +225,13 @@ private:
     };
 
     std::condition_variable m_callChanged;
+    std::map<CallToken, std::shared_ptr<PendingCall>> m_deferred;  // the calls a tool deferred, until complete()
     int32_t m_callTimeoutMs{5000};
     ServerConfig m_config;
     Socket m_listener;
     std::mutex m_logMutex;
-    std::mutex m_mutex;
+    mutable std::mutex m_mutex;
+    CallToken m_nextToken{1};
     std::vector<std::shared_ptr<PendingCall>> m_pending;
     std::atomic<bool> m_running{false};
     std::string m_startError;
@@ -250,6 +282,10 @@ public:
             return false;
         }
         m_startError.clear();
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_deferred.clear();  // the cancelled calls of a previous run
+        }
         m_running = true;
         m_thread = std::thread(&Server::run, this);
         return true;
@@ -271,6 +307,9 @@ public:
         m_listener.close();
         std::lock_guard<std::mutex> lock(m_mutex);
         m_pending.clear();
+        for (auto& deferred : m_deferred) {
+            deferred.second->state = CallState_Cancelled;  // complete() will say so
+        }
     }
 
     // Why the last start() failed ; empty after a success.
@@ -295,6 +334,7 @@ public:
             for (const auto& pending : m_pending) {
                 if (pending->state == CallState_Queued) {
                     pending->state = CallState_Running;
+                    pending->result.m_callToken = m_nextToken++;
                     calls.push_back(pending);
                 }
             }
@@ -305,11 +345,44 @@ public:
             call.tool.functor(call.arguments, call.result);
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
-                call.state = CallState_Done;
+                if (call.result.m_deferred) {
+                    m_deferred[call.result.m_callToken] = pCall;  // still running : complete() answers it
+                } else {
+                    call.state = CallState_Done;
+                }
             }
             m_callChanged.notify_all();
         }
         return calls.size();
+    }
+
+    // Answers a call a tool deferred, on the calling thread.
+    CompleteResult complete(CallToken aToken, const ToolResult& aResult) {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        const auto found = m_deferred.find(aToken);
+        if (found == m_deferred.end()) {
+            return CompleteResult_UnknownToken;
+        }
+        const std::shared_ptr<PendingCall> call = found->second;
+        m_deferred.erase(found);
+        if (call->state == CallState_Cancelled) {
+            return CompleteResult_Cancelled;
+        }
+        call->result = aResult;
+        call->result.m_callToken = aToken;
+        call->result.m_deferred = false;
+        call->state = CallState_Done;
+        lock.unlock();
+        m_callChanged.notify_all();
+        return CompleteResult_Completed;
+    }
+
+    // True while a tool call waits for the next poll() : an application that
+    // sleeps between frames wakes up for it.
+    bool hasQueuedCalls() const {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return std::any_of(m_pending.begin(), m_pending.end(),
+            [](const std::shared_ptr<PendingCall>& apPending) { return apPending->state == CallState_Queued; });
     }
 
     // The whole HTTP answer to one request : what the server thread sends
@@ -653,7 +726,7 @@ private:
                     return;
                 }
             } else {
-                // Picked up by poll() : a running tool is waited for, whatever its length.
+                // Picked up by poll() : a running tool, or a deferred one, is waited for, whatever its length.
                 m_callChanged.wait(lock);
             }
         }

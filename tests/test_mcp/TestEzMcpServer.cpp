@@ -575,6 +575,125 @@ bool TestEzMcpServer_LogBodies() {
     return true;
 }
 
+// A tool that answers later when asked to : it keeps the token of its call.
+static Tool makeLater(std::atomic<ez::mcp::CallToken>& aoToken) {
+    return makeTool("later", [&aoToken](const JsonValue& aArguments, ToolResult& aoResult) {
+        const JsonValue* pLater = aArguments.find("later");
+        if ((pLater != nullptr) && pLater->asBool()) {
+            aoToken = aoResult.defer();
+            return;
+        }
+        aoResult.addText("at once");
+    });
+}
+
+static const char* const sCallLater =
+    "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\",\"params\":{\"name\":\"later\",\"arguments\":{\"later\":true}}}";
+
+bool TestEzMcpServer_DeferredAnswer() {
+    Server server;
+    std::atomic<ez::mcp::CallToken> token{0U};
+    CTEST_ASSERT(server.addTool(makeLater(token)));
+    ServerConfig config;
+    config.callTimeoutMs = 100;  // a deferred call outlives it : it was picked up
+    CTEST_ASSERT(server.start(config));
+    HttpAnswer answer;
+    std::atomic<bool> done{false};
+    const uint16_t port = server.getPort();
+    std::thread client([port, &answer, &done]() {
+        answer = httpExchange(port, makePost(sCallLater));
+        done = true;
+    });
+    // the application loop : the tool defers, the answer comes 30 frames later
+    size_t framesSinceDefer = 0U;
+    ez::mcp::CompleteResult completed = ez::mcp::CompleteResult_UnknownToken;
+    for (size_t frame = 0U; (frame < 5000U) && !done; ++frame) {
+        server.poll();
+        if (token != 0U) {
+            ++framesSinceDefer;
+            if (framesSinceDefer == 30U) {
+                ToolResult late;
+                late.addText("done later");
+                completed = server.complete(token, late);
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    client.join();
+    CTEST_ASSERT(token != 0U);
+    CTEST_ASSERT_MESSAGE(framesSinceDefer >= 30U, "nothing answered before complete()");
+    CTEST_ASSERT(completed == ez::mcp::CompleteResult_Completed);
+    CTEST_ASSERT_MESSAGE((answer.status == 200) && (errorCode(answer) == 0), "no timeout for a deferred call");
+    CTEST_ASSERT(answer.json.find("id")->asInteger() == 7);
+    CTEST_ASSERT(result(answer).find("content")->at(0U).find("text")->asString() == "done later");
+    ToolResult again;
+    CTEST_ASSERT_MESSAGE(server.complete(token, again) == ez::mcp::CompleteResult_UnknownToken, "a token answers once");
+    CTEST_ASSERT(server.complete(0U, again) == ez::mcp::CompleteResult_UnknownToken);
+    CTEST_ASSERT(server.complete(123456U, again) == ez::mcp::CompleteResult_UnknownToken);
+    // the same tool answers at once when not asked to wait : the mode is chosen per call
+    const HttpAnswer atOnce =
+        postWhilePolling(server, makePost("{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":\"tools/call\",\"params\":{\"name\":\"later\"}}"));
+    CTEST_ASSERT(result(atOnce).find("content")->at(0U).find("text")->asString() == "at once");
+    return true;
+}
+
+bool TestEzMcpServer_DeferredThenStop() {
+    Server server;
+    std::atomic<ez::mcp::CallToken> token{0U};
+    CTEST_ASSERT(server.addTool(makeLater(token)));
+    CTEST_ASSERT(server.start(ServerConfig()));
+    HttpAnswer answer;
+    const uint16_t port = server.getPort();
+    std::thread client([port, &answer]() { answer = httpExchange(port, makePost(sCallLater)); });
+    for (size_t frame = 0U; (frame < 2000U) && (token == 0U); ++frame) {
+        server.poll();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    CTEST_ASSERT(token != 0U);
+    server.stop();
+    client.join();
+    CTEST_ASSERT_MESSAGE(errorCode(answer) == -32603, "the waiting client is told the server stops");
+    ToolResult late;
+    late.addText("too late");
+    CTEST_ASSERT_MESSAGE(server.complete(token, late) == ez::mcp::CompleteResult_Cancelled, "complete() says the call was cancelled");
+    CTEST_ASSERT(server.complete(token, late) == ez::mcp::CompleteResult_UnknownToken);
+    CTEST_ASSERT(server.start(ServerConfig()));
+    CTEST_ASSERT(server.complete(token, late) == ez::mcp::CompleteResult_UnknownToken);
+    return true;
+}
+
+bool TestEzMcpServer_DeferOutsidePoll() {
+    ToolResult alone;
+    CTEST_ASSERT_MESSAGE(alone.defer() == 0U, "no call, no token");
+    alone.addText("still a result");
+    CTEST_ASSERT(alone.toJson().find("content")->size() == 1U);
+    return true;
+}
+
+bool TestEzMcpServer_HasQueuedCalls() {
+    Server server;
+    std::thread::id caller;
+    CTEST_ASSERT(server.addTool(makeEcho(caller)));
+    ServerConfig config;
+    config.callTimeoutMs = 5000;
+    CTEST_ASSERT(server.start(config));
+    CTEST_ASSERT(!server.hasQueuedCalls());
+    HttpAnswer answer;
+    const uint16_t port = server.getPort();
+    std::thread client([port, &answer]() { answer = httpExchange(port, makePost(sCallEcho)); });
+    bool queued = false;
+    for (size_t round = 0U; (round < 300U) && !queued; ++round) {
+        queued = server.hasQueuedCalls();
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    CTEST_ASSERT_MESSAGE(queued, "a call waits for the next poll");
+    CTEST_ASSERT(server.poll() == 1U);
+    CTEST_ASSERT_MESSAGE(!server.hasQueuedCalls(), "the poll took it");
+    client.join();
+    CTEST_ASSERT(answer.status == 200);
+    return true;
+}
+
 // A tool picked up by poll() is waited for to its end, whatever the call timeout.
 bool TestEzMcpServer_SlowToolOutlivesTimeout() {
     Server server;
@@ -684,6 +803,10 @@ bool TestEzMcpServer(const std::string& vTest) {
     else IfTestExist(TestEzMcpServer_LogExchanges);
     else IfTestExist(TestEzMcpServer_LogToolCalls);
     else IfTestExist(TestEzMcpServer_LogBodies);
+    else IfTestExist(TestEzMcpServer_DeferredAnswer);
+    else IfTestExist(TestEzMcpServer_DeferredThenStop);
+    else IfTestExist(TestEzMcpServer_DeferOutsidePoll);
+    else IfTestExist(TestEzMcpServer_HasQueuedCalls);
     else IfTestExist(TestEzMcpServer_SlowToolOutlivesTimeout);
     else IfTestExist(TestEzMcpServer_StopWhileWaiting);
     else IfTestExist(TestEzMcpServer_MalformedHttp);
