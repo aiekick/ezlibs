@@ -63,7 +63,7 @@ static std::string makePost(const std::string& aBody) {
 }
 
 // One raw exchange over a real connection : send, read until the server closes.
-static HttpAnswer exchange(uint16_t aPort, const std::string& aRaw) {
+static HttpAnswer httpExchange(uint16_t aPort, const std::string& aRaw) {
     Socket client;
     if (!client.connectLocal(aPort) || !client.sendAll(aRaw)) {
         return HttpAnswer();
@@ -274,11 +274,11 @@ bool TestEzMcpServer_EndToEnd() {
     std::atomic<bool> clientDone{false};
     std::thread clientThread([port, &answers, &clientDone]() {
         answers.push_back(
-            exchange(port, makePost("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-11-25\"}}")));
-        answers.push_back(exchange(port, makePost("{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}")));
-        answers.push_back(exchange(port, makePost("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}")));
-        answers.push_back(exchange(port, makePost(sCallEcho)));
-        answers.push_back(exchange(port, makePost("{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"echo\"}}")));
+            httpExchange(port, makePost("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-11-25\"}}")));
+        answers.push_back(httpExchange(port, makePost("{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}")));
+        answers.push_back(httpExchange(port, makePost("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}")));
+        answers.push_back(httpExchange(port, makePost(sCallEcho)));
+        answers.push_back(httpExchange(port, makePost("{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"echo\"}}")));
         clientDone = true;
     });
     // The application loop : one poll per frame.
@@ -323,7 +323,7 @@ bool TestEzMcpServer_SlowToolOutlivesTimeout() {
     HttpAnswer answer;
     std::atomic<bool> clientDone{false};
     std::thread clientThread([port, &answer, &clientDone]() {
-        answer = exchange(port, makePost("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"slow\"}}"));
+        answer = httpExchange(port, makePost("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"slow\"}}"));
         clientDone = true;
     });
     size_t ran = 0U;
@@ -347,7 +347,7 @@ bool TestEzMcpServer_StopWhileWaiting() {
     CTEST_ASSERT(server.start(config));
     const uint16_t port = server.getPort();
     HttpAnswer answer;
-    std::thread clientThread([port, &answer]() { answer = exchange(port, makePost(sCallEcho)); });
+    std::thread clientThread([port, &answer]() { answer = httpExchange(port, makePost(sCallEcho)); });
     std::this_thread::sleep_for(std::chrono::milliseconds(300));  // the call waits in the queue
     const std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     server.stop();
@@ -370,9 +370,9 @@ bool TestEzMcpServer_MalformedHttp() {
     CTEST_ASSERT_MESSAGE(!second.start(taken), "a port in use fails the start");
     CTEST_ASSERT(!second.isRunning());
     CTEST_ASSERT_MESSAGE(!server.start(ServerConfig()), "a running server does not start twice");
-    const HttpAnswer bad = exchange(server.getPort(), "NONSENSE\r\n\r\n");
+    const HttpAnswer bad = httpExchange(server.getPort(), "NONSENSE\r\n\r\n");
     CTEST_ASSERT(bad.status == 400);
-    const HttpAnswer page = exchange(server.getPort(), "POST /mcp HTTP/1.1\r\nOrigin: http://evil\r\nContent-Length: 2\r\n\r\n{}");
+    const HttpAnswer page = httpExchange(server.getPort(), "POST /mcp HTTP/1.1\r\nOrigin: http://evil\r\nContent-Length: 2\r\n\r\n{}");
     CTEST_ASSERT(page.status == 403);
     // A request sent in pieces is read whole.
     Socket client;
@@ -392,11 +392,11 @@ bool TestEzMcpServer_MalformedHttp() {
     Socket leaving;
     CTEST_ASSERT(leaving.connectLocal(server.getPort()));
     leaving.close();
-    CTEST_ASSERT(exchange(server.getPort(), makePost("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\"}")).status == 200);
+    CTEST_ASSERT(httpExchange(server.getPort(), makePost("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\"}")).status == 200);
     // A client that connects and says nothing does not block the next one.
     Socket silent;
     CTEST_ASSERT(silent.connectLocal(server.getPort()));
-    const HttpAnswer after = exchange(server.getPort(), makePost("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}"));
+    const HttpAnswer after = httpExchange(server.getPort(), makePost("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}"));
     CTEST_ASSERT_MESSAGE(after.status == 200, "served once the silent one timed out");
     return true;
 }
